@@ -28,39 +28,6 @@ class Main {
 		return Main._groundMaterial;
 	}
 
-    public static _kongoFlagSMaterial: BABYLON.StandardMaterial;
-	public static get kongoFlagSMaterial(): BABYLON.StandardMaterial {
-		if (!Main._kongoFlagSMaterial) {
-            Main._kongoFlagSMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-			Main._kongoFlagSMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-small.png", Main.Scene);
-			Main._kongoFlagSMaterial.emissiveColor.copyFromFloats(0.5, 0.5, 0.5);
-			Main._kongoFlagSMaterial.specularColor.copyFromFloats(0, 0, 0);
-		}
-		return Main._kongoFlagSMaterial;
-	}
-
-    public static _kongoFlagMMaterial: BABYLON.StandardMaterial;
-	public static get kongoFlagMMaterial(): BABYLON.StandardMaterial {
-		if (!Main._kongoFlagMMaterial) {
-            Main._kongoFlagMMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-			Main._kongoFlagMMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-medium.png", Main.Scene);
-			Main._kongoFlagMMaterial.emissiveColor.copyFromFloats(0.5, 0.5, 0.5);
-			Main._kongoFlagMMaterial.specularColor.copyFromFloats(0, 0, 0);
-		}
-		return Main._kongoFlagMMaterial;
-	}
-
-    public static _kongoFlagLMaterial: BABYLON.StandardMaterial;
-	public static get kongoFlagLMaterial(): BABYLON.StandardMaterial {
-		if (!Main._kongoFlagLMaterial) {
-            Main._kongoFlagLMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-			Main._kongoFlagLMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-large.png", Main.Scene);
-			Main._kongoFlagLMaterial.emissiveColor.copyFromFloats(0.25, 0.25, 0.25);
-			Main._kongoFlagLMaterial.specularColor.copyFromFloats(0, 0, 0);
-		}
-		return Main._kongoFlagLMaterial;
-	}
-
     constructor(canvasElement: string) {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -150,10 +117,13 @@ class Main {
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
 
+		let t0 = performance.now();
         let chunck = new Chunck();
         chunck.randomizeNice();
         chunck.generateVertices();
 		chunck.generateFaces();
+		let t1 = performance.now();
+		alert(t1 - t0);
 		
 		console.log("Main scene Initialized.");
     }

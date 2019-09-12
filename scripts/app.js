@@ -1,11 +1,12 @@
-var CHUNCK_SIZE = 8;
+var CHUNCK_SIZE = 16;
 class Vertex {
-    constructor(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+    constructor(i, j, k) {
+        this.i = i;
+        this.j = j;
+        this.k = k;
         this.links = [];
-        this.smoothedPosition = new BABYLON.Vector3(x, y, z);
+        this.position = new BABYLON.Vector3(i, j, k);
+        this.smoothedPosition = this.position.clone();
     }
     connect(v) {
         if (v) {
@@ -15,11 +16,20 @@ class Vertex {
             if (v.links.indexOf(this) === -1) {
                 v.links.push(this);
             }
-            this.smoothedPosition.x = this.smoothedPosition.x * 0.9 + v.x * 0.1;
-            this.smoothedPosition.y = this.smoothedPosition.y * 0.9 + v.y * 0.1;
-            this.smoothedPosition.z = this.smoothedPosition.z * 0.9 + v.z * 0.1;
         }
     }
+    smooth(factor) {
+        this.smoothedPosition.copyFrom(this.position);
+        for (let i = 0; i < this.links.length; i++) {
+            this.smoothedPosition.addInPlace(this.links[i].position.scale(factor));
+        }
+        this.smoothedPosition.scaleInPlace(1 / (this.links.length * factor + 1));
+    }
+    applySmooth() {
+        this.position.copyFrom(this.smoothedPosition);
+    }
+}
+class Face {
 }
 class Cube {
     constructor(i, j, k) {
@@ -28,9 +38,9 @@ class Cube {
         this.k = k;
     }
     addVertex(v) {
-        if (v.x === this.i) {
-            if (v.y === this.j) {
-                if (v.z === this.k) {
+        if (v.i === this.i) {
+            if (v.j === this.j) {
+                if (v.k === this.k) {
                     this.v000 = v;
                 }
                 else {
@@ -38,7 +48,7 @@ class Cube {
                 }
             }
             else {
-                if (v.z === this.k) {
+                if (v.k === this.k) {
                     this.v010 = v;
                 }
                 else {
@@ -47,8 +57,8 @@ class Cube {
             }
         }
         else {
-            if (v.y === this.j) {
-                if (v.z === this.k) {
+            if (v.j === this.j) {
+                if (v.k === this.k) {
                     this.v100 = v;
                 }
                 else {
@@ -56,7 +66,7 @@ class Cube {
                 }
             }
             else {
-                if (v.z === this.k) {
+                if (v.k === this.k) {
                     this.v110 = v;
                 }
                 else {
@@ -169,6 +179,7 @@ class Cube {
 }
 class Chunck {
     constructor() {
+        this.vertices = [];
         this.cubes = [];
     }
     getCube(i, j, k) {
@@ -203,11 +214,18 @@ class Chunck {
                 this.cubes[i][j] = [];
             }
         }
-        for (let i = 1; i < CHUNCK_SIZE - 1; i++) {
-            for (let j = 1; j < CHUNCK_SIZE - 1; j++) {
-                for (let k = 1; k < CHUNCK_SIZE - 1; k++) {
+        for (let i = 1; i < CHUNCK_SIZE / 2 - 1; i++) {
+            for (let j = 1; j < CHUNCK_SIZE / 2 - 1; j++) {
+                for (let k = 1; k < CHUNCK_SIZE / 2 - 1; k++) {
                     if (Math.random() > 0.3) {
-                        this.cubes[i][j][k] = new Cube(i, j, k);
+                        this.cubes[2 * i][2 * j][2 * k] = new Cube(2 * i, 2 * j, 2 * k);
+                        this.cubes[2 * i + 1][2 * j][2 * k] = new Cube(2 * i + 1, 2 * j, 2 * k);
+                        this.cubes[2 * i][2 * j + 1][2 * k] = new Cube(2 * i, 2 * j + 1, 2 * k);
+                        this.cubes[2 * i][2 * j][2 * k + 1] = new Cube(2 * i, 2 * j, 2 * k + 1);
+                        this.cubes[2 * i + 1][2 * j + 1][2 * k] = new Cube(2 * i + 1, 2 * j + 1, 2 * k);
+                        this.cubes[2 * i][2 * j + 1][2 * k + 1] = new Cube(2 * i, 2 * j + 1, 2 * k + 1);
+                        this.cubes[2 * i + 1][2 * j][2 * k + 1] = new Cube(2 * i + 1, 2 * j, 2 * k + 1);
+                        this.cubes[2 * i + 1][2 * j + 1][2 * k + 1] = new Cube(2 * i + 1, 2 * j + 1, 2 * k + 1);
                     }
                 }
             }
@@ -230,11 +248,15 @@ class Chunck {
                     }
                     if (adjacentCubes.length === 1) {
                         let v = new Vertex(i, j, k);
+                        v.index = this.vertices.length;
+                        this.vertices.push(v);
                         adjacentCubes[0].addVertex(v);
                     }
-                    else if (adjacentCubes.length > 1 && adjacentCubes.length < 8) {
+                    else if (adjacentCubes.length > 1 && adjacentCubes.length < 6) {
                         while (adjacentCubes.length > 0) {
                             let v = new Vertex(i, j, k);
+                            v.index = this.vertices.length;
+                            this.vertices.push(v);
                             let vCubes = [adjacentCubes.pop()];
                             vCubes[0].addVertex(v);
                             let done = false;
@@ -259,6 +281,14 @@ class Chunck {
                                 done = lastCubeLength === adjacentCubes.length;
                                 lastCubeLength = adjacentCubes.length;
                             }
+                        }
+                    }
+                    else {
+                        let v = new Vertex(i, j, k);
+                        v.index = this.vertices.length;
+                        this.vertices.push(v);
+                        for (let c = 0; c < adjacentCubes.length; c++) {
+                            adjacentCubes[c].addVertex(v);
                         }
                     }
                 }
@@ -291,30 +321,45 @@ class Chunck {
                 }
             }
         }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].smooth(1);
+        }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].applySmooth();
+        }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].smooth(1);
+        }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].applySmooth();
+        }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].smooth(1);
+        }
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].applySmooth();
+        }
     }
     generateFaces() {
         let data = new BABYLON.VertexData();
         let positions = [];
+        for (let i = 0; i < this.vertices.length; i++) {
+            let v = this.vertices[i];
+            positions.push(v.smoothedPosition.x, v.smoothedPosition.y, v.smoothedPosition.z);
+        }
         let indices = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
                     let cube = this.getCube(i, j, k);
                     if (cube) {
-                        let debug = BABYLON.MeshBuilder.CreateBox("debug", { size: 0.1 });
-                        debug.position.copyFromFloats(i - CHUNCK_SIZE / 2, j - CHUNCK_SIZE / 2, k - CHUNCK_SIZE / 2);
                         let mXCube = this.getCube(i - 1, j, k);
                         if (!mXCube) {
                             let p0 = cube.v001;
                             let p1 = cube.v011;
                             let p2 = cube.v010;
                             let p3 = cube.v000;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                         let pXCube = this.getCube(i + 1, j, k);
                         if (!pXCube) {
@@ -322,12 +367,7 @@ class Chunck {
                             let p1 = cube.v110;
                             let p2 = cube.v111;
                             let p3 = cube.v101;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                         let mYCube = this.getCube(i, j - 1, k);
                         if (!mYCube) {
@@ -335,12 +375,7 @@ class Chunck {
                             let p1 = cube.v000;
                             let p2 = cube.v100;
                             let p3 = cube.v101;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                         let pYCube = this.getCube(i, j + 1, k);
                         if (!pYCube) {
@@ -348,12 +383,7 @@ class Chunck {
                             let p1 = cube.v110;
                             let p2 = cube.v010;
                             let p3 = cube.v011;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                         let mZCube = this.getCube(i, j, k - 1);
                         if (!mZCube) {
@@ -361,12 +391,7 @@ class Chunck {
                             let p1 = cube.v010;
                             let p2 = cube.v110;
                             let p3 = cube.v100;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                         let pZCube = this.getCube(i, j, k + 1);
                         if (!pZCube) {
@@ -374,12 +399,7 @@ class Chunck {
                             let p1 = cube.v111;
                             let p2 = cube.v011;
                             let p3 = cube.v001;
-                            let l = positions.length / 3;
-                            positions.push(p0.smoothedPosition.x, p0.smoothedPosition.y, p0.smoothedPosition.z);
-                            positions.push(p1.smoothedPosition.x, p1.smoothedPosition.y, p1.smoothedPosition.z);
-                            positions.push(p2.smoothedPosition.x, p2.smoothedPosition.y, p2.smoothedPosition.z);
-                            positions.push(p3.smoothedPosition.x, p3.smoothedPosition.y, p3.smoothedPosition.z);
-                            indices.push(l, l + 2, l + 1, l, l + 3, l + 2);
+                            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                         }
                     }
                 }
@@ -387,11 +407,14 @@ class Chunck {
         }
         data.positions = positions;
         data.indices = indices;
+        data.normals = [];
+        BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
         let mesh = new BABYLON.Mesh("test");
         mesh.position.x = -CHUNCK_SIZE / 2 - 0.5;
         mesh.position.y = -CHUNCK_SIZE / 2 - 0.5;
         mesh.position.z = -CHUNCK_SIZE / 2 - 0.5;
         data.applyToMesh(mesh);
+        mesh.material = Main.cellShadingMaterial;
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -410,33 +433,6 @@ class Main {
             Main._groundMaterial.specularColor.copyFromFloats(0, 0, 0);
         }
         return Main._groundMaterial;
-    }
-    static get kongoFlagSMaterial() {
-        if (!Main._kongoFlagSMaterial) {
-            Main._kongoFlagSMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-            Main._kongoFlagSMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-small.png", Main.Scene);
-            Main._kongoFlagSMaterial.emissiveColor.copyFromFloats(0.5, 0.5, 0.5);
-            Main._kongoFlagSMaterial.specularColor.copyFromFloats(0, 0, 0);
-        }
-        return Main._kongoFlagSMaterial;
-    }
-    static get kongoFlagMMaterial() {
-        if (!Main._kongoFlagMMaterial) {
-            Main._kongoFlagMMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-            Main._kongoFlagMMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-medium.png", Main.Scene);
-            Main._kongoFlagMMaterial.emissiveColor.copyFromFloats(0.5, 0.5, 0.5);
-            Main._kongoFlagMMaterial.specularColor.copyFromFloats(0, 0, 0);
-        }
-        return Main._kongoFlagMMaterial;
-    }
-    static get kongoFlagLMaterial() {
-        if (!Main._kongoFlagLMaterial) {
-            Main._kongoFlagLMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-            Main._kongoFlagLMaterial.diffuseTexture = new BABYLON.Texture("datas/textures/flags/kongo-large.png", Main.Scene);
-            Main._kongoFlagLMaterial.emissiveColor.copyFromFloats(0.25, 0.25, 0.25);
-            Main._kongoFlagLMaterial.specularColor.copyFromFloats(0, 0, 0);
-        }
-        return Main._kongoFlagLMaterial;
     }
     constructor(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
@@ -515,10 +511,13 @@ class Main {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
+        let t0 = performance.now();
         let chunck = new Chunck();
         chunck.randomizeNice();
         chunck.generateVertices();
         chunck.generateFaces();
+        let t1 = performance.now();
+        alert(t1 - t0);
         console.log("Main scene Initialized.");
     }
     animate() {
