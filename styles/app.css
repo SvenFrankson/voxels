@@ -1,0 +1,31 @@
+html, body {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#render-canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    touch-action: none;
+}
+
+#prop-editor-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}
+
+#credit {
+  position: absolute;
+  width: 256px;
+  height: 40px;
+  bottom: 0px;
+  right: 0px;
+  font-size: 24px;
+  color: white;
+  font-family: "Orbitron Light";
+}
