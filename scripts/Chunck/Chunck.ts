@@ -1,4 +1,4 @@
-var CHUNCK_SIZE = 16;
+var CHUNCK_SIZE = 8;
 
 class Vertex {
 
@@ -215,6 +215,7 @@ class Cube {
 class Chunck {
 
 
+    public faces: Vertex[][] = [];
     public vertices: Vertex[] = [];
     public cubes: Cube[][][] = [];
 
@@ -249,6 +250,26 @@ class Chunck {
     }
 
     public randomizeNice(): void {
+        this.cubes = [];
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            this.cubes[i] = [];
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                this.cubes[i][j] = [];
+            }
+        }
+
+        for (let i = 1; i < CHUNCK_SIZE - 1; i++) {
+            for (let j = 1; j < CHUNCK_SIZE - 1; j++) {
+                for (let k = 1; k < CHUNCK_SIZE - 1; k++) {
+                    if (Math.random() > 0.3) {
+                        this.cubes[i][j][k] = new Cube(i, j, k);
+                    }
+                }
+            }
+        }
+    }
+
+    public randomizeNiceDouble(): void {
         this.cubes = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             this.cubes[i] = [];
@@ -345,26 +366,62 @@ class Chunck {
                     let cube = this.getCube(i, j, k);
                     if (cube) {
                         if (!this.getCube(i - 1, j, k)) {
-                            cube.makeLinksMX();
+                            this.faces.push([cube.v000, cube.v001, cube.v011, cube.v010]);
                         }
                         if (!this.getCube(i + 1, j, k)) {
-                            cube.makeLinksPX();
+                            this.faces.push([cube.v100, cube.v110, cube.v111, cube.v101]);
                         }
                         if (!this.getCube(i, j - 1, k)) {
-                            cube.makeLinksMY();
+                            this.faces.push([cube.v000, cube.v100, cube.v101, cube.v001]);
                         }
                         if (!this.getCube(i, j + 1, k)) {
-                            cube.makeLinksPY();
+                            this.faces.push([cube.v010, cube.v011, cube.v111, cube.v110]);
                         }
                         if (!this.getCube(i, j, k - 1)) {
-                            cube.makeLinksMZ();
+                            this.faces.push([cube.v000, cube.v010, cube.v110, cube.v100]);
                         }
                         if (!this.getCube(i, j, k + 1)) {
-                            cube.makeLinksPZ();
+                            this.faces.push([cube.v001, cube.v101, cube.v111, cube.v011]);
                         }
                     }
                 }
             }
+        }
+
+        let subVertices = new Map<string, Vertex>();
+        for (let i = 0; i < this.faces.length; i++) {
+            let f = this.faces[i];
+            let center = new Vertex(
+                f[0].i * 0.25 + f[1].i * 0.25 + f[2].i * 0.25 + f[3].i * 0.25,
+                f[0].j * 0.25 + f[1].j * 0.25 + f[2].j * 0.25 + f[3].j * 0.25,
+                f[0].k * 0.25 + f[1].k * 0.25 + f[2].k * 0.25 + f[3].k * 0.25,
+            );
+            center.index = this.vertices.length;
+            this.vertices.push(center);
+            let subs = [];
+            for (let n = 0; n < 4; n++) {
+                let n1 = (n + 1) % 4;
+                let subKey = Math.min(f[n].index, f[n1].index) + "" + Math.max(f[n].index, f[n1].index);
+                let sub = subVertices.get(subKey);
+                if (!sub) {
+                    sub = new Vertex(
+                        f[n].i * 0.5 + f[n1].i * 0.5,
+                        f[n].j * 0.5 + f[n1].j * 0.5,
+                        f[n].k * 0.5 + f[n1].k * 0.5,
+                    );
+                    sub.index = this.vertices.length;
+                    subVertices.set(subKey, sub);
+                    this.vertices.push(sub);
+                    sub.connect(f[n]);
+                    sub.connect(f[n1]);
+                }
+                sub.connect(center);
+                subs.push(sub);
+            }
+            for (let i = 3; i >= 0; i--) {
+                f.splice(i + 1, 0, subs[i]);
+            }
+            f.splice(0, 0, center);
         }
 
         for (let i = 0; i < this.vertices.length; i++) {
@@ -401,6 +458,38 @@ class Chunck {
         }
         let indices: number[] = [];
 
+        for (let i = 0; i < this.faces.length; i++) {
+            let f = this.faces[i];
+            let p0 = f[0];
+            let p1 = f[8];
+            let p2 = f[1];
+            let p3 = f[2];
+
+            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+
+            p0 = f[0];
+            p1 = f[2];
+            p2 = f[3];
+            p3 = f[4];
+
+            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+
+            p0 = f[0];
+            p1 = f[4];
+            p2 = f[5];
+            p3 = f[6];
+
+            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+
+            p0 = f[0];
+            p1 = f[6];
+            p2 = f[7];
+            p3 = f[8];
+
+            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+        }
+
+        /*
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
@@ -464,6 +553,7 @@ class Chunck {
                 }
             }
         }
+        */
 
         data.positions = positions;
         data.indices = indices;
