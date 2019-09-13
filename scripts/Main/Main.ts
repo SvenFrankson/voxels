@@ -118,12 +118,22 @@ class Main {
 		Main.Skybox.material = skyboxMaterial;
 
 		let t0 = performance.now();
-        let chunck = new Chunck();
-        chunck.randomizeNice();
-        chunck.generateVertices();
-		chunck.generateFaces();
+		let chunckManager = new ChunckManager();
+		chunckManager.generateRandom(1);
+		for (let i = -1; i <= 1; i++) {
+			for (let j = -1; j <= 1; j++) {
+				for (let k = -1; k <= 1; k++) {
+					let chunck = chunckManager.getChunck(i, j, k);
+					chunck.generateVertices();
+					chunck.generateFaces();
+				}
+			}
+		}
+		//let chunck = chunckManager.getChunck(0, 0, 0);
+		//chunck.generateVertices();
+		//chunck.generateFaces();
 		let t1 = performance.now();
-		alert(t1 - t0);
+		console.log(t1 - t0);
 		
 		console.log("Main scene Initialized.");
     }

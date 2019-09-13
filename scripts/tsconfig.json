@@ -4,6 +4,7 @@
         "outFile": "./app.js"
     },
     "exclude": [
+        "lib",
         "node_modules",
         "typings/browser",
         "typings/browser.d.ts"
