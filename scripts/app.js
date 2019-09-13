@@ -48,6 +48,10 @@ class Vertex {
     }
 }
 class Face {
+    constructor(vertices, draw = true) {
+        this.vertices = vertices;
+        this.draw = draw;
+    }
 }
 class Cube {
     constructor(chunck, i, j, k) {
@@ -372,24 +376,25 @@ class Chunck {
             for (let j = -1; j < CHUNCK_SIZE + 1; j++) {
                 for (let k = -1; k < CHUNCK_SIZE + 1; k++) {
                     let cube = this.getCube(i, j, k);
+                    let draw = i >= 0 && j >= 0 && k >= 0 && i < CHUNCK_SIZE && j < CHUNCK_SIZE && k < CHUNCK_SIZE;
                     if (cube) {
                         if (!this.getCube(i - 1, j, k)) {
-                            this.faces.push([cube.v000, cube.v001, cube.v011, cube.v010]);
+                            this.faces.push(new Face([cube.v000, cube.v001, cube.v011, cube.v010], draw));
                         }
                         if (!this.getCube(i + 1, j, k)) {
-                            this.faces.push([cube.v100, cube.v110, cube.v111, cube.v101]);
+                            this.faces.push(new Face([cube.v100, cube.v110, cube.v111, cube.v101], draw));
                         }
                         if (!this.getCube(i, j - 1, k)) {
-                            this.faces.push([cube.v000, cube.v100, cube.v101, cube.v001]);
+                            this.faces.push(new Face([cube.v000, cube.v100, cube.v101, cube.v001], draw));
                         }
                         if (!this.getCube(i, j + 1, k)) {
-                            this.faces.push([cube.v010, cube.v011, cube.v111, cube.v110]);
+                            this.faces.push(new Face([cube.v010, cube.v011, cube.v111, cube.v110], draw));
                         }
                         if (!this.getCube(i, j, k - 1)) {
-                            this.faces.push([cube.v000, cube.v010, cube.v110, cube.v100]);
+                            this.faces.push(new Face([cube.v000, cube.v010, cube.v110, cube.v100], draw));
                         }
                         if (!this.getCube(i, j, k + 1)) {
-                            this.faces.push([cube.v001, cube.v101, cube.v111, cube.v011]);
+                            this.faces.push(new Face([cube.v001, cube.v101, cube.v111, cube.v011], draw));
                         }
                     }
                 }
@@ -398,38 +403,29 @@ class Chunck {
         let subVertices = new Map();
         for (let i = 0; i < this.faces.length; i++) {
             let f = this.faces[i];
-            if (!f[0]) {
-                debugger;
-            }
-            let center = new Vertex(f[0].position.x * 0.25 + f[1].position.x * 0.25 + f[2].position.x * 0.25 + f[3].position.x * 0.25, f[0].position.y * 0.25 + f[1].position.y * 0.25 + f[2].position.y * 0.25 + f[3].position.y * 0.25, f[0].position.z * 0.25 + f[1].position.z * 0.25 + f[2].position.z * 0.25 + f[3].position.z * 0.25);
+            let center = new Vertex(f.vertices[0].position.x * 0.25 + f.vertices[1].position.x * 0.25 + f.vertices[2].position.x * 0.25 + f.vertices[3].position.x * 0.25, f.vertices[0].position.y * 0.25 + f.vertices[1].position.y * 0.25 + f.vertices[2].position.y * 0.25 + f.vertices[3].position.y * 0.25, f.vertices[0].position.z * 0.25 + f.vertices[1].position.z * 0.25 + f.vertices[2].position.z * 0.25 + f.vertices[3].position.z * 0.25);
             center.index = this.vertices.length;
             this.vertices.push(center);
             let subs = [];
             for (let n = 0; n < 4; n++) {
                 let n1 = (n + 1) % 4;
-                let subKey = Math.min(f[n].index, f[n1].index) + "" + Math.max(f[n].index, f[n1].index);
+                let subKey = Math.min(f.vertices[n].index, f.vertices[n1].index) + "" + Math.max(f.vertices[n].index, f.vertices[n1].index);
                 let sub = subVertices.get(subKey);
                 if (!sub) {
-                    sub = new Vertex(f[n].position.x * 0.5 + f[n1].position.x * 0.5, f[n].position.y * 0.5 + f[n1].position.y * 0.5, f[n].position.z * 0.5 + f[n1].position.z * 0.5);
+                    sub = new Vertex(f.vertices[n].position.x * 0.5 + f.vertices[n1].position.x * 0.5, f.vertices[n].position.y * 0.5 + f.vertices[n1].position.y * 0.5, f.vertices[n].position.z * 0.5 + f.vertices[n1].position.z * 0.5);
                     sub.index = this.vertices.length;
                     subVertices.set(subKey, sub);
                     this.vertices.push(sub);
-                    sub.connect(f[n]);
-                    sub.connect(f[n1]);
+                    sub.connect(f.vertices[n]);
+                    sub.connect(f.vertices[n1]);
                 }
                 sub.connect(center);
                 subs.push(sub);
             }
             for (let i = 3; i >= 0; i--) {
-                f.splice(i + 1, 0, subs[i]);
+                f.vertices.splice(i + 1, 0, subs[i]);
             }
-            f.splice(0, 0, center);
-        }
-        for (let i = 0; i < this.vertices.length; i++) {
-            this.vertices[i].smooth(1);
-        }
-        for (let i = 0; i < this.vertices.length; i++) {
-            this.vertices[i].applySmooth();
+            f.vertices.splice(0, 0, center);
         }
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].smooth(1);
@@ -454,26 +450,28 @@ class Chunck {
         let indices = [];
         for (let i = 0; i < this.faces.length; i++) {
             let f = this.faces[i];
-            let p0 = f[0];
-            let p1 = f[8];
-            let p2 = f[1];
-            let p3 = f[2];
-            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
-            p0 = f[0];
-            p1 = f[2];
-            p2 = f[3];
-            p3 = f[4];
-            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
-            p0 = f[0];
-            p1 = f[4];
-            p2 = f[5];
-            p3 = f[6];
-            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
-            p0 = f[0];
-            p1 = f[6];
-            p2 = f[7];
-            p3 = f[8];
-            indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+            if (f.draw) {
+                let p0 = f.vertices[0];
+                let p1 = f.vertices[8];
+                let p2 = f.vertices[1];
+                let p3 = f.vertices[2];
+                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                p0 = f.vertices[0];
+                p1 = f.vertices[2];
+                p2 = f.vertices[3];
+                p3 = f.vertices[4];
+                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                p0 = f.vertices[0];
+                p1 = f.vertices[4];
+                p2 = f.vertices[5];
+                p3 = f.vertices[6];
+                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                p0 = f.vertices[0];
+                p1 = f.vertices[6];
+                p2 = f.vertices[7];
+                p3 = f.vertices[8];
+                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+            }
         }
         data.positions = positions;
         data.indices = indices;
@@ -615,12 +613,14 @@ class Main {
 			}
         `;
         let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
+        /*
         let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
         postProcess.onApply = (effect) => {
             effect.setTexture("depthSampler", depthMap);
             effect.setFloat("width", Main.Engine.getRenderWidth());
             effect.setFloat("height", Main.Engine.getRenderHeight());
         };
+        */
         let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
         noPostProcessCamera.parent = Main.Camera;
         noPostProcessCamera.layerMask = 0x10000000;

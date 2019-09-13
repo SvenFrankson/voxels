@@ -87,13 +87,15 @@ class Main {
 			}
         `;
         
-        let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
+		let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
+		/*
 		let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
 		postProcess.onApply = (effect) => {
 			effect.setTexture("depthSampler", depthMap);
 			effect.setFloat("width", Main.Engine.getRenderWidth());
 			effect.setFloat("height", Main.Engine.getRenderHeight());
 		};
+		*/
 		
 		let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
 		noPostProcessCamera.parent = Main.Camera;
