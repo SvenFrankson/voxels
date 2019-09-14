@@ -9,11 +9,10 @@ class Main {
 	public static Camera: BABYLON.ArcRotateCamera;
 	public static Skybox: BABYLON.Mesh;
 
-    public static _cellShadingMaterial: BABYLON.CellMaterial;
-	public static get cellShadingMaterial(): BABYLON.CellMaterial {
+    public static _cellShadingMaterial: ToonMaterial;
+	public static get cellShadingMaterial(): ToonMaterial {
 		if (!Main._cellShadingMaterial) {
-			Main._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
-			Main._cellShadingMaterial.computeHighLevel = true;
+			Main._cellShadingMaterial = new ToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
 		}
 		return Main._cellShadingMaterial;
 	}
@@ -86,6 +85,7 @@ class Main {
 				}
 			}
         `;
+		BABYLON.Engine.ShadersRepository = "./shaders/";
         
 		let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
 		
@@ -121,7 +121,7 @@ class Main {
 
 		let t0 = performance.now();
 		let chunckManager = new ChunckManager();
-		let l = 2;
+		let l = 3;
 		chunckManager.generateTerrain(l);
 		for (let i = -l; i <= l; i++) {
 			for (let j = -l; j <= l; j++) {

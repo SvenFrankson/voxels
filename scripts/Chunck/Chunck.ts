@@ -1,293 +1,13 @@
 var CHUNCK_SIZE = 8;
 
-class Vertex {
-
-    public index: number;
-    public links: Vertex[] = [];
-    public faces: Face[] = [];
-    public position: BABYLON.Vector3;
-    public smoothedPosition: BABYLON.Vector3;
-
-    public color: BABYLON.Color3;
-    public smoothedColor: BABYLON.Color3;
-    public colorSources: number = 0;
-
-    constructor(
-        public i: number,
-        public j: number,
-        public k: number
-    ) {
-        this.position = new BABYLON.Vector3(i, j, k);
-        this.smoothedPosition = this.position.clone();
-        while (this.i < 0) {
-            this.i += CHUNCK_SIZE;
-        }
-        while (this.j < 0) {
-            this.j += CHUNCK_SIZE;
-        }
-        while (this.k < 0) {
-            this.k += CHUNCK_SIZE;
-        }
-        while (this.i >= CHUNCK_SIZE) {
-            this.i -= CHUNCK_SIZE;
-        }
-        while (this.j >= CHUNCK_SIZE) {
-            this.j -= CHUNCK_SIZE;
-        }
-        while (this.k >= CHUNCK_SIZE) {
-            this.k -= CHUNCK_SIZE;
-        }
-    }
-
-    public connect(v: Vertex) {
-        if (v) {
-            if (this.links.indexOf(v) === -1) {
-                this.links.push(v);
-            }
-            if (v.links.indexOf(this) === -1) {
-                v.links.push(this);
-            }
-        }
-    }
-
-    public addColor(c: BABYLON.Color3): void {
-        if (this.colorSources === 0) {
-            this.color = c;
-            this.colorSources = 1;
-        }
-        else {
-            this.colorSources++;
-            this.color.r = this.color.r * (1 - 1 / this.colorSources) + c.r / this.colorSources;
-            this.color.g = this.color.g * (1 - 1 / this.colorSources) + c.g / this.colorSources;
-            this.color.b = this.color.b * (1 - 1 / this.colorSources) + c.b / this.colorSources;
-        }
-    }
-
-    public smooth(factor: number): void {
-        this.smoothedColor = this.color.clone();
-        this.smoothedPosition.copyFrom(this.position);
-        for (let i = 0; i < this.links.length; i++) {
-            this.smoothedPosition.addInPlace(this.links[i].position.scale(factor));
-            this.smoothedColor.r += this.links[i].color.r * factor;
-            this.smoothedColor.g += this.links[i].color.g * factor;
-            this.smoothedColor.b += this.links[i].color.b * factor;
-        }
-        this.smoothedPosition.scaleInPlace(1 / (this.links.length * factor + 1));
-        this.smoothedColor.r /= (this.links.length * factor + 1);
-        this.smoothedColor.g /= (this.links.length * factor + 1);
-        this.smoothedColor.b /= (this.links.length * factor + 1);
-    }
-
-    public applySmooth() {
-        this.position.copyFrom(this.smoothedPosition);
-        this.color.copyFrom(this.smoothedColor);
-    }
-}
-
 class Face {
 
     constructor(
         public vertices: Vertex[],
-        public color: BABYLON.Color3,
+        public cubeType: CubeType,
         public draw: boolean = true
     ) {
 
-    }
-}
-
-enum CubeType {
-    Grass = 0,
-    Dirt,
-    Sand,
-    Rock
-}
-
-class Cube {
-
-    public v000: Vertex;
-    public v001: Vertex;
-    public v010: Vertex;
-    public v011: Vertex;
-    public v100: Vertex;
-    public v101: Vertex;
-    public v110: Vertex;
-    public v111: Vertex;
-
-    public cubeType: CubeType;
-
-    constructor(
-        public chunck: Chunck,
-        public i: number,
-        public j: number,
-        public k: number
-    ) {
-        this.cubeType = Math.floor(Math.random() * 4);
-    }
-
-    public getColor(): BABYLON.Color3 {
-        if (this.cubeType === CubeType.Grass) {
-            return BABYLON.Color3.FromHexString("#47a632");
-        }
-        else if (this.cubeType === CubeType.Dirt) {
-            return BABYLON.Color3.FromHexString("#a86f32");
-        }
-        else if (this.cubeType === CubeType.Rock) {
-            return BABYLON.Color3.FromHexString("#8c8c89");
-        }
-        else if (this.cubeType === CubeType.Sand) {
-            return BABYLON.Color3.FromHexString("#dbc67b");
-        }
-    }
-
-    public addVertex(v: Vertex): void {
-        if (v.i === this.i) {
-            if (v.j === this.j) {
-                if (v.k === this.k) {
-                    this.v000 = v;
-                }
-                else {
-                    this.v001 = v;
-                }
-            }
-            else {
-                if (v.k === this.k) {
-                    this.v010 = v;
-                }
-                else {
-                    this.v011 = v;
-                }
-            }
-        }
-        else {
-            if (v.j === this.j) {
-                if (v.k === this.k) {
-                    this.v100 = v;
-                }
-                else {
-                    this.v101 = v;
-                }
-            }
-            else {
-                if (v.k === this.k) {
-                    this.v110 = v;
-                }
-                else {
-                    if (this.v111) {
-                        debugger;
-                    }
-                    this.v111 = v;
-                }
-            }
-        }
-    }
-
-    public makeLinksMX() {
-        if (this.v000) {
-            this.v000.connect(this.v001);
-            this.v000.connect(this.v010);
-        }
-        if (this.v011) {
-            this.v011.connect(this.v010);
-            this.v011.connect(this.v001);
-        }
-    }
-
-    public makeLinksPX() {
-        if (this.v100) {
-            this.v100.connect(this.v101);
-            this.v100.connect(this.v110);
-        }
-        if (this.v111) {
-            this.v111.connect(this.v110);
-            this.v111.connect(this.v101);
-        }
-    }
-
-    public makeLinksMY() {
-        if (this.v000) {
-            this.v000.connect(this.v001);
-            this.v000.connect(this.v100);
-        }
-        if (this.v101) {
-            this.v101.connect(this.v001);
-            this.v101.connect(this.v100);
-        }
-    }
-
-    public makeLinksPY() {
-        if (this.v010) {
-            this.v010.connect(this.v011);
-            this.v010.connect(this.v110);
-        }
-        if (this.v111) {
-            this.v111.connect(this.v011);
-            this.v111.connect(this.v110);
-        }
-    }
-
-    public makeLinksMZ() {
-        if (this.v000) {
-            this.v000.connect(this.v100);
-            this.v000.connect(this.v010);
-        }
-        if (this.v110) {
-            this.v110.connect(this.v010);
-            this.v110.connect(this.v100);
-        }
-    }
-
-    public makeLinksPZ() {
-        if (this.v001) {
-            this.v001.connect(this.v101);
-            this.v001.connect(this.v011);
-        }
-        if (this.v111) {
-            this.v111.connect(this.v011);
-            this.v111.connect(this.v101);
-        }
-    }
-
-    public makeLinks(): void {
-        if (this.v000) {
-            this.v000.connect(this.v001);
-            this.v000.connect(this.v010);
-            this.v000.connect(this.v100);
-        }
-        if (this.v001) {
-            this.v001.connect(this.v011);
-            this.v001.connect(this.v101);
-        }
-        if (this.v010) {
-            this.v010.connect(this.v011);
-            this.v010.connect(this.v110);
-        }
-        if (this.v011) {
-            this.v011.connect(this.v111);
-        }
-        if (this.v100) {
-            this.v100.connect(this.v101);
-            this.v100.connect(this.v110);
-        }
-        if (this.v101) {
-            this.v101.connect(this.v111);
-        }
-        if (this.v110) {
-            this.v110.connect(this.v111);
-        }
-    }
-
-    public shareFace(c: Cube): boolean {
-        let diff = 0;
-        if (this.i !== c.i) {
-            diff++;
-        }
-        if (this.j !== c.j) {
-            diff++;
-        }
-        if (this.k !== c.k) {
-            diff++;
-        }
-        return diff < 2;
     }
 }
 
@@ -300,6 +20,16 @@ class Chunck {
 
     public getCube(i: number, j: number, k: number): Cube {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
+    }
+
+    public setCube(i: number, j: number, k: number, cubeType?: CubeType): void {
+        if (!this.cubes[i]) {
+            this.cubes[i] = [];
+        }
+        if (!this.cubes[i][j]) {
+            this.cubes[i][j] = [];
+        }
+        this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
     }
 
     constructor(
@@ -451,7 +181,7 @@ class Chunck {
                             v.index = this.vertices.length;
                             this.vertices.push(v);
                             adjacentCubes[0].addVertex(v);
-                            v.addColor(adjacentCubes[0].getColor());
+                            v.addCubeType(adjacentCubes[0].cubeType);
                         }
                         else if (adjacentCubes.length > 1 && adjacentCubes.length < 6) {
                             while (adjacentCubes.length > 0) {
@@ -460,7 +190,7 @@ class Chunck {
                                 this.vertices.push(v);
                                 let vCubes = [adjacentCubes.pop()];
                                 vCubes[0].addVertex(v);
-                                v.addColor(vCubes[0].getColor());
+                                v.addCubeType(vCubes[0].cubeType);
                                 let done = false;
                                 let lastCubeLength = adjacentCubes.length;
                                 while (!done) {
@@ -475,7 +205,7 @@ class Chunck {
                                         }
                                         if (shareFace) {
                                             cube.addVertex(v);
-                                            v.addColor(cube.getColor());
+                                            v.addCubeType(cube.cubeType);
                                             adjacentCubes.splice(c, 1);
                                             c--;
                                             vCubes.push(cube);
@@ -489,11 +219,11 @@ class Chunck {
                         else if (adjacentCubes.length < 8) {
                             let v = new Vertex(i, j, k);
                             v.index = this.vertices.length;
-                            v.addColor(adjacentCubes[0].getColor());
+                            v.addCubeType(adjacentCubes[0].cubeType);
                             this.vertices.push(v);
                             for (let c = 0; c < adjacentCubes.length; c++) {
                                 adjacentCubes[c].addVertex(v);
-                                v.addColor(adjacentCubes[c].getColor());
+                                v.addCubeType(adjacentCubes[c].cubeType);
                             }
                         }
                     }
@@ -508,22 +238,22 @@ class Chunck {
                     let draw = i >= 0 && j >= 0 && k >= 0 && i < CHUNCK_SIZE && j < CHUNCK_SIZE && k < CHUNCK_SIZE;
                     if (cube) {
                         if (!this.getCube(i - 1, j, k)) {
-                            this.faces.push(new Face([cube.v000, cube.v001, cube.v011, cube.v010], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v000, cube.v001, cube.v011, cube.v010], cube.cubeType, draw));
                         }
                         if (!this.getCube(i + 1, j, k)) {
-                            this.faces.push(new Face([cube.v100, cube.v110, cube.v111, cube.v101], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v100, cube.v110, cube.v111, cube.v101], cube.cubeType, draw));
                         }
                         if (!this.getCube(i, j - 1, k)) {
-                            this.faces.push(new Face([cube.v000, cube.v100, cube.v101, cube.v001], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v000, cube.v100, cube.v101, cube.v001], cube.cubeType, draw));
                         }
                         if (!this.getCube(i, j + 1, k)) {
-                            this.faces.push(new Face([cube.v010, cube.v011, cube.v111, cube.v110], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v010, cube.v011, cube.v111, cube.v110], cube.cubeType, draw));
                         }
                         if (!this.getCube(i, j, k - 1)) {
-                            this.faces.push(new Face([cube.v000, cube.v010, cube.v110, cube.v100], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v000, cube.v010, cube.v110, cube.v100], cube.cubeType, draw));
                         }
                         if (!this.getCube(i, j, k + 1)) {
-                            this.faces.push(new Face([cube.v001, cube.v101, cube.v111, cube.v011], cube.getColor(), draw));
+                            this.faces.push(new Face([cube.v001, cube.v101, cube.v111, cube.v011], cube.cubeType, draw));
                         }
                     }
                 }
@@ -539,7 +269,7 @@ class Chunck {
                 f.vertices[0].position.z * 0.25 + f.vertices[1].position.z * 0.25 + f.vertices[2].position.z * 0.25 + f.vertices[3].position.z * 0.25,
             );
             center.index = this.vertices.length;
-            center.color = f.color.clone();
+            center.addCubeType(f.cubeType);
             this.vertices.push(center);
             let subs = [];
             for (let n = 0; n < 4; n++) {
@@ -553,7 +283,11 @@ class Chunck {
                         f.vertices[n].position.z * 0.5 + f.vertices[n1].position.z * 0.5,
                     );
                     sub.index = this.vertices.length;
-                    sub.color = BABYLON.Color3.Lerp(f.vertices[n].color, f.vertices[n1].color, 0.5);
+                    sub.cubeTypes = [
+                        f.vertices[n].cubeTypes[0] * 0.5 + f.vertices[n1].cubeTypes[0] * 0.5,   
+                        f.vertices[n].cubeTypes[1] * 0.5 + f.vertices[n1].cubeTypes[1] * 0.5,   
+                        f.vertices[n].cubeTypes[2] * 0.5 + f.vertices[n1].cubeTypes[2] * 0.5   
+                    ];
                     subVertices.set(subKey, sub);
                     this.vertices.push(sub);
                     sub.connect(f.vertices[n]);
@@ -592,7 +326,7 @@ class Chunck {
         for (let i = 0; i < this.vertices.length; i++) {
             let v = this.vertices[i];
             positions.push(v.smoothedPosition.x, v.smoothedPosition.y, v.smoothedPosition.z);
-            colors.push(v.color.r, v.color.g, v.color.b, 1);
+            colors.push(v.cubeTypes[0], v.cubeTypes[1], v.cubeTypes[2], 1);
         }
         let indices: number[] = [];
 
@@ -603,29 +337,57 @@ class Chunck {
                 let p1 = f.vertices[8];
                 let p2 = f.vertices[1];
                 let p3 = f.vertices[2];
-    
-                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+
+                let d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
+                let d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+                if (d0 < d1) {
+                    indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                }
+                else {
+                    indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
+                }
     
                 p0 = f.vertices[0];
                 p1 = f.vertices[2];
                 p2 = f.vertices[3];
                 p3 = f.vertices[4];
     
-                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
+                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+                if (d0 < d1) {
+                    indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                }
+                else {
+                    indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
+                }
     
                 p0 = f.vertices[0];
                 p1 = f.vertices[4];
                 p2 = f.vertices[5];
                 p3 = f.vertices[6];
     
-                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
+                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+                if (d0 < d1) {
+                    indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                }
+                else {
+                    indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
+                }
     
                 p0 = f.vertices[0];
                 p1 = f.vertices[6];
                 p2 = f.vertices[7];
                 p3 = f.vertices[8];
     
-                indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
+                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+                if (d0 < d1) {
+                    indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
+                }
+                else {
+                    indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
+                }
             }
         }
 

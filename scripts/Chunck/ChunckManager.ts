@@ -21,10 +21,21 @@ class ChunckManager {
 
     public generateTerrain(d: number = 2): void {
         this.generateAroundZero(d);
-        for (let i = - d; i <= d; i++) {
-            for (let k = - d; k <= d; k++) {
-                this.getChunck(i, -1, k).generateFull();
-                this.getChunck(i, 0, k).generateTerrain();
+        for (let i = - d * CHUNCK_SIZE; i <= d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k <= d * CHUNCK_SIZE; k++) {
+                let r = Math.floor(i * i + k * k);
+                let pSand = r / (d * CHUNCK_SIZE * 10);
+                pSand = 1 - pSand;
+                let hSand = Math.max(-1, Math.floor(Math.random() * pSand * 3));
+                for (let j = 0; j <= hSand; j++) {
+                    this.setCube(i, j, k, CubeType.Sand);
+                }
+                let pDirt = r / (d * CHUNCK_SIZE * 7);
+                pDirt = 1 - pDirt;
+                let hDirt = Math.max(-1, Math.floor(Math.random() * pDirt * 4));
+                for (let j = 1; j <= hDirt; j++) {
+                    this.setCube(i, j + hSand, k, CubeType.Dirt);
+                }
             }
         }
     }
@@ -53,6 +64,19 @@ class ChunckManager {
                     return chunck.cubes[iCube][jCube][kCube];
                 }
             }
+        }
+    }
+
+    public setCube(I: number, J: number, K: number, cubeType: CubeType): void {
+        let iChunck = Math.floor(I / CHUNCK_SIZE);
+        let jChunck = Math.floor(J / CHUNCK_SIZE);
+        let kChunck = Math.floor(K / CHUNCK_SIZE);
+        let chunck = this.getChunck(iChunck, jChunck, kChunck);
+        if (chunck) {
+            let iCube = I - iChunck * CHUNCK_SIZE;
+            let jCube = J - jChunck * CHUNCK_SIZE;
+            let kCube = K - kChunck * CHUNCK_SIZE;
+            chunck.setCube(iCube, jCube, kCube, cubeType);
         }
     }
 
