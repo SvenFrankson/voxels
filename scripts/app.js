@@ -6,6 +6,7 @@ class Vertex {
         this.k = k;
         this.links = [];
         this.faces = [];
+        this.colorSources = 0;
         this.position = new BABYLON.Vector3(i, j, k);
         this.smoothedPosition = this.position.clone();
         while (this.i < 0) {
@@ -37,29 +38,72 @@ class Vertex {
             }
         }
     }
+    addColor(c) {
+        if (this.colorSources === 0) {
+            this.color = c;
+            this.colorSources = 1;
+        }
+        else {
+            this.colorSources++;
+            this.color.r = this.color.r * (1 - 1 / this.colorSources) + c.r / this.colorSources;
+            this.color.g = this.color.g * (1 - 1 / this.colorSources) + c.g / this.colorSources;
+            this.color.b = this.color.b * (1 - 1 / this.colorSources) + c.b / this.colorSources;
+        }
+    }
     smooth(factor) {
+        this.smoothedColor = this.color.clone();
         this.smoothedPosition.copyFrom(this.position);
         for (let i = 0; i < this.links.length; i++) {
             this.smoothedPosition.addInPlace(this.links[i].position.scale(factor));
+            this.smoothedColor.r += this.links[i].color.r * factor;
+            this.smoothedColor.g += this.links[i].color.g * factor;
+            this.smoothedColor.b += this.links[i].color.b * factor;
         }
         this.smoothedPosition.scaleInPlace(1 / (this.links.length * factor + 1));
+        this.smoothedColor.r /= (this.links.length * factor + 1);
+        this.smoothedColor.g /= (this.links.length * factor + 1);
+        this.smoothedColor.b /= (this.links.length * factor + 1);
     }
     applySmooth() {
         this.position.copyFrom(this.smoothedPosition);
+        this.color.copyFrom(this.smoothedColor);
     }
 }
 class Face {
-    constructor(vertices, draw = true) {
+    constructor(vertices, color, draw = true) {
         this.vertices = vertices;
+        this.color = color;
         this.draw = draw;
     }
 }
+var CubeType;
+(function (CubeType) {
+    CubeType[CubeType["Grass"] = 0] = "Grass";
+    CubeType[CubeType["Dirt"] = 1] = "Dirt";
+    CubeType[CubeType["Sand"] = 2] = "Sand";
+    CubeType[CubeType["Rock"] = 3] = "Rock";
+})(CubeType || (CubeType = {}));
 class Cube {
     constructor(chunck, i, j, k) {
         this.chunck = chunck;
         this.i = i;
         this.j = j;
         this.k = k;
+        this.cubeType = Math.floor(Math.random() * 4);
+    }
+    getColor() {
+        if (this.cubeType === CubeType.Grass) {
+            return BABYLON.Color3.FromHexString("#47a632");
+        }
+        else if (this.cubeType === CubeType.Dirt) {
+            return BABYLON.Color3.FromHexString("#a86f32");
+        }
+        else if (this.cubeType === CubeType.Rock) {
+            return BABYLON.Color3.FromHexString("#8c8c89");
+        }
+        else if (this.cubeType === CubeType.Sand) {
+            return BABYLON.Color3.FromHexString("#dbc67b");
+        }
     }
     addVertex(v) {
         if (v.i === this.i) {
@@ -341,49 +385,56 @@ class Chunck {
                             }
                         }
                     }
-                    if (adjacentCubes.length === 1) {
-                        let v = new Vertex(i, j, k);
-                        v.index = this.vertices.length;
-                        this.vertices.push(v);
-                        adjacentCubes[0].addVertex(v);
-                    }
-                    else if (adjacentCubes.length > 1 && adjacentCubes.length < 6) {
-                        while (adjacentCubes.length > 0) {
+                    if (adjacentCubes.length > 0) {
+                        if (adjacentCubes.length === 1) {
                             let v = new Vertex(i, j, k);
                             v.index = this.vertices.length;
                             this.vertices.push(v);
-                            let vCubes = [adjacentCubes.pop()];
-                            vCubes[0].addVertex(v);
-                            let done = false;
-                            let lastCubeLength = adjacentCubes.length;
-                            while (!done) {
-                                for (let c = 0; c < adjacentCubes.length; c++) {
-                                    let cube = adjacentCubes[c];
-                                    let shareFace = false;
-                                    for (let v = 0; v < vCubes.length; v++) {
-                                        if (vCubes[v].shareFace(cube)) {
-                                            shareFace = true;
-                                            break;
+                            adjacentCubes[0].addVertex(v);
+                            v.addColor(adjacentCubes[0].getColor());
+                        }
+                        else if (adjacentCubes.length > 1 && adjacentCubes.length < 6) {
+                            while (adjacentCubes.length > 0) {
+                                let v = new Vertex(i, j, k);
+                                v.index = this.vertices.length;
+                                this.vertices.push(v);
+                                let vCubes = [adjacentCubes.pop()];
+                                vCubes[0].addVertex(v);
+                                v.addColor(vCubes[0].getColor());
+                                let done = false;
+                                let lastCubeLength = adjacentCubes.length;
+                                while (!done) {
+                                    for (let c = 0; c < adjacentCubes.length; c++) {
+                                        let cube = adjacentCubes[c];
+                                        let shareFace = false;
+                                        for (let v = 0; v < vCubes.length; v++) {
+                                            if (vCubes[v].shareFace(cube)) {
+                                                shareFace = true;
+                                                break;
+                                            }
+                                        }
+                                        if (shareFace) {
+                                            cube.addVertex(v);
+                                            v.addColor(cube.getColor());
+                                            adjacentCubes.splice(c, 1);
+                                            c--;
+                                            vCubes.push(cube);
                                         }
                                     }
-                                    if (shareFace) {
-                                        cube.addVertex(v);
-                                        adjacentCubes.splice(c, 1);
-                                        c--;
-                                        vCubes.push(cube);
-                                    }
+                                    done = lastCubeLength === adjacentCubes.length;
+                                    lastCubeLength = adjacentCubes.length;
                                 }
-                                done = lastCubeLength === adjacentCubes.length;
-                                lastCubeLength = adjacentCubes.length;
                             }
                         }
-                    }
-                    else if (adjacentCubes.length < 8) {
-                        let v = new Vertex(i, j, k);
-                        v.index = this.vertices.length;
-                        this.vertices.push(v);
-                        for (let c = 0; c < adjacentCubes.length; c++) {
-                            adjacentCubes[c].addVertex(v);
+                        else if (adjacentCubes.length < 8) {
+                            let v = new Vertex(i, j, k);
+                            v.index = this.vertices.length;
+                            v.addColor(adjacentCubes[0].getColor());
+                            this.vertices.push(v);
+                            for (let c = 0; c < adjacentCubes.length; c++) {
+                                adjacentCubes[c].addVertex(v);
+                                v.addColor(adjacentCubes[c].getColor());
+                            }
                         }
                     }
                 }
@@ -396,22 +447,22 @@ class Chunck {
                     let draw = i >= 0 && j >= 0 && k >= 0 && i < CHUNCK_SIZE && j < CHUNCK_SIZE && k < CHUNCK_SIZE;
                     if (cube) {
                         if (!this.getCube(i - 1, j, k)) {
-                            this.faces.push(new Face([cube.v000, cube.v001, cube.v011, cube.v010], draw));
+                            this.faces.push(new Face([cube.v000, cube.v001, cube.v011, cube.v010], cube.getColor(), draw));
                         }
                         if (!this.getCube(i + 1, j, k)) {
-                            this.faces.push(new Face([cube.v100, cube.v110, cube.v111, cube.v101], draw));
+                            this.faces.push(new Face([cube.v100, cube.v110, cube.v111, cube.v101], cube.getColor(), draw));
                         }
                         if (!this.getCube(i, j - 1, k)) {
-                            this.faces.push(new Face([cube.v000, cube.v100, cube.v101, cube.v001], draw));
+                            this.faces.push(new Face([cube.v000, cube.v100, cube.v101, cube.v001], cube.getColor(), draw));
                         }
                         if (!this.getCube(i, j + 1, k)) {
-                            this.faces.push(new Face([cube.v010, cube.v011, cube.v111, cube.v110], draw));
+                            this.faces.push(new Face([cube.v010, cube.v011, cube.v111, cube.v110], cube.getColor(), draw));
                         }
                         if (!this.getCube(i, j, k - 1)) {
-                            this.faces.push(new Face([cube.v000, cube.v010, cube.v110, cube.v100], draw));
+                            this.faces.push(new Face([cube.v000, cube.v010, cube.v110, cube.v100], cube.getColor(), draw));
                         }
                         if (!this.getCube(i, j, k + 1)) {
-                            this.faces.push(new Face([cube.v001, cube.v101, cube.v111, cube.v011], draw));
+                            this.faces.push(new Face([cube.v001, cube.v101, cube.v111, cube.v011], cube.getColor(), draw));
                         }
                     }
                 }
@@ -422,6 +473,7 @@ class Chunck {
             let f = this.faces[i];
             let center = new Vertex(f.vertices[0].position.x * 0.25 + f.vertices[1].position.x * 0.25 + f.vertices[2].position.x * 0.25 + f.vertices[3].position.x * 0.25, f.vertices[0].position.y * 0.25 + f.vertices[1].position.y * 0.25 + f.vertices[2].position.y * 0.25 + f.vertices[3].position.y * 0.25, f.vertices[0].position.z * 0.25 + f.vertices[1].position.z * 0.25 + f.vertices[2].position.z * 0.25 + f.vertices[3].position.z * 0.25);
             center.index = this.vertices.length;
+            center.color = f.color.clone();
             this.vertices.push(center);
             let subs = [];
             for (let n = 0; n < 4; n++) {
@@ -431,6 +483,7 @@ class Chunck {
                 if (!sub) {
                     sub = new Vertex(f.vertices[n].position.x * 0.5 + f.vertices[n1].position.x * 0.5, f.vertices[n].position.y * 0.5 + f.vertices[n1].position.y * 0.5, f.vertices[n].position.z * 0.5 + f.vertices[n1].position.z * 0.5);
                     sub.index = this.vertices.length;
+                    sub.color = BABYLON.Color3.Lerp(f.vertices[n].color, f.vertices[n1].color, 0.5);
                     subVertices.set(subKey, sub);
                     this.vertices.push(sub);
                     sub.connect(f.vertices[n]);
@@ -460,9 +513,11 @@ class Chunck {
     generateFaces() {
         let data = new BABYLON.VertexData();
         let positions = [];
+        let colors = [];
         for (let i = 0; i < this.vertices.length; i++) {
             let v = this.vertices[i];
             positions.push(v.smoothedPosition.x, v.smoothedPosition.y, v.smoothedPosition.z);
+            colors.push(v.color.r, v.color.g, v.color.b, 1);
         }
         let indices = [];
         for (let i = 0; i < this.faces.length; i++) {
@@ -491,6 +546,7 @@ class Chunck {
             }
         }
         data.positions = positions;
+        data.colors = colors;
         data.indices = indices;
         data.normals = [];
         BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
