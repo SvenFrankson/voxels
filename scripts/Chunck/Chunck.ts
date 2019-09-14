@@ -4,6 +4,7 @@ class Vertex {
 
     public index: number;
     public links: Vertex[] = [];
+    public faces: Face[] = [];
     public position: BABYLON.Vector3;
     public smoothedPosition: BABYLON.Vector3;
 
@@ -297,6 +298,24 @@ class Chunck {
         }
     }
 
+    public generateFull(): void {
+        this.cubes = [];
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            this.cubes[i] = [];
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                this.cubes[i][j] = [];
+            }
+        }
+
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                for (let k = 0; k < CHUNCK_SIZE; k++) {
+                    this.cubes[i][j][k] = new Cube(this, i, j, k);
+                }
+            }
+        }
+    }
+
     public randomizeNiceDouble(): void {
         this.cubes = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
@@ -333,10 +352,10 @@ class Chunck {
             }
         }
 
-        for (let i = 1; i < CHUNCK_SIZE - 1; i++) {
-            for (let k = 1; k < CHUNCK_SIZE - 1; k++) {
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let k = 0; k < CHUNCK_SIZE; k++) {
                 let h = Math.floor(Math.random() * 4) + 2;
-                for (let j = 1; j < h; j++) {
+                for (let j = 0; j < h; j++) {
                     this.cubes[i][j][k] = new Cube(this, i, j, k);
                 }
             }
@@ -489,7 +508,6 @@ class Chunck {
             }
             f.vertices.splice(0, 0, center);
         }
-
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].smooth(1);
         }
@@ -560,6 +578,6 @@ class Chunck {
         mesh.position.z = - CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.k;
         data.applyToMesh(mesh);
 
-        //mesh.material = Main.cellShadingMaterial;
+        mesh.material = Main.cellShadingMaterial;
     }
 }

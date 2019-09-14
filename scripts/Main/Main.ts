@@ -88,14 +88,14 @@ class Main {
         `;
         
 		let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
-		/*
+		
 		let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
 		postProcess.onApply = (effect) => {
 			effect.setTexture("depthSampler", depthMap);
 			effect.setFloat("width", Main.Engine.getRenderWidth());
 			effect.setFloat("height", Main.Engine.getRenderHeight());
 		};
-		*/
+		
 		
 		let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
 		noPostProcessCamera.parent = Main.Camera;
@@ -121,10 +121,11 @@ class Main {
 
 		let t0 = performance.now();
 		let chunckManager = new ChunckManager();
-		chunckManager.generateRandom(1);
-		for (let i = -1; i <= 1; i++) {
-			for (let j = -1; j <= 1; j++) {
-				for (let k = -1; k <= 1; k++) {
+		let l = 2;
+		chunckManager.generateTerrain(l);
+		for (let i = -l; i <= l; i++) {
+			for (let j = -l; j <= l; j++) {
+				for (let k = -l; k <= l; k++) {
 					let chunck = chunckManager.getChunck(i, j, k);
 					chunck.generateVertices();
 					chunck.generateFaces();

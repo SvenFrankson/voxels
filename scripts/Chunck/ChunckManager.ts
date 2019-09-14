@@ -19,6 +19,16 @@ class ChunckManager {
         }
     }
 
+    public generateTerrain(d: number = 2): void {
+        this.generateAroundZero(d);
+        for (let i = - d; i <= d; i++) {
+            for (let k = - d; k <= d; k++) {
+                this.getChunck(i, -1, k).generateFull();
+                this.getChunck(i, 0, k).generateTerrain();
+            }
+        }
+    }
+
     public getChunck(i: number, j: number, k: number): Chunck {
         let mapMapChuncks = this.chuncks.get(i);
         if (mapMapChuncks) {

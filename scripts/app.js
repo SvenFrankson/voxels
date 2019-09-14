@@ -5,6 +5,7 @@ class Vertex {
         this.j = j;
         this.k = k;
         this.links = [];
+        this.faces = [];
         this.position = new BABYLON.Vector3(i, j, k);
         this.smoothedPosition = this.position.clone();
         while (this.i < 0) {
@@ -250,6 +251,22 @@ class Chunck {
             }
         }
     }
+    generateFull() {
+        this.cubes = [];
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            this.cubes[i] = [];
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                this.cubes[i][j] = [];
+            }
+        }
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                for (let k = 0; k < CHUNCK_SIZE; k++) {
+                    this.cubes[i][j][k] = new Cube(this, i, j, k);
+                }
+            }
+        }
+    }
     randomizeNiceDouble() {
         this.cubes = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
@@ -283,10 +300,10 @@ class Chunck {
                 this.cubes[i][j] = [];
             }
         }
-        for (let i = 1; i < CHUNCK_SIZE - 1; i++) {
-            for (let k = 1; k < CHUNCK_SIZE - 1; k++) {
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let k = 0; k < CHUNCK_SIZE; k++) {
                 let h = Math.floor(Math.random() * 4) + 2;
-                for (let j = 1; j < h; j++) {
+                for (let j = 0; j < h; j++) {
                     this.cubes[i][j][k] = new Cube(this, i, j, k);
                 }
             }
@@ -482,7 +499,7 @@ class Chunck {
         mesh.position.y = -CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.j;
         mesh.position.z = -CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.k;
         data.applyToMesh(mesh);
-        //mesh.material = Main.cellShadingMaterial;
+        mesh.material = Main.cellShadingMaterial;
     }
 }
 class ChunckManager {
@@ -498,6 +515,15 @@ class ChunckManager {
                 for (let k = -d; k <= d; k++) {
                     mapChuncks.get(k).generateRandom();
                 }
+            }
+        }
+    }
+    generateTerrain(d = 2) {
+        this.generateAroundZero(d);
+        for (let i = -d; i <= d; i++) {
+            for (let k = -d; k <= d; k++) {
+                this.getChunck(i, -1, k).generateFull();
+                this.getChunck(i, 0, k).generateTerrain();
             }
         }
     }
@@ -613,14 +639,12 @@ class Main {
 			}
         `;
         let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
-        /*
         let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
         postProcess.onApply = (effect) => {
             effect.setTexture("depthSampler", depthMap);
             effect.setFloat("width", Main.Engine.getRenderWidth());
             effect.setFloat("height", Main.Engine.getRenderHeight());
         };
-        */
         let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
         noPostProcessCamera.parent = Main.Camera;
         noPostProcessCamera.layerMask = 0x10000000;
@@ -639,10 +663,11 @@ class Main {
         Main.Skybox.material = skyboxMaterial;
         let t0 = performance.now();
         let chunckManager = new ChunckManager();
-        chunckManager.generateRandom(1);
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                for (let k = -1; k <= 1; k++) {
+        let l = 2;
+        chunckManager.generateTerrain(l);
+        for (let i = -l; i <= l; i++) {
+            for (let j = -l; j <= l; j++) {
+                for (let k = -l; k <= l; k++) {
                     let chunck = chunckManager.getChunck(i, j, k);
                     chunck.generateVertices();
                     chunck.generateFaces();
