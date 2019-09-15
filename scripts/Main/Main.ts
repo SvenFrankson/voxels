@@ -41,7 +41,7 @@ class Main {
         Main.Camera.setPosition(new BABYLON.Vector3(0, 5, - 10));
 		Main.Camera.attachControl(Main.Canvas, true);
 		Main.Camera.lowerRadiusLimit = 6;
-		Main.Camera.upperRadiusLimit = 40;
+		Main.Camera.upperRadiusLimit = 100;
 		Main.Camera.radius = (Main.Camera.upperRadiusLimit + Main.Camera.lowerRadiusLimit) * 0.5;
 		Main.Camera.wheelPrecision *= 8;
 
@@ -119,6 +119,47 @@ class Main {
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
 
+		BABYLON.MeshBuilder.CreateGround(
+			"ground",
+			{
+				width: 6 * CHUNCK_SIZE,
+				height: 6 * CHUNCK_SIZE
+			},
+			Main.Scene
+		);
+		BABYLON.SceneLoader.ImportMesh(
+			"",
+			"./datas/meshes/",
+			"craneo.v2.packed.babylon",
+			Main.Scene,
+			(meshes, particleSystems, skeletons) => {
+				let skullMesh = meshes.find(m => { return m.name === "Crane"; }) as BABYLON.Mesh;
+				let sandMesh = meshes.find(m => { return m.name === "Sand"; }) as BABYLON.Mesh;
+				let rockMesh = meshes.find(m => { return m.name === "Rock"; }) as BABYLON.Mesh;
+				let dirtMesh = meshes.find(m => { return m.name === "Dirt"; }) as BABYLON.Mesh;
+				let t0 = performance.now();
+				let chunckManager = new ChunckManager();
+				let l = 6;
+				chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
+				for (let i = -l; i <= l; i++) {
+					for (let j = -1; j <= 2 * l - 1; j++) {
+						for (let k = -l; k <= l; k++) {
+							let chunck = chunckManager.getChunck(i, j, k);
+							chunck.generateVertices();
+							chunck.generateFaces();
+						}
+					}
+				}
+				let t1 = performance.now();
+				console.log(t1 - t0);
+				skullMesh.dispose();
+				sandMesh.dispose();
+				rockMesh.dispose();
+				dirtMesh.dispose();
+			}
+		);
+
+		/*
 		let t0 = performance.now();
 		let chunckManager = new ChunckManager();
 		let l = 3;
@@ -132,9 +173,6 @@ class Main {
 				}
 			}
 		}
-		//let chunck = chunckManager.getChunck(0, 0, 0);
-		//chunck.generateVertices();
-		//chunck.generateFaces();
 		let t1 = performance.now();
 		console.log(t1 - t0);
 
@@ -187,6 +225,7 @@ class Main {
 				}
 			}
 		)
+		*/
 		
 		console.log("Main scene Initialized.");
     }

@@ -1,0 +1,57 @@
+Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		texture directory   :  C:\Users\svent\Documents\SvenFrankson\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Sand
+		WARNING: No materials have been assigned: 
+		num positions      :  20525
+		num normals        :  20525
+		num tangents       :  0
+		num uvs            :  41050
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  20538
+	processing begun of mesh:  Rock
+		WARNING: No materials have been assigned: 
+		num positions      :  4536
+		num normals        :  4536
+		num tangents       :  0
+		num uvs            :  9072
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  4536
+	processing begun of mesh:  Crane
+		processing begun of material:  Mat.Craneo
+		num positions      :  1594
+		num normals        :  1594
+		num tangents       :  0
+		num uvs            :  3188
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  7332
+	processing begun of mesh:  Dirt
+		WARNING: No materials have been assigned: 
+		num positions      :  5824
+		num normals        :  5824
+		num tangents       :  0
+		num uvs            :  11648
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  5826
+========= Writing of JSON file started =========
+	writing mesh:  Sand
+	writing mesh:  Rock
+	writing mesh:  Crane
+	writing mesh:  Dirt
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.935 secs

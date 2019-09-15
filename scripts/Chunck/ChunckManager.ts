@@ -19,10 +19,107 @@ class ChunckManager {
         }
     }
 
+    public generateFromMesh(
+        skullMesh: BABYLON.Mesh,
+        rockMesh: BABYLON.Mesh,
+        sandMesh: BABYLON.Mesh,
+        dirtMesh: BABYLON.Mesh,
+        d: number = 2
+    ): void {
+        this.generateAboveZero(d);
+        for (let i = - 3 * CHUNCK_SIZE; i < 3 * CHUNCK_SIZE; i++) {
+            for (let j = - CHUNCK_SIZE; j < 2 * 3 * CHUNCK_SIZE; j++) {
+                for (let k = - 3 * CHUNCK_SIZE; k < 3 * CHUNCK_SIZE; k++) {
+                    let p = new BABYLON.Vector3(
+                        i + 0.5,
+                        j + 0.5,
+                        k + 0.5
+                    );
+                    let dir = p.subtract(new BABYLON.Vector3(0, 20, 0)).normalize();
+                    let r = new BABYLON.Ray(p, dir);
+                    if (r.intersectsMesh(skullMesh).hit) {
+                        this.setCube(i, j, k, CubeType.Rock);
+                    }
+                }
+            }
+        }
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                for (let j =  2 * d * CHUNCK_SIZE; j >= - CHUNCK_SIZE; j--) {
+                    let cube = this.getCube(i, j, k);
+                    if (cube) {
+                        let r = Math.random();
+                        if (r > 0.05) {
+                            this.setCube(i, j + 1, k, CubeType.Dirt);
+                        }
+                        if (r > 0.9) {
+                            this.setCube(i, j + 2, k, CubeType.Dirt);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(
+                    i + 0.5,
+                    100,
+                    k + 0.5
+                );
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(dirtMesh);
+                if (pickInfo.hit) {
+                    let h = pickInfo.pickedPoint.y;
+                    for (let j = -1; j <= h; j++) {
+                        this.setCube(i, j, k, CubeType.Dirt);
+                    }
+                }
+            }
+        }
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(
+                    i + 0.5,
+                    100,
+                    k + 0.5
+                );
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(rockMesh);
+                if (pickInfo.hit) {
+                    let h = pickInfo.pickedPoint.y;
+                    for (let j = -1; j <= h; j++) {
+                        this.setCube(i, j, k, CubeType.Rock);
+                    }
+                }
+            }
+        }
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(
+                    i + 0.5,
+                    100,
+                    k + 0.5
+                );
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(sandMesh);
+                if (pickInfo.hit) {
+                    let h = pickInfo.pickedPoint.y;
+                    for (let j = -1; j <= h; j++) {
+                        this.setCube(i, j, k, CubeType.Sand);
+                    }
+                }
+            }
+        }
+    }
+
     public generateTerrain(d: number = 2): void {
         this.generateAroundZero(d);
-        for (let i = - d * CHUNCK_SIZE; i <= d * CHUNCK_SIZE; i++) {
-            for (let k = - d * CHUNCK_SIZE; k <= d * CHUNCK_SIZE; k++) {
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
                 let r = Math.floor(i * i + k * k);
                 let pSand = r / (d * CHUNCK_SIZE * 10);
                 pSand = 1 - pSand;
@@ -116,6 +213,21 @@ class ChunckManager {
             let mapMapChuncks = new Map<number, Map<number, Chunck>>()
             this.chuncks.set(i, mapMapChuncks);
             for (let j = - d; j <= d; j++) {
+                let mapChuncks = new Map<number, Chunck>()
+                mapMapChuncks.set(j, mapChuncks);
+                for (let k = - d; k <= d; k++) {
+                    let chunck = new Chunck(this, i, j, k);
+                    mapChuncks.set(k, chunck);
+                }
+            }
+        }
+    }
+
+    public generateAboveZero(d: number): void {
+        for (let i = - d; i <= d; i++) {
+            let mapMapChuncks = new Map<number, Map<number, Chunck>>()
+            this.chuncks.set(i, mapMapChuncks);
+            for (let j = - 1; j <= 2 * d - 1; j++) {
                 let mapChuncks = new Map<number, Chunck>()
                 mapMapChuncks.set(j, mapChuncks);
                 for (let k = - d; k <= d; k++) {
