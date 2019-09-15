@@ -1,3 +1,57 @@
+class VertexCubeType {
+
+    public values: number[];
+    public sourceCount: number = 0;
+
+    constructor() {
+        this.values = [0, 0, 0];
+    }
+
+    public getColor(): BABYLON.Color3 {
+        return new BABYLON.Color3(this.values[0], this.values[1], this.values[2]);
+    }
+
+    public getColorAsArray(): number[] {
+        return this.values;
+    }
+
+    public copyFrom(other: VertexCubeType): VertexCubeType {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] = other.values[i];
+        }
+        return this;
+    }
+
+    public clone(): VertexCubeType {
+        let c = new VertexCubeType();
+        c.values = [...this.values];
+        return c;
+    }
+
+    public addCubeType(cubeType: CubeType): void {
+        this.sourceCount++;
+        this.values[cubeType] = this.values[cubeType] * (1 - 1 / this.sourceCount) + 1 / this.sourceCount;
+    }
+
+    public addInPlace(other: VertexCubeType): void {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] += other.values[i];
+        }
+    }
+
+    public scaleInPlace(n: number): void {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] *= n;
+        }
+    }
+
+    public lerpInPlace(other: VertexCubeType, distance: number): void {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] = this.values[i] * (1 - distance) + other.values[i] * distance;
+        }
+    }
+}
+
 class Vertex {
 
     public index: number;
@@ -6,9 +60,8 @@ class Vertex {
     public position: BABYLON.Vector3;
     public smoothedPosition: BABYLON.Vector3;
 
-    public cubeTypes: number[] = [0, 0, 0];
-    public smoothedCubeTypes: number[] = [0, 0, 0];
-    public colorSources: number = 0;
+    public cubeTypes: VertexCubeType = new VertexCubeType();
+    public smoothedCubeTypes: VertexCubeType = new VertexCubeType();
 
     constructor(
         public i: number,
@@ -49,35 +102,22 @@ class Vertex {
     }
 
     public addCubeType(ct: CubeType): void {
-        if (this.colorSources === 0) {
-            this.cubeTypes[ct] = 1;
-            this.colorSources = 1;
-        }
-        else {
-            this.colorSources++;
-            for (let i = 0; i < this.cubeTypes.length; i++) {
-                this.cubeTypes[i] = this.cubeTypes[i] * (1 - 1 / this.colorSources) + (ct === i ? 1 : 0) / this.colorSources;
-            }
-        }
+        this.cubeTypes.addCubeType(ct);
     }
 
     public smooth(factor: number): void {
-        this.smoothedCubeTypes = [...this.cubeTypes];
+        this.smoothedCubeTypes.copyFrom(this.cubeTypes);
         this.smoothedPosition.copyFrom(this.position);
         for (let i = 0; i < this.links.length; i++) {
             this.smoothedPosition.addInPlace(this.links[i].position.scale(factor));
-            for (let j = 0; j < this.smoothedCubeTypes.length; j++) {
-                this.smoothedCubeTypes[j] += this.links[i].cubeTypes[j] * factor;
-            }
+            this.smoothedCubeTypes.addInPlace(this.links[i].cubeTypes);
         }
         this.smoothedPosition.scaleInPlace(1 / (this.links.length * factor + 1));
-        for (let i = 0; i < this.smoothedCubeTypes.length; i++) {
-            this.smoothedCubeTypes[i] /= (this.links.length * factor + 1);
-        }
+        this.smoothedCubeTypes.scaleInPlace(1 / (this.links.length * factor + 1));
     }
 
     public applySmooth() {
         this.position.copyFrom(this.smoothedPosition);
-        this.cubeTypes = [...this.smoothedCubeTypes];
+        this.cubeTypes.copyFrom(this.smoothedCubeTypes);
     }
 }

@@ -6,8 +6,9 @@ class Face {
         this.draw = draw;
     }
 }
-class Chunck {
+class Chunck extends BABYLON.Mesh {
     constructor(manager, i, j, k) {
+        super("chunck_" + i + "_" + j + "_" + k);
         this.manager = manager;
         this.i = i;
         this.j = j;
@@ -121,6 +122,8 @@ class Chunck {
         }
     }
     generateVertices() {
+        this.vertices = [];
+        this.faces = [];
         for (let i = -2; i < CHUNCK_SIZE + 3; i++) {
             for (let j = -2; j < CHUNCK_SIZE + 3; j++) {
                 for (let k = -2; k < CHUNCK_SIZE + 3; k++) {
@@ -250,11 +253,8 @@ class Chunck {
                 if (!sub) {
                     sub = new Vertex(f.vertices[n].position.x * 0.5 + f.vertices[n1].position.x * 0.5, f.vertices[n].position.y * 0.5 + f.vertices[n1].position.y * 0.5, f.vertices[n].position.z * 0.5 + f.vertices[n1].position.z * 0.5);
                     sub.index = this.vertices.length;
-                    sub.cubeTypes = [
-                        f.vertices[n].cubeTypes[0] * 0.5 + f.vertices[n1].cubeTypes[0] * 0.5,
-                        f.vertices[n].cubeTypes[1] * 0.5 + f.vertices[n1].cubeTypes[1] * 0.5,
-                        f.vertices[n].cubeTypes[2] * 0.5 + f.vertices[n1].cubeTypes[2] * 0.5
-                    ];
+                    sub.cubeTypes.copyFrom(f.vertices[n].cubeTypes);
+                    sub.cubeTypes.lerpInPlace(f.vertices[n1].cubeTypes, 0.5);
                     subVertices.set(subKey, sub);
                     this.vertices.push(sub);
                     sub.connect(f.vertices[n]);
@@ -288,7 +288,7 @@ class Chunck {
         for (let i = 0; i < this.vertices.length; i++) {
             let v = this.vertices[i];
             positions.push(v.smoothedPosition.x, v.smoothedPosition.y, v.smoothedPosition.z);
-            colors.push(v.cubeTypes[0], v.cubeTypes[1], v.cubeTypes[2], 1);
+            colors.push(...v.cubeTypes.getColorAsArray(), 1);
         }
         let indices = [];
         for (let i = 0; i < this.faces.length; i++) {
@@ -349,12 +349,11 @@ class Chunck {
         data.indices = indices;
         data.normals = [];
         BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
-        let mesh = new BABYLON.Mesh("test");
-        mesh.position.x = -CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.i;
-        mesh.position.y = -CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.j;
-        mesh.position.z = -CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.k;
-        data.applyToMesh(mesh);
-        mesh.material = Main.cellShadingMaterial;
+        this.position.x = CHUNCK_SIZE * this.i;
+        this.position.y = CHUNCK_SIZE * this.j;
+        this.position.z = CHUNCK_SIZE * this.k;
+        data.applyToMesh(this);
+        this.material = Main.cellShadingMaterial;
     }
 }
 class ChunckManager {
@@ -418,7 +417,10 @@ class ChunckManager {
             }
         }
     }
-    setCube(I, J, K, cubeType) {
+    setChunckCube(chunck, i, j, k, cubeType, redraw = false) {
+        this.setCube(chunck.i * CHUNCK_SIZE + i, chunck.j * CHUNCK_SIZE + j, chunck.k * CHUNCK_SIZE + k, cubeType, redraw);
+    }
+    setCube(I, J, K, cubeType, redraw = false) {
         let iChunck = Math.floor(I / CHUNCK_SIZE);
         let jChunck = Math.floor(J / CHUNCK_SIZE);
         let kChunck = Math.floor(K / CHUNCK_SIZE);
@@ -428,6 +430,25 @@ class ChunckManager {
             let jCube = J - jChunck * CHUNCK_SIZE;
             let kCube = K - kChunck * CHUNCK_SIZE;
             chunck.setCube(iCube, jCube, kCube, cubeType);
+            if (redraw) {
+                let i0 = iCube === 0 ? -1 : 0;
+                let i1 = iCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+                let j0 = jCube === 0 ? -1 : 0;
+                let j1 = jCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+                let k0 = kCube === 0 ? -1 : 0;
+                let k1 = kCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+                for (let i = i0; i <= i1; i++) {
+                    for (let j = j0; j <= j1; j++) {
+                        for (let k = k0; k <= k1; k++) {
+                            let redrawnChunck = this.getChunck(i + iChunck, j + jChunck, k + kChunck);
+                            if (redrawnChunck) {
+                                redrawnChunck.generateVertices();
+                                redrawnChunck.generateFaces();
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     generateAroundZero(d) {
@@ -605,6 +626,48 @@ class Cube {
         return diff < 2;
     }
 }
+class VertexCubeType {
+    constructor() {
+        this.sourceCount = 0;
+        this.values = [0, 0, 0];
+    }
+    getColor() {
+        return new BABYLON.Color3(this.values[0], this.values[1], this.values[2]);
+    }
+    getColorAsArray() {
+        return this.values;
+    }
+    copyFrom(other) {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] = other.values[i];
+        }
+        return this;
+    }
+    clone() {
+        let c = new VertexCubeType();
+        c.values = [...this.values];
+        return c;
+    }
+    addCubeType(cubeType) {
+        this.sourceCount++;
+        this.values[cubeType] = this.values[cubeType] * (1 - 1 / this.sourceCount) + 1 / this.sourceCount;
+    }
+    addInPlace(other) {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] += other.values[i];
+        }
+    }
+    scaleInPlace(n) {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] *= n;
+        }
+    }
+    lerpInPlace(other, distance) {
+        for (let i = 0; i < this.values.length; i++) {
+            this.values[i] = this.values[i] * (1 - distance) + other.values[i] * distance;
+        }
+    }
+}
 class Vertex {
     constructor(i, j, k) {
         this.i = i;
@@ -612,9 +675,8 @@ class Vertex {
         this.k = k;
         this.links = [];
         this.faces = [];
-        this.cubeTypes = [0, 0, 0];
-        this.smoothedCubeTypes = [0, 0, 0];
-        this.colorSources = 0;
+        this.cubeTypes = new VertexCubeType();
+        this.smoothedCubeTypes = new VertexCubeType();
         this.position = new BABYLON.Vector3(i, j, k);
         this.smoothedPosition = this.position.clone();
         while (this.i < 0) {
@@ -647,34 +709,21 @@ class Vertex {
         }
     }
     addCubeType(ct) {
-        if (this.colorSources === 0) {
-            this.cubeTypes[ct] = 1;
-            this.colorSources = 1;
-        }
-        else {
-            this.colorSources++;
-            for (let i = 0; i < this.cubeTypes.length; i++) {
-                this.cubeTypes[i] = this.cubeTypes[i] * (1 - 1 / this.colorSources) + (ct === i ? 1 : 0) / this.colorSources;
-            }
-        }
+        this.cubeTypes.addCubeType(ct);
     }
     smooth(factor) {
-        this.smoothedCubeTypes = [...this.cubeTypes];
+        this.smoothedCubeTypes.copyFrom(this.cubeTypes);
         this.smoothedPosition.copyFrom(this.position);
         for (let i = 0; i < this.links.length; i++) {
             this.smoothedPosition.addInPlace(this.links[i].position.scale(factor));
-            for (let j = 0; j < this.smoothedCubeTypes.length; j++) {
-                this.smoothedCubeTypes[j] += this.links[i].cubeTypes[j] * factor;
-            }
+            this.smoothedCubeTypes.addInPlace(this.links[i].cubeTypes);
         }
         this.smoothedPosition.scaleInPlace(1 / (this.links.length * factor + 1));
-        for (let i = 0; i < this.smoothedCubeTypes.length; i++) {
-            this.smoothedCubeTypes[i] /= (this.links.length * factor + 1);
-        }
+        this.smoothedCubeTypes.scaleInPlace(1 / (this.links.length * factor + 1));
     }
     applySmooth() {
         this.position.copyFrom(this.smoothedPosition);
-        this.cubeTypes = [...this.smoothedCubeTypes];
+        this.cubeTypes.copyFrom(this.smoothedCubeTypes);
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -789,6 +838,44 @@ class Main {
         //chunck.generateFaces();
         let t1 = performance.now();
         console.log(t1 - t0);
+        Main.Scene.onPointerObservable.add((eventData, eventState) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                let pickedMesh = eventData.pickInfo.pickedMesh;
+                if (pickedMesh instanceof Chunck) {
+                    let chunck = pickedMesh;
+                    let localPickedPoint = eventData.pickInfo.pickedPoint.subtract(chunck.position);
+                    let n = eventData.pickInfo.getNormal();
+                    localPickedPoint.subtractInPlace(n.scale(0.5));
+                    let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+                    let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+                    if (absN.x > absN.y && absN.x > absN.z) {
+                        if (n.x > 0) {
+                            coordinates.x++;
+                        }
+                        else {
+                            coordinates.x--;
+                        }
+                    }
+                    if (absN.y > absN.x && absN.y > absN.z) {
+                        if (n.y > 0) {
+                            coordinates.y++;
+                        }
+                        else {
+                            coordinates.y--;
+                        }
+                    }
+                    if (absN.z > absN.x && absN.z > absN.y) {
+                        if (n.z > 0) {
+                            coordinates.z++;
+                        }
+                        else {
+                            coordinates.z--;
+                        }
+                    }
+                    chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, CubeType.Rock, true);
+                }
+            }
+        });
         console.log("Main scene Initialized.");
     }
     animate() {
@@ -864,5 +951,19 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
         this.setColor3("colDirt", BABYLON.Color3.FromHexString("#a86f32"));
         this.setColor3("colRock", BABYLON.Color3.FromHexString("#8c8c89"));
         this.setColor3("colSand", BABYLON.Color3.FromHexString("#dbc67b"));
+    }
+}
+class RayIntersection {
+    constructor(point, normal) {
+        this.point = point;
+        this.normal = normal;
+    }
+}
+class Intersections3D {
+    static RayChunck(ray, chunck) {
+        let pickingInfo = chunck.getScene().pickWithRay(ray, (m) => {
+            return m === chunck;
+        });
+        return new RayIntersection(pickingInfo.pickedPoint, pickingInfo.getNormal());
     }
 }

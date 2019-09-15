@@ -67,7 +67,17 @@ class ChunckManager {
         }
     }
 
-    public setCube(I: number, J: number, K: number, cubeType: CubeType): void {
+    public setChunckCube(chunck: Chunck, i: number, j: number, k: number, cubeType: CubeType, redraw: boolean = false): void {
+        this.setCube(
+            chunck.i * CHUNCK_SIZE + i,
+            chunck.j * CHUNCK_SIZE + j,
+            chunck.k * CHUNCK_SIZE + k,
+            cubeType,
+            redraw
+        );
+    }
+
+    public setCube(I: number, J: number, K: number, cubeType: CubeType, redraw: boolean = false): void {
         let iChunck = Math.floor(I / CHUNCK_SIZE);
         let jChunck = Math.floor(J / CHUNCK_SIZE);
         let kChunck = Math.floor(K / CHUNCK_SIZE);
@@ -77,6 +87,27 @@ class ChunckManager {
             let jCube = J - jChunck * CHUNCK_SIZE;
             let kCube = K - kChunck * CHUNCK_SIZE;
             chunck.setCube(iCube, jCube, kCube, cubeType);
+            if (redraw) {
+                
+                let i0 = iCube === 0 ? - 1 : 0;
+                let i1 = iCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+                let j0 = jCube === 0 ? - 1 : 0;
+                let j1 = jCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+                let k0 = kCube === 0 ? - 1 : 0;
+                let k1 = kCube === (CHUNCK_SIZE - 1) ? 1 : 0;
+
+                for (let i = i0; i <= i1; i++) {
+                    for (let j = j0; j <= j1; j++) {
+                        for (let k = k0; k <= k1; k++) {
+                            let redrawnChunck = this.getChunck(i + iChunck, j + jChunck, k + kChunck);
+                            if (redrawnChunck) {
+                                redrawnChunck.generateVertices();
+                                redrawnChunck.generateFaces();
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

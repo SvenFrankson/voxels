@@ -11,7 +11,7 @@ class Face {
     }
 }
 
-class Chunck {
+class Chunck extends BABYLON.Mesh {
 
 
     public faces: Face[] = [];
@@ -38,7 +38,7 @@ class Chunck {
         public j: number,
         public k: number
     ) {
-        
+        super("chunck_" + i + "_" + j + "_" + k);
     }
 
     public fatCube(): void {
@@ -143,6 +143,8 @@ class Chunck {
     }
 
     public generateVertices(): void {
+        this.vertices = [];
+        this.faces = [];
         for (let i = - 2; i < CHUNCK_SIZE + 3; i++) {
             for (let j = - 2; j < CHUNCK_SIZE + 3; j++) {
                 for (let k = - 2; k < CHUNCK_SIZE + 3; k++) {
@@ -283,11 +285,8 @@ class Chunck {
                         f.vertices[n].position.z * 0.5 + f.vertices[n1].position.z * 0.5,
                     );
                     sub.index = this.vertices.length;
-                    sub.cubeTypes = [
-                        f.vertices[n].cubeTypes[0] * 0.5 + f.vertices[n1].cubeTypes[0] * 0.5,   
-                        f.vertices[n].cubeTypes[1] * 0.5 + f.vertices[n1].cubeTypes[1] * 0.5,   
-                        f.vertices[n].cubeTypes[2] * 0.5 + f.vertices[n1].cubeTypes[2] * 0.5   
-                    ];
+                    sub.cubeTypes.copyFrom(f.vertices[n].cubeTypes);
+                    sub.cubeTypes.lerpInPlace(f.vertices[n1].cubeTypes, 0.5);
                     subVertices.set(subKey, sub);
                     this.vertices.push(sub);
                     sub.connect(f.vertices[n]);
@@ -326,7 +325,7 @@ class Chunck {
         for (let i = 0; i < this.vertices.length; i++) {
             let v = this.vertices[i];
             positions.push(v.smoothedPosition.x, v.smoothedPosition.y, v.smoothedPosition.z);
-            colors.push(v.cubeTypes[0], v.cubeTypes[1], v.cubeTypes[2], 1);
+            colors.push(...v.cubeTypes.getColorAsArray(), 1);
         }
         let indices: number[] = [];
 
@@ -397,12 +396,11 @@ class Chunck {
         data.normals = [];
         BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
 
-        let mesh = new BABYLON.Mesh("test");
-        mesh.position.x = - CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.i;
-        mesh.position.y = - CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.j;
-        mesh.position.z = - CHUNCK_SIZE / 2 - 0.5 + CHUNCK_SIZE * this.k;
-        data.applyToMesh(mesh);
+        this.position.x = CHUNCK_SIZE * this.i;
+        this.position.y = CHUNCK_SIZE * this.j;
+        this.position.z = CHUNCK_SIZE * this.k;
+        data.applyToMesh(this);
 
-        mesh.material = Main.cellShadingMaterial;
+        this.material = Main.cellShadingMaterial;
     }
 }
