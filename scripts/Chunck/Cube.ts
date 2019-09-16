@@ -1,7 +1,8 @@
 enum CubeType {
     Dirt = 0,
     Rock,
-    Sand
+    Sand,
+    None
 }
 
 class Cube {

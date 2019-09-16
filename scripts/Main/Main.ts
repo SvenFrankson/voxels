@@ -127,105 +127,65 @@ class Main {
 			},
 			Main.Scene
 		);
-		BABYLON.SceneLoader.ImportMesh(
-			"",
-			"./datas/meshes/",
-			"craneo.v2.packed.babylon",
-			Main.Scene,
-			(meshes, particleSystems, skeletons) => {
-				let skullMesh = meshes.find(m => { return m.name === "Crane"; }) as BABYLON.Mesh;
-				let sandMesh = meshes.find(m => { return m.name === "Sand"; }) as BABYLON.Mesh;
-				let rockMesh = meshes.find(m => { return m.name === "Rock"; }) as BABYLON.Mesh;
-				let dirtMesh = meshes.find(m => { return m.name === "Dirt"; }) as BABYLON.Mesh;
-				let t0 = performance.now();
-				let chunckManager = new ChunckManager();
-				let l = 6;
-				chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
-				for (let i = -l; i <= l; i++) {
-					for (let j = -1; j <= 2 * l - 1; j++) {
-						for (let k = -l; k <= l; k++) {
-							let chunck = chunckManager.getChunck(i, j, k);
+		let chunckManager = new ChunckManager();
+		let savedTerrainString = window.localStorage.getItem("terrain");
+		if (savedTerrainString) {
+			let t0 = performance.now();
+			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
+			chunckManager.deserialize(savedTerrain);
+			let l = 6;
+			for (let i = -l; i <= l; i++) {
+				for (let j = -1; j <= 2 * l - 1; j++) {
+					for (let k = -l; k <= l; k++) {
+						let chunck = chunckManager.getChunck(i, j, k);
+						if (chunck) {
 							chunck.generateVertices();
 							chunck.generateFaces();
 						}
 					}
 				}
-				let t1 = performance.now();
-				console.log(t1 - t0);
-				skullMesh.dispose();
-				sandMesh.dispose();
-				rockMesh.dispose();
-				dirtMesh.dispose();
 			}
-		);
-
-		/*
-		let t0 = performance.now();
-		let chunckManager = new ChunckManager();
-		let l = 3;
-		chunckManager.generateTerrain(l);
-		for (let i = -l; i <= l; i++) {
-			for (let j = -l; j <= l; j++) {
-				for (let k = -l; k <= l; k++) {
-					let chunck = chunckManager.getChunck(i, j, k);
-					chunck.generateVertices();
-					chunck.generateFaces();
-				}
-			}
+			let t1 = performance.now();
+			console.log(t1 - t0);
 		}
-		let t1 = performance.now();
-		console.log(t1 - t0);
-
-		Main.Scene.onPointerObservable.add(
-			(eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
-				if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-					let pickedMesh = eventData.pickInfo.pickedMesh;
-					if (pickedMesh instanceof Chunck) {
-						let chunck = pickedMesh as Chunck;
-						let localPickedPoint = eventData.pickInfo.pickedPoint.subtract(chunck.position);
-						let n = eventData.pickInfo.getNormal();
-						localPickedPoint.subtractInPlace(n.scale(0.5));
-						let coordinates = new BABYLON.Vector3(
-							Math.floor(localPickedPoint.x),
-							Math.floor(localPickedPoint.y),
-							Math.floor(localPickedPoint.z)
-						);
-						let absN = new BABYLON.Vector3(
-							Math.abs(n.x),
-							Math.abs(n.y),
-							Math.abs(n.z)
-						);
-						if (absN.x > absN.y && absN.x > absN.z) {
-							if (n.x > 0) {
-								coordinates.x++;
-							}
-							else {
-								coordinates.x--;
+		else {
+			BABYLON.SceneLoader.ImportMesh(
+				"",
+				"./datas/meshes/",
+				"craneo.v2.packed.babylon",
+				Main.Scene,
+				(meshes, particleSystems, skeletons) => {
+					let skullMesh = meshes.find(m => { return m.name === "Crane"; }) as BABYLON.Mesh;
+					let sandMesh = meshes.find(m => { return m.name === "Sand"; }) as BABYLON.Mesh;
+					let rockMesh = meshes.find(m => { return m.name === "Rock"; }) as BABYLON.Mesh;
+					let dirtMesh = meshes.find(m => { return m.name === "Dirt"; }) as BABYLON.Mesh;
+					let t0 = performance.now();
+					let l = 6;
+					chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
+					for (let i = -l; i <= l; i++) {
+						for (let j = -1; j <= 2 * l - 1; j++) {
+							for (let k = -l; k <= l; k++) {
+								let chunck = chunckManager.getChunck(i, j, k);
+								chunck.generateVertices();
+								chunck.generateFaces();
 							}
 						}
-						if (absN.y > absN.x && absN.y > absN.z) {
-							if (n.y > 0) {
-								coordinates.y++;
-							}
-							else {
-								coordinates.y--;
-							}
-						}
-						if (absN.z > absN.x && absN.z > absN.y) {
-							if (n.z > 0) {
-								coordinates.z++;
-							}
-							else {
-								coordinates.z--;
-							}
-						}
-
-						chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, CubeType.Rock, true);
 					}
+					skullMesh.dispose();
+					sandMesh.dispose();
+					rockMesh.dispose();
+					dirtMesh.dispose();
+					let data = chunckManager.serialize();
+					let stringData = JSON.stringify(data);
+					console.log("StringData length = " + stringData.length);
+					window.localStorage.setItem("terrain", stringData);
+					let t1 = performance.now();
+					console.log(t1 - t0);
 				}
-			}
-		)
-		*/
+			);
+		}
+
+		new ChunckEditor(chunckManager);
 		
 		console.log("Main scene Initialized.");
     }

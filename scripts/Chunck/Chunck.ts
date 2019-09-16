@@ -23,13 +23,24 @@ class Chunck extends BABYLON.Mesh {
     }
 
     public setCube(i: number, j: number, k: number, cubeType?: CubeType): void {
-        if (!this.cubes[i]) {
-            this.cubes[i] = [];
+        if (cubeType !== CubeType.None) {
+            if (!this.cubes[i]) {
+                this.cubes[i] = [];
+            }
+            if (!this.cubes[i][j]) {
+                this.cubes[i][j] = [];
+            }
+            this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
         }
-        if (!this.cubes[i][j]) {
-            this.cubes[i][j] = [];
+        else {
+            if (this.cubes[i]) {
+                if (this.cubes[i][j]) {
+                    if (this.cubes[i][j][k]) {
+                        this.cubes[i][j][k] = undefined;
+                    }
+                }
+            }
         }
-        this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
     }
 
     constructor(
@@ -402,5 +413,56 @@ class Chunck extends BABYLON.Mesh {
         data.applyToMesh(this);
 
         this.material = Main.cellShadingMaterial;
+    }
+
+    public serialize(): ChunckData {
+        let data = "";
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                for (let k = 0; k < CHUNCK_SIZE; k++) {
+                    let cube = this.getCube(i, j, k);
+                    if (cube) {
+                        data += cube.cubeType;
+                    }
+                    else {
+                        data += "_";
+                    }
+                }
+            }
+        }
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            data: data
+        };
+    }
+
+    public deserialize(data: string): void {
+        let l = CHUNCK_SIZE * CHUNCK_SIZE * CHUNCK_SIZE;
+        let i = 0;
+        let j = 0;
+        let k = 0;
+        for (let n = 0; n < l; n++) {
+            let v = data[n];
+            if (v === "0") {
+                this.setCube(i, j, k, CubeType.Dirt);
+            }
+            if (v === "1") {
+                this.setCube(i, j, k, CubeType.Rock);
+            }
+            if (v === "2") {
+                this.setCube(i, j, k, CubeType.Sand);
+            }
+            k++;
+            if (k >= CHUNCK_SIZE) {
+                k = 0;
+                j++;
+                if (j >= CHUNCK_SIZE) {
+                    j = 0;
+                    i++;
+                }
+            }
+        }
     }
 }

@@ -13,19 +13,12 @@ html, body {
     touch-action: none;
 }
 
-#prop-editor-panel {
-    position: absolute;
+#chunck-editor {
+    position: fixed;
     top: 10px;
     left: 10px;
 }
 
-#credit {
-  position: absolute;
-  width: 256px;
-  height: 40px;
-  bottom: 0px;
-  right: 0px;
-  font-size: 24px;
-  color: white;
-  font-family: "Orbitron Light";
+.chunck-editor-button {
+    display: block;
 }

@@ -1,3 +1,14 @@
+interface ChunckData {
+    i: number;
+    j: number;
+    k: number;
+    data: string;
+}
+
+interface TerrainData {
+    chuncks: ChunckData[];
+}
+
 class ChunckManager {
 
     public chuncks: Map<number, Map<number, Map<number, Chunck>>> = new Map<number, Map<number, Map<number, Chunck>>>();
@@ -137,6 +148,25 @@ class ChunckManager {
         }
     }
 
+    public createChunck(i: number, j: number, k: number): Chunck {
+        let mapMapChuncks = this.chuncks.get(i);
+        if (!mapMapChuncks) {
+            mapMapChuncks = new Map<number, Map<number, Chunck>>();
+            this.chuncks.set(i, mapMapChuncks);
+        }
+        let mapChuncks = mapMapChuncks.get(j);
+        if (!mapChuncks) {
+            mapChuncks = new Map<number, Chunck>();
+            mapMapChuncks.set(j, mapChuncks);
+        }
+        let chunck = mapChuncks.get(k);
+        if (!chunck) {
+            chunck = new Chunck(this, i, j, k);
+            mapChuncks.set(k, chunck);
+        }
+        return chunck;
+    }
+
     public getChunck(i: number, j: number, k: number): Chunck {
         let mapMapChuncks = this.chuncks.get(i);
         if (mapMapChuncks) {
@@ -234,6 +264,35 @@ class ChunckManager {
                     let chunck = new Chunck(this, i, j, k);
                     mapChuncks.set(k, chunck);
                 }
+            }
+        }
+    }
+
+    public serialize(): TerrainData {
+        let data = {
+            chuncks: []
+        };
+        this.chuncks.forEach(
+            m => {
+                m.forEach(
+                    mm => {
+                        mm.forEach(
+                            chunck => {
+                                data.chuncks.push(chunck.serialize());
+                            }
+                        )
+                    }
+                )
+            }
+        );
+        return data;
+    }
+
+    public deserialize(data: TerrainData): void {
+        for (let i = 0; i < data.chuncks.length; i++) {
+            let d = data.chuncks[i];
+            if (d) {
+                this.createChunck(d.i, d.j, d.k).deserialize(d.data);
             }
         }
     }

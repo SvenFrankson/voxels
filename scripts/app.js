@@ -21,13 +21,24 @@ class Chunck extends BABYLON.Mesh {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
     }
     setCube(i, j, k, cubeType) {
-        if (!this.cubes[i]) {
-            this.cubes[i] = [];
+        if (cubeType !== CubeType.None) {
+            if (!this.cubes[i]) {
+                this.cubes[i] = [];
+            }
+            if (!this.cubes[i][j]) {
+                this.cubes[i][j] = [];
+            }
+            this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
         }
-        if (!this.cubes[i][j]) {
-            this.cubes[i][j] = [];
+        else {
+            if (this.cubes[i]) {
+                if (this.cubes[i][j]) {
+                    if (this.cubes[i][j][k]) {
+                        this.cubes[i][j][k] = undefined;
+                    }
+                }
+            }
         }
-        this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
     }
     fatCube() {
         this.cubes = [];
@@ -355,6 +366,117 @@ class Chunck extends BABYLON.Mesh {
         data.applyToMesh(this);
         this.material = Main.cellShadingMaterial;
     }
+    serialize() {
+        let data = "";
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                for (let k = 0; k < CHUNCK_SIZE; k++) {
+                    let cube = this.getCube(i, j, k);
+                    if (cube) {
+                        data += cube.cubeType;
+                    }
+                    else {
+                        data += "_";
+                    }
+                }
+            }
+        }
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            data: data
+        };
+    }
+    deserialize(data) {
+        let l = CHUNCK_SIZE * CHUNCK_SIZE * CHUNCK_SIZE;
+        let i = 0;
+        let j = 0;
+        let k = 0;
+        for (let n = 0; n < l; n++) {
+            let v = data[n];
+            if (v === "0") {
+                this.setCube(i, j, k, CubeType.Dirt);
+            }
+            if (v === "1") {
+                this.setCube(i, j, k, CubeType.Rock);
+            }
+            if (v === "2") {
+                this.setCube(i, j, k, CubeType.Sand);
+            }
+            k++;
+            if (k >= CHUNCK_SIZE) {
+                k = 0;
+                j++;
+                if (j >= CHUNCK_SIZE) {
+                    j = 0;
+                    i++;
+                }
+            }
+        }
+    }
+}
+class ChunckEditor {
+    constructor(chunckManager) {
+        this.chunckManager = chunckManager;
+        document.getElementById("destroy").addEventListener("click", () => {
+            this.currentCubeType = CubeType.None;
+        });
+        document.getElementById("dirt").addEventListener("click", () => {
+            this.currentCubeType = CubeType.Dirt;
+        });
+        document.getElementById("rock").addEventListener("click", () => {
+            this.currentCubeType = CubeType.Rock;
+        });
+        document.getElementById("sand").addEventListener("click", () => {
+            this.currentCubeType = CubeType.Sand;
+        });
+        Main.Scene.onPointerObservable.add((eventData, eventState) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                let pickedMesh = eventData.pickInfo.pickedMesh;
+                if (pickedMesh instanceof Chunck) {
+                    let chunck = pickedMesh;
+                    let localPickedPoint = eventData.pickInfo.pickedPoint.subtract(chunck.position);
+                    let n = eventData.pickInfo.getNormal();
+                    if (this.currentCubeType !== CubeType.None) {
+                        localPickedPoint.subtractInPlace(n.scale(0.5));
+                        let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+                        let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+                        if (absN.x > absN.y && absN.x > absN.z) {
+                            if (n.x > 0) {
+                                coordinates.x++;
+                            }
+                            else {
+                                coordinates.x--;
+                            }
+                        }
+                        if (absN.y > absN.x && absN.y > absN.z) {
+                            if (n.y > 0) {
+                                coordinates.y++;
+                            }
+                            else {
+                                coordinates.y--;
+                            }
+                        }
+                        if (absN.z > absN.x && absN.z > absN.y) {
+                            if (n.z > 0) {
+                                coordinates.z++;
+                            }
+                            else {
+                                coordinates.z--;
+                            }
+                        }
+                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                    }
+                    else {
+                        localPickedPoint.subtractInPlace(n.scale(0.5));
+                        let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                    }
+                }
+            }
+        });
+    }
 }
 class ChunckManager {
     constructor() {
@@ -466,6 +588,24 @@ class ChunckManager {
             }
         }
     }
+    createChunck(i, j, k) {
+        let mapMapChuncks = this.chuncks.get(i);
+        if (!mapMapChuncks) {
+            mapMapChuncks = new Map();
+            this.chuncks.set(i, mapMapChuncks);
+        }
+        let mapChuncks = mapMapChuncks.get(j);
+        if (!mapChuncks) {
+            mapChuncks = new Map();
+            mapMapChuncks.set(j, mapChuncks);
+        }
+        let chunck = mapChuncks.get(k);
+        if (!chunck) {
+            chunck = new Chunck(this, i, j, k);
+            mapChuncks.set(k, chunck);
+        }
+        return chunck;
+    }
     getChunck(i, j, k) {
         let mapMapChuncks = this.chuncks.get(i);
         if (mapMapChuncks) {
@@ -553,12 +693,34 @@ class ChunckManager {
             }
         }
     }
+    serialize() {
+        let data = {
+            chuncks: []
+        };
+        this.chuncks.forEach(m => {
+            m.forEach(mm => {
+                mm.forEach(chunck => {
+                    data.chuncks.push(chunck.serialize());
+                });
+            });
+        });
+        return data;
+    }
+    deserialize(data) {
+        for (let i = 0; i < data.chuncks.length; i++) {
+            let d = data.chuncks[i];
+            if (d) {
+                this.createChunck(d.i, d.j, d.k).deserialize(d.data);
+            }
+        }
+    }
 }
 var CubeType;
 (function (CubeType) {
     CubeType[CubeType["Dirt"] = 0] = "Dirt";
     CubeType[CubeType["Rock"] = 1] = "Rock";
     CubeType[CubeType["Sand"] = 2] = "Sand";
+    CubeType[CubeType["None"] = 3] = "None";
 })(CubeType || (CubeType = {}));
 class Cube {
     constructor(chunck, i, j, k, cubeType) {
@@ -912,98 +1074,58 @@ class Main {
             width: 6 * CHUNCK_SIZE,
             height: 6 * CHUNCK_SIZE
         }, Main.Scene);
-        BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/", "craneo.v2.packed.babylon", Main.Scene, (meshes, particleSystems, skeletons) => {
-            let skullMesh = meshes.find(m => { return m.name === "Crane"; });
-            let sandMesh = meshes.find(m => { return m.name === "Sand"; });
-            let rockMesh = meshes.find(m => { return m.name === "Rock"; });
-            let dirtMesh = meshes.find(m => { return m.name === "Dirt"; });
+        let chunckManager = new ChunckManager();
+        let savedTerrainString = window.localStorage.getItem("terrain");
+        if (savedTerrainString) {
             let t0 = performance.now();
-            let chunckManager = new ChunckManager();
+            let savedTerrain = JSON.parse(savedTerrainString);
+            chunckManager.deserialize(savedTerrain);
             let l = 6;
-            chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
             for (let i = -l; i <= l; i++) {
                 for (let j = -1; j <= 2 * l - 1; j++) {
                     for (let k = -l; k <= l; k++) {
                         let chunck = chunckManager.getChunck(i, j, k);
-                        chunck.generateVertices();
-                        chunck.generateFaces();
+                        if (chunck) {
+                            chunck.generateVertices();
+                            chunck.generateFaces();
+                        }
                     }
                 }
             }
             let t1 = performance.now();
             console.log(t1 - t0);
-            skullMesh.dispose();
-            sandMesh.dispose();
-            rockMesh.dispose();
-            dirtMesh.dispose();
-        });
-        /*
-        let t0 = performance.now();
-        let chunckManager = new ChunckManager();
-        let l = 3;
-        chunckManager.generateTerrain(l);
-        for (let i = -l; i <= l; i++) {
-            for (let j = -l; j <= l; j++) {
-                for (let k = -l; k <= l; k++) {
-                    let chunck = chunckManager.getChunck(i, j, k);
-                    chunck.generateVertices();
-                    chunck.generateFaces();
-                }
-            }
         }
-        let t1 = performance.now();
-        console.log(t1 - t0);
-
-        Main.Scene.onPointerObservable.add(
-            (eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
-                if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                    let pickedMesh = eventData.pickInfo.pickedMesh;
-                    if (pickedMesh instanceof Chunck) {
-                        let chunck = pickedMesh as Chunck;
-                        let localPickedPoint = eventData.pickInfo.pickedPoint.subtract(chunck.position);
-                        let n = eventData.pickInfo.getNormal();
-                        localPickedPoint.subtractInPlace(n.scale(0.5));
-                        let coordinates = new BABYLON.Vector3(
-                            Math.floor(localPickedPoint.x),
-                            Math.floor(localPickedPoint.y),
-                            Math.floor(localPickedPoint.z)
-                        );
-                        let absN = new BABYLON.Vector3(
-                            Math.abs(n.x),
-                            Math.abs(n.y),
-                            Math.abs(n.z)
-                        );
-                        if (absN.x > absN.y && absN.x > absN.z) {
-                            if (n.x > 0) {
-                                coordinates.x++;
-                            }
-                            else {
-                                coordinates.x--;
-                            }
+        else {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/", "craneo.v2.packed.babylon", Main.Scene, (meshes, particleSystems, skeletons) => {
+                let skullMesh = meshes.find(m => { return m.name === "Crane"; });
+                let sandMesh = meshes.find(m => { return m.name === "Sand"; });
+                let rockMesh = meshes.find(m => { return m.name === "Rock"; });
+                let dirtMesh = meshes.find(m => { return m.name === "Dirt"; });
+                let t0 = performance.now();
+                let l = 6;
+                chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
+                for (let i = -l; i <= l; i++) {
+                    for (let j = -1; j <= 2 * l - 1; j++) {
+                        for (let k = -l; k <= l; k++) {
+                            let chunck = chunckManager.getChunck(i, j, k);
+                            chunck.generateVertices();
+                            chunck.generateFaces();
                         }
-                        if (absN.y > absN.x && absN.y > absN.z) {
-                            if (n.y > 0) {
-                                coordinates.y++;
-                            }
-                            else {
-                                coordinates.y--;
-                            }
-                        }
-                        if (absN.z > absN.x && absN.z > absN.y) {
-                            if (n.z > 0) {
-                                coordinates.z++;
-                            }
-                            else {
-                                coordinates.z--;
-                            }
-                        }
-
-                        chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, CubeType.Rock, true);
                     }
                 }
-            }
-        )
-        */
+                skullMesh.dispose();
+                sandMesh.dispose();
+                rockMesh.dispose();
+                dirtMesh.dispose();
+                let data = chunckManager.serialize();
+                let stringData = JSON.stringify(data);
+                console.log("StringData length = " + stringData.length);
+                window.localStorage.setItem("terrain", stringData);
+                let t1 = performance.now();
+                console.log(t1 - t0);
+            });
+        }
+        new ChunckEditor(chunckManager);
         console.log("Main scene Initialized.");
     }
     animate() {
