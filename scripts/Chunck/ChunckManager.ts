@@ -117,11 +117,12 @@ class ChunckManager {
                 let dir = new BABYLON.Vector3(0, -1, 0);
                 let r = new BABYLON.Ray(p, dir);
                 let pickInfo = r.intersectsMesh(sandMesh);
+                let h = 0;
                 if (pickInfo.hit) {
-                    let h = pickInfo.pickedPoint.y;
-                    for (let j = -1; j <= h; j++) {
-                        this.setCube(i, j, k, CubeType.Sand);
-                    }
+                    h = pickInfo.pickedPoint.y;
+                }
+                for (let j = -1; j <= Math.max(h, 0); j++) {
+                    this.setCube(i, j, k, CubeType.Sand);
                 }
             }
         }

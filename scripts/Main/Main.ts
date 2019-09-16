@@ -37,12 +37,11 @@ class Main {
 
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
-        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 0, 0), Main.Scene);
-        Main.Camera.setPosition(new BABYLON.Vector3(0, 5, - 10));
+        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
+        Main.Camera.setPosition(new BABYLON.Vector3(- 20, 50, 60));
 		Main.Camera.attachControl(Main.Canvas, true);
 		Main.Camera.lowerRadiusLimit = 6;
-		Main.Camera.upperRadiusLimit = 100;
-		Main.Camera.radius = (Main.Camera.upperRadiusLimit + Main.Camera.lowerRadiusLimit) * 0.5;
+		Main.Camera.upperRadiusLimit = 200;
 		Main.Camera.wheelPrecision *= 8;
 
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
@@ -119,14 +118,21 @@ class Main {
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
 
-		BABYLON.MeshBuilder.CreateGround(
-			"ground",
+		let water = BABYLON.MeshBuilder.CreateGround(
+			"water",
 			{
-				width: 6 * CHUNCK_SIZE,
-				height: 6 * CHUNCK_SIZE
+				width: 12 * CHUNCK_SIZE,
+				height: 12 * CHUNCK_SIZE
 			},
 			Main.Scene
 		);
+		water.position.y = 4.5;
+		let waterMaterial = new BABYLON.StandardMaterial("water-material", Main.Scene);
+		waterMaterial.alpha = 0.3;
+		waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
+		waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+		water.material = waterMaterial;
+
 		let chunckManager = new ChunckManager();
 		let savedTerrainString = window.localStorage.getItem("terrain");
 		if (savedTerrainString) {
@@ -175,10 +181,6 @@ class Main {
 					sandMesh.dispose();
 					rockMesh.dispose();
 					dirtMesh.dispose();
-					let data = chunckManager.serialize();
-					let stringData = JSON.stringify(data);
-					console.log("StringData length = " + stringData.length);
-					window.localStorage.setItem("terrain", stringData);
 					let t1 = performance.now();
 					console.log(t1 - t0);
 				}

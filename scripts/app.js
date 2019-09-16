@@ -419,6 +419,8 @@ class Chunck extends BABYLON.Mesh {
 class ChunckEditor {
     constructor(chunckManager) {
         this.chunckManager = chunckManager;
+        this._xPointerDown = NaN;
+        this._yPointerDown = NaN;
         document.getElementById("destroy").addEventListener("click", () => {
             this.currentCubeType = CubeType.None;
         });
@@ -431,8 +433,21 @@ class ChunckEditor {
         document.getElementById("sand").addEventListener("click", () => {
             this.currentCubeType = CubeType.Sand;
         });
+        document.getElementById("save").addEventListener("click", () => {
+            let data = chunckManager.serialize();
+            let stringData = JSON.stringify(data);
+            console.log("StringData length = " + stringData.length);
+            window.localStorage.setItem("terrain", stringData);
+        });
         Main.Scene.onPointerObservable.add((eventData, eventState) => {
+            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                this._xPointerDown = eventData.event.clientX;
+                this._yPointerDown = eventData.event.clientY;
+            }
             if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                if (Math.abs(eventData.event.clientX - this._xPointerDown) > 5 || Math.abs(eventData.event.clientY - this._yPointerDown) > 5) {
+                    return;
+                }
                 let pickedMesh = eventData.pickInfo.pickedMesh;
                 if (pickedMesh instanceof Chunck) {
                     let chunck = pickedMesh;
@@ -559,11 +574,12 @@ class ChunckManager {
                 let dir = new BABYLON.Vector3(0, -1, 0);
                 let r = new BABYLON.Ray(p, dir);
                 let pickInfo = r.intersectsMesh(sandMesh);
+                let h = 0;
                 if (pickInfo.hit) {
-                    let h = pickInfo.pickedPoint.y;
-                    for (let j = -1; j <= h; j++) {
-                        this.setCube(i, j, k, CubeType.Sand);
-                    }
+                    h = pickInfo.pickedPoint.y;
+                }
+                for (let j = -1; j <= Math.max(h, 0); j++) {
+                    this.setCube(i, j, k, CubeType.Sand);
                 }
             }
         }
@@ -999,12 +1015,11 @@ class Main {
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
-        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 0, 0), Main.Scene);
-        Main.Camera.setPosition(new BABYLON.Vector3(0, 5, -10));
+        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
+        Main.Camera.setPosition(new BABYLON.Vector3(-20, 50, 60));
         Main.Camera.attachControl(Main.Canvas, true);
         Main.Camera.lowerRadiusLimit = 6;
-        Main.Camera.upperRadiusLimit = 100;
-        Main.Camera.radius = (Main.Camera.upperRadiusLimit + Main.Camera.lowerRadiusLimit) * 0.5;
+        Main.Camera.upperRadiusLimit = 200;
         Main.Camera.wheelPrecision *= 8;
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -1070,10 +1085,16 @@ class Main {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
-        BABYLON.MeshBuilder.CreateGround("ground", {
-            width: 6 * CHUNCK_SIZE,
-            height: 6 * CHUNCK_SIZE
+        let water = BABYLON.MeshBuilder.CreateGround("water", {
+            width: 12 * CHUNCK_SIZE,
+            height: 12 * CHUNCK_SIZE
         }, Main.Scene);
+        water.position.y = 4.5;
+        let waterMaterial = new BABYLON.StandardMaterial("water-material", Main.Scene);
+        waterMaterial.alpha = 0.3;
+        waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
+        waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        water.material = waterMaterial;
         let chunckManager = new ChunckManager();
         let savedTerrainString = window.localStorage.getItem("terrain");
         if (savedTerrainString) {
@@ -1117,10 +1138,6 @@ class Main {
                 sandMesh.dispose();
                 rockMesh.dispose();
                 dirtMesh.dispose();
-                let data = chunckManager.serialize();
-                let stringData = JSON.stringify(data);
-                console.log("StringData length = " + stringData.length);
-                window.localStorage.setItem("terrain", stringData);
                 let t1 = performance.now();
                 console.log(t1 - t0);
             });

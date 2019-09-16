@@ -1,5 +1,7 @@
 class ChunckEditor {
 
+    private _xPointerDown: number = NaN;
+    private _yPointerDown: number = NaN;
     public currentCubeType: CubeType;
 
     constructor(
@@ -17,9 +19,22 @@ class ChunckEditor {
         document.getElementById("sand").addEventListener("click", () => {
             this.currentCubeType = CubeType.Sand;
         });
+        document.getElementById("save").addEventListener("click", () => {
+            let data = chunckManager.serialize();
+            let stringData = JSON.stringify(data);
+            console.log("StringData length = " + stringData.length);
+            window.localStorage.setItem("terrain", stringData);
+        })
         Main.Scene.onPointerObservable.add(
 			(eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
+                if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    this._xPointerDown = eventData.event.clientX;
+                    this._yPointerDown = eventData.event.clientY;
+                }
 				if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    if (Math.abs(eventData.event.clientX - this._xPointerDown) > 5 || Math.abs(eventData.event.clientY - this._yPointerDown) > 5) {
+                        return;
+                    }
 					let pickedMesh = eventData.pickInfo.pickedMesh;
 					if (pickedMesh instanceof Chunck) {
 						let chunck = pickedMesh as Chunck;

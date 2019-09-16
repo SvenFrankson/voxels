@@ -20,5 +20,39 @@ html, body {
 }
 
 .chunck-editor-button {
+    font-family: "Bangers";
     display: block;
+    font-size: 20px;
+    margin-bottom: 5px;
+    background: white;
+    border: none;
+    width: 150px;
+    padding-left: 15px;
+    padding-bottom: 7px;
+    text-align: left;
+    letter-spacing: 2px;
+}
+
+.chunck-editor-icon-button {
+    font-size: 32px;
+}
+
+#destroy-icon-button {
+    color: black;
+}
+
+#dirt-icon-button {
+    color: #47a632;
+}
+
+#rock-icon-button {
+    color: #8c8c89;
+}
+
+#sand-icon-button {
+    color: #dbc67b;
+}
+
+#save-icon-button {
+    color: #2097c9;
 }

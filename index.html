@@ -9,15 +9,16 @@
   <script src="./scripts/app.js"></script>
   <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <link rel="stylesheet" type="text/css" href="./styles/app.css">
-  <link rel="stylesheet" type="text/css" href="./styles/panel.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bangers">
 </head>
 <body>
   <canvas id="render-canvas"></canvas>
   <div id="chunck-editor">
-    <button id="destroy" class="chunck-editor-button">DESTROY</button>
-    <button id="dirt" class="chunck-editor-button">DIRT</button>
-    <button id="rock" class="chunck-editor-button">ROCK</button>
-    <button id="sand" class="chunck-editor-button">SAND</button>
+    <button id="destroy" class="chunck-editor-button"><span id="destroy-icon-button" class="chunck-editor-icon-button">□</span> DESTROY</button>
+    <button id="dirt" class="chunck-editor-button"><span id="dirt-icon-button" class="chunck-editor-icon-button">■ </span>DIRT</button>
+    <button id="rock" class="chunck-editor-button"><span id="rock-icon-button" class="chunck-editor-icon-button">■ </span>ROCK</button>
+    <button id="sand" class="chunck-editor-button"><span id="sand-icon-button" class="chunck-editor-icon-button">■ </span>SAND</button>
+    <button id="save" class="chunck-editor-button"><span id="save-icon-button" class="chunck-editor-icon-button">■ </span>SAVE</button>
   </div>
 </body>
 </html>
