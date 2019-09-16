@@ -2,23 +2,26 @@ class ChunckEditor {
 
     private _xPointerDown: number = NaN;
     private _yPointerDown: number = NaN;
-    public currentCubeType: CubeType;
+    public currentCubeType: CubeType = CubeType.None;
+    public brushSize: number = 0;
 
     constructor(
         public chunckManager: ChunckManager
     ) {
-        document.getElementById("destroy").addEventListener("click", () => {
-            this.currentCubeType = CubeType.None;
-        });
-        document.getElementById("dirt").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Dirt;
-        });
-        document.getElementById("rock").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Rock;
-        });
-        document.getElementById("sand").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Sand;
-        });
+        for (let i = 0; i < 4; i++) {
+            let ii = i;
+            document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
+                this.currentCubeType = ii;
+                this.applyBrushTypeButtonStyle();
+            });
+        }
+        for (let i = 0; i < 5; i++) {
+            let ii = i;
+            document.getElementById("brush-size-button-" + ii).addEventListener("click", () => {
+                this.brushSize = ii;
+                this.applyBrushSizeButtonStyle();
+            });
+        }
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
@@ -77,7 +80,7 @@ class ChunckEditor {
                                 }
                             }
     
-                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
                         }
                         else {
                             localPickedPoint.subtractInPlace(n.scale(0.5));
@@ -86,11 +89,41 @@ class ChunckEditor {
                                 Math.floor(localPickedPoint.y),
                                 Math.floor(localPickedPoint.z)
                             );
-                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
                         }
 					}
 				}
 			}
-		)
+        );
+        this.applyBrushTypeButtonStyle();
+        this.applyBrushSizeButtonStyle();
+    }
+
+    public applyBrushTypeButtonStyle(): void {
+        document.querySelectorAll(".brush-type-button").forEach(
+            e => {
+                if (e instanceof HTMLElement) {
+                    e.style.background = "white";
+                    e.style.color = "black";
+                }
+            }
+        );
+        let e = document.getElementById("brush-type-button-" + this.currentCubeType);
+        e.style.background = "black";
+        e.style.color = "white";
+    }
+
+    public applyBrushSizeButtonStyle(): void {
+        document.querySelectorAll(".brush-size-button").forEach(
+            e => {
+                if (e instanceof HTMLElement) {
+                    e.style.background = "white";
+                    e.style.color = "black";
+                }
+            }
+        );
+        let e = document.getElementById("brush-size-button-" + this.brushSize);
+        e.style.background = "black";
+        e.style.color = "white";
     }
 }

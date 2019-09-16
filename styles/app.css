@@ -23,7 +23,7 @@ html, body {
     font-family: "Bangers";
     display: block;
     font-size: 20px;
-    margin-bottom: 5px;
+    margin: 0;
     background: white;
     border: none;
     width: 150px;
@@ -55,4 +55,35 @@ html, body {
 
 #save-icon-button {
     color: #2097c9;
+}
+
+.editor-panel {
+    font-family: "Bangers";
+    display: block;
+    font-size: 20px;
+    margin-bottom: 5px;
+    background: white;
+    border: none;
+    width: 150px;
+    padding: 10px 0px 0px 0px;
+    text-align: left;
+    letter-spacing: 2px;
+}
+
+.editor-label {
+    margin-left: 15px;
+    margin-bottom: 10px;
+}
+
+.brush-size-button {
+    font-family: "Bangers";
+    display: inline-block;
+    font-size: 20px;
+    background: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    margin-right: -6px;
+    text-align: center;
+    letter-spacing:0px;
 }

@@ -421,18 +421,22 @@ class ChunckEditor {
         this.chunckManager = chunckManager;
         this._xPointerDown = NaN;
         this._yPointerDown = NaN;
-        document.getElementById("destroy").addEventListener("click", () => {
-            this.currentCubeType = CubeType.None;
-        });
-        document.getElementById("dirt").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Dirt;
-        });
-        document.getElementById("rock").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Rock;
-        });
-        document.getElementById("sand").addEventListener("click", () => {
-            this.currentCubeType = CubeType.Sand;
-        });
+        this.currentCubeType = CubeType.None;
+        this.brushSize = 0;
+        for (let i = 0; i < 4; i++) {
+            let ii = i;
+            document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
+                this.currentCubeType = ii;
+                this.applyBrushTypeButtonStyle();
+            });
+        }
+        for (let i = 0; i < 5; i++) {
+            let ii = i;
+            document.getElementById("brush-size-button-" + ii).addEventListener("click", () => {
+                this.brushSize = ii;
+                this.applyBrushSizeButtonStyle();
+            });
+        }
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
@@ -481,16 +485,40 @@ class ChunckEditor {
                                 coordinates.z--;
                             }
                         }
-                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
                     }
                     else {
                         localPickedPoint.subtractInPlace(n.scale(0.5));
                         let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
-                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, true);
+                        this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
                     }
                 }
             }
         });
+        this.applyBrushTypeButtonStyle();
+        this.applyBrushSizeButtonStyle();
+    }
+    applyBrushTypeButtonStyle() {
+        document.querySelectorAll(".brush-type-button").forEach(e => {
+            if (e instanceof HTMLElement) {
+                e.style.background = "white";
+                e.style.color = "black";
+            }
+        });
+        let e = document.getElementById("brush-type-button-" + this.currentCubeType);
+        e.style.background = "black";
+        e.style.color = "white";
+    }
+    applyBrushSizeButtonStyle() {
+        document.querySelectorAll(".brush-size-button").forEach(e => {
+            if (e instanceof HTMLElement) {
+                e.style.background = "white";
+                e.style.color = "black";
+            }
+        });
+        let e = document.getElementById("brush-size-button-" + this.brushSize);
+        e.style.background = "black";
+        e.style.color = "white";
     }
 }
 class ChunckManager {
@@ -647,35 +675,54 @@ class ChunckManager {
             }
         }
     }
-    setChunckCube(chunck, i, j, k, cubeType, redraw = false) {
-        this.setCube(chunck.i * CHUNCK_SIZE + i, chunck.j * CHUNCK_SIZE + j, chunck.k * CHUNCK_SIZE + k, cubeType, redraw);
+    setChunckCube(chunck, i, j, k, cubeType, r = 0, redraw = false) {
+        this.setCube(chunck.i * CHUNCK_SIZE + i, chunck.j * CHUNCK_SIZE + j, chunck.k * CHUNCK_SIZE + k, cubeType, r, redraw);
     }
-    setCube(I, J, K, cubeType, redraw = false) {
-        let iChunck = Math.floor(I / CHUNCK_SIZE);
-        let jChunck = Math.floor(J / CHUNCK_SIZE);
-        let kChunck = Math.floor(K / CHUNCK_SIZE);
-        let chunck = this.getChunck(iChunck, jChunck, kChunck);
-        if (chunck) {
-            let iCube = I - iChunck * CHUNCK_SIZE;
-            let jCube = J - jChunck * CHUNCK_SIZE;
-            let kCube = K - kChunck * CHUNCK_SIZE;
-            chunck.setCube(iCube, jCube, kCube, cubeType);
-            if (redraw) {
-                let i0 = iCube === 0 ? -1 : 0;
-                let i1 = iCube === (CHUNCK_SIZE - 1) ? 1 : 0;
-                let j0 = jCube === 0 ? -1 : 0;
-                let j1 = jCube === (CHUNCK_SIZE - 1) ? 1 : 0;
-                let k0 = kCube === 0 ? -1 : 0;
-                let k1 = kCube === (CHUNCK_SIZE - 1) ? 1 : 0;
-                for (let i = i0; i <= i1; i++) {
-                    for (let j = j0; j <= j1; j++) {
-                        for (let k = k0; k <= k1; k++) {
-                            let redrawnChunck = this.getChunck(i + iChunck, j + jChunck, k + kChunck);
-                            if (redrawnChunck) {
-                                redrawnChunck.generateVertices();
-                                redrawnChunck.generateFaces();
-                            }
+    setCube(I, J, K, cubeType, r = 0, redraw = false) {
+        if (r === 0) {
+            let iChunck = Math.floor(I / CHUNCK_SIZE);
+            let jChunck = Math.floor(J / CHUNCK_SIZE);
+            let kChunck = Math.floor(K / CHUNCK_SIZE);
+            let chunck = this.getChunck(iChunck, jChunck, kChunck);
+            if (chunck) {
+                let iCube = I - iChunck * CHUNCK_SIZE;
+                let jCube = J - jChunck * CHUNCK_SIZE;
+                let kCube = K - kChunck * CHUNCK_SIZE;
+                chunck.setCube(iCube, jCube, kCube, cubeType);
+                if (redraw) {
+                    this.redrawZone(I - 1, J - 1, K - 1, I + 1, J + 1, K + 1);
+                }
+            }
+        }
+        else {
+            for (let II = -r; II <= r; II++) {
+                for (let JJ = -r; JJ <= r; JJ++) {
+                    for (let KK = -r; KK <= r; KK++) {
+                        if (II * II + JJ * JJ + KK * KK < r * r) {
+                            this.setCube(I + II, J + JJ, K + KK, cubeType, 0, false);
                         }
+                    }
+                }
+            }
+            if (redraw) {
+                this.redrawZone(I - 1 - r, J - 1 - r, K - 1 - r, I + 1 + r, J + 1 + r, K + 1 + r);
+            }
+        }
+    }
+    redrawZone(IMin, JMin, KMin, IMax, JMax, KMax) {
+        let iChunckMin = Math.floor(IMin / CHUNCK_SIZE);
+        let jChunckMin = Math.floor(JMin / CHUNCK_SIZE);
+        let kChunckMin = Math.floor(KMin / CHUNCK_SIZE);
+        let iChunckMax = Math.floor(IMax / CHUNCK_SIZE);
+        let jChunckMax = Math.floor(JMax / CHUNCK_SIZE);
+        let kChunckMax = Math.floor(KMax / CHUNCK_SIZE);
+        for (let i = iChunckMin; i <= iChunckMax; i++) {
+            for (let j = jChunckMin; j <= jChunckMax; j++) {
+                for (let k = kChunckMin; k <= kChunckMax; k++) {
+                    let redrawnChunck = this.getChunck(i, j, k);
+                    if (redrawnChunck) {
+                        redrawnChunck.generateVertices();
+                        redrawnChunck.generateFaces();
                     }
                 }
             }

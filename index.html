@@ -14,10 +14,21 @@
 <body>
   <canvas id="render-canvas"></canvas>
   <div id="chunck-editor">
-    <button id="destroy" class="chunck-editor-button"><span id="destroy-icon-button" class="chunck-editor-icon-button">□</span> DESTROY</button>
-    <button id="dirt" class="chunck-editor-button"><span id="dirt-icon-button" class="chunck-editor-icon-button">■ </span>DIRT</button>
-    <button id="rock" class="chunck-editor-button"><span id="rock-icon-button" class="chunck-editor-icon-button">■ </span>ROCK</button>
-    <button id="sand" class="chunck-editor-button"><span id="sand-icon-button" class="chunck-editor-icon-button">■ </span>SAND</button>
+    <div class="editor-panel">
+        <div class="editor-label">Brush Type</div>
+        <button id="brush-type-button-3" class="chunck-editor-button brush-type-button"><span id="destroy-icon-button" class="chunck-editor-icon-button">□</span> DESTROY</button>
+        <button id="brush-type-button-0" class="chunck-editor-button brush-type-button"><span id="dirt-icon-button" class="chunck-editor-icon-button">■ </span>DIRT</button>
+        <button id="brush-type-button-1" class="chunck-editor-button brush-type-button"><span id="rock-icon-button" class="chunck-editor-icon-button">■ </span>ROCK</button>
+        <button id="brush-type-button-2" class="chunck-editor-button brush-type-button"><span id="sand-icon-button" class="chunck-editor-icon-button">■ </span>SAND</button>
+    </div>
+    <div class="editor-panel">
+      <div class="editor-label">Brush Size</div>
+      <button id="brush-size-button-0" class="brush-size-button">1</button>
+      <button id="brush-size-button-1" class="brush-size-button">2</button>
+      <button id="brush-size-button-2" class="brush-size-button">3</button>
+      <button id="brush-size-button-3" class="brush-size-button">4</button>
+      <button id="brush-size-button-4" class="brush-size-button">5</button>
+    </div>
     <button id="save" class="chunck-editor-button"><span id="save-icon-button" class="chunck-editor-icon-button">■ </span>SAVE</button>
   </div>
 </body>
