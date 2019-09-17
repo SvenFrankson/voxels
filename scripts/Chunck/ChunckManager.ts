@@ -226,9 +226,7 @@ class ChunckManager {
             for (let II = - r; II <= r; II++) {
                 for (let JJ = - r; JJ <= r; JJ++) {
                     for (let KK = - r; KK <= r; KK++) {
-                        if (II * II + JJ * JJ + KK * KK < r * r) {
-                            this.setCube(I + II, J + JJ, K + KK, cubeType, 0, false);
-                        }
+                        this.setCube(I + II, J + JJ, K + KK, cubeType, 0, false);
                     }
                 }
             }

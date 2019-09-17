@@ -5,14 +5,19 @@ class ChunckEditor {
     public currentCubeType: CubeType = CubeType.None;
     public brushSize: number = 0;
 
+    public brushMesh: BABYLON.Mesh;
+
     constructor(
         public chunckManager: ChunckManager
     ) {
+        this.brushMesh = new BABYLON.Mesh("brush-mesh");
+        this.updateBrushMesh();
         for (let i = 0; i < 4; i++) {
             let ii = i;
             document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
                 this.currentCubeType = ii;
                 this.applyBrushTypeButtonStyle();
+                this.updateBrushMesh();
             });
         }
         for (let i = 0; i < 5; i++) {
@@ -20,6 +25,7 @@ class ChunckEditor {
             document.getElementById("brush-size-button-" + ii).addEventListener("click", () => {
                 this.brushSize = ii;
                 this.applyBrushSizeButtonStyle();
+                this.updateBrushMesh();
             });
         }
         document.getElementById("save").addEventListener("click", () => {
@@ -30,26 +36,30 @@ class ChunckEditor {
         })
         Main.Scene.onPointerObservable.add(
 			(eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
+                console.log("Pouet");
                 if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                     this._xPointerDown = eventData.event.clientX;
                     this._yPointerDown = eventData.event.clientY;
                 }
-				if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                    if (Math.abs(eventData.event.clientX - this._xPointerDown) > 5 || Math.abs(eventData.event.clientY - this._yPointerDown) > 5) {
-                        return;
-                    }
-					let pickedMesh = eventData.pickInfo.pickedMesh;
+				else {
+					let pickInfo = Main.Scene.pickWithRay(
+                        eventData.pickInfo.ray,
+                        (m) => {
+                            return m instanceof Chunck;
+                        }
+                    );
+                    let pickedMesh = pickInfo.pickedMesh;
 					if (pickedMesh instanceof Chunck) {
 						let chunck = pickedMesh as Chunck;
-						let localPickedPoint = eventData.pickInfo.pickedPoint.subtract(chunck.position);
-                        let n = eventData.pickInfo.getNormal();
+						let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+                        let n = pickInfo.getNormal();
+                        localPickedPoint.subtractInPlace(n.scale(0.5));
+                        let coordinates = new BABYLON.Vector3(
+                            Math.floor(localPickedPoint.x),
+                            Math.floor(localPickedPoint.y),
+                            Math.floor(localPickedPoint.z)
+                        );
                         if (this.currentCubeType !== CubeType.None) {
-                            localPickedPoint.subtractInPlace(n.scale(0.5));
-                            let coordinates = new BABYLON.Vector3(
-                                Math.floor(localPickedPoint.x),
-                                Math.floor(localPickedPoint.y),
-                                Math.floor(localPickedPoint.z)
-                            );
                             let absN = new BABYLON.Vector3(
                                 Math.abs(n.x),
                                 Math.abs(n.y),
@@ -79,19 +89,17 @@ class ChunckEditor {
                                     coordinates.z--;
                                 }
                             }
-    
-                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
                         }
-                        else {
-                            localPickedPoint.subtractInPlace(n.scale(0.5));
-                            let coordinates = new BABYLON.Vector3(
-                                Math.floor(localPickedPoint.x),
-                                Math.floor(localPickedPoint.y),
-                                Math.floor(localPickedPoint.z)
-                            );
-                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
+                        if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                            if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
+                                this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
+                            }
                         }
-					}
+                        this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
+                        this.brushMesh.position.x += 0.5;
+                        this.brushMesh.position.y += 0.5;
+                        this.brushMesh.position.z += 0.5;
+                    }
 				}
 			}
         );
@@ -125,5 +133,13 @@ class ChunckEditor {
         let e = document.getElementById("brush-size-button-" + this.brushSize);
         e.style.background = "black";
         e.style.color = "white";
+    }
+
+    public updateBrushMesh(): void {
+        BABYLON.VertexData.CreateBox({
+            width: 1 + 2 * this.brushSize + 0.2,
+            height: 1 + 2 * this.brushSize + 0.2,
+            depth: 1 + 2 * this.brushSize + 0.2
+        }).applyToMesh(this.brushMesh);
     }
 }
