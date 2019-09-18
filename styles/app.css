@@ -17,6 +17,8 @@ html, body {
     position: fixed;
     top: 10px;
     left: 10px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 30%);
 }
 
 .chunck-editor-button {
@@ -86,4 +88,32 @@ html, body {
     margin-right: -6px;
     text-align: center;
     letter-spacing:0px;
+}
+
+a {
+    color: white;
+    text-decoration: none; /* no underline */
+}
+
+#credit {
+    background-color: rgba(0, 0, 0, 30%);
+    text-align: right;
+    position: absolute;
+    width: 300px;
+    bottom: 10px;
+    right: 10px;
+    padding: 10px;
+    color: white;
+    font-family: "Arial";
+}
+
+#credit-dev {
+    font-size: 18px;
+    margin: 5px;
+}
+
+#credit-art {
+    font-style: italic;
+    font-size: 14px;
+    margin: 5px;
 }
