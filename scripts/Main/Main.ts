@@ -42,7 +42,7 @@ class Main {
 		Main.Camera.attachControl(Main.Canvas, true);
 		Main.Camera.lowerRadiusLimit = 6;
 		Main.Camera.upperRadiusLimit = 200;
-		Main.Camera.wheelPrecision *= 8;
+		Main.Camera.wheelPrecision *= 4;
 
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -103,20 +103,62 @@ class Main {
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
 
 		// Skybox seed : 1vt3h8rxhb28
-		Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
 		Main.Skybox.layerMask = 1;
-		Main.Skybox.rotation.y = Math.PI / 2;
 		Main.Skybox.infiniteDistance = true;
 		let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
 		skyboxMaterial.backFaceCulling = false;
-		skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
-			"./datas/skyboxes/sky",
-			Main.Scene,
-			["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
-		skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+		skyboxMaterial.emissiveTexture = new BABYLON.Texture(
+			"./datas/textures/sky.png",
+			Main.Scene
+		);
 		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
+
+		let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
+		borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
+		borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+		let borderXP = BABYLON.MeshBuilder.CreateBox(
+			"border-xp",
+			{
+				width: 2,
+				depth: 12 * CHUNCK_SIZE + 2,
+				height: 6
+			}
+		);
+		borderXP.position.copyFromFloats(6 * CHUNCK_SIZE + 1, 2, - 1);
+		borderXP.material = borderMaterial;
+		let borderXM = BABYLON.MeshBuilder.CreateBox(
+			"border-xm",
+			{
+				width: 2,
+				depth: 12 * CHUNCK_SIZE + 2,
+				height: 6
+			}
+		);
+		borderXM.position.copyFromFloats(- 6 * CHUNCK_SIZE - 1, 2, 1);
+		borderXM.material = borderMaterial;
+		let borderZP = BABYLON.MeshBuilder.CreateBox(
+			"border-zp",
+			{
+				width: 12 * CHUNCK_SIZE + 2,
+				depth: 2,
+				height: 6
+			}
+		);
+		borderZP.position.copyFromFloats(1, 2, 6 * CHUNCK_SIZE + 1);
+		borderZP.material = borderMaterial;
+		let borderZM = BABYLON.MeshBuilder.CreateBox(
+			"border-zm",
+			{
+				width: 12 * CHUNCK_SIZE + 2,
+				depth: 2,
+				height: 6
+			}
+		);
+		borderZM.position.copyFromFloats(- 1, 2, - 6 * CHUNCK_SIZE - 1);
+		borderZM.material = borderMaterial;
 
 		let water = BABYLON.MeshBuilder.CreateGround(
 			"water",
@@ -140,51 +182,61 @@ class Main {
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
 			chunckManager.deserialize(savedTerrain);
 			let l = 6;
+			let manyChuncks = [];
 			for (let i = -l; i <= l; i++) {
 				for (let j = -1; j <= 2 * l - 1; j++) {
 					for (let k = -l; k <= l; k++) {
 						let chunck = chunckManager.getChunck(i, j, k);
 						if (chunck) {
-							chunck.generateVertices();
-							chunck.generateFaces();
+							manyChuncks.push(chunck);
 						}
 					}
 				}
 			}
-			let t1 = performance.now();
-			console.log(t1 - t0);
+			let loopOut = async () => {
+				await chunckManager.generateManyChuncks(manyChuncks);
+				let t1 = performance.now();
+				console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
+			}
+			loopOut();
 		}
 		else {
-			BABYLON.SceneLoader.ImportMesh(
-				"",
-				"./datas/meshes/",
-				"craneo.v2.packed.babylon",
-				Main.Scene,
-				(meshes, particleSystems, skeletons) => {
-					let skullMesh = meshes.find(m => { return m.name === "Crane"; }) as BABYLON.Mesh;
-					let sandMesh = meshes.find(m => { return m.name === "Sand"; }) as BABYLON.Mesh;
-					let rockMesh = meshes.find(m => { return m.name === "Rock"; }) as BABYLON.Mesh;
-					let dirtMesh = meshes.find(m => { return m.name === "Dirt"; }) as BABYLON.Mesh;
-					let t0 = performance.now();
+			let t0 = performance.now();
+			var request = new XMLHttpRequest();
+			request.open('GET', './datas/scenes/crane_island.json', true);
+
+			request.onload = () => {
+				if (request.status >= 200 && request.status < 400) {
+					let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
+					chunckManager.deserialize(defaultTerrain);
 					let l = 6;
-					chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
+					let manyChuncks = [];
 					for (let i = -l; i <= l; i++) {
 						for (let j = -1; j <= 2 * l - 1; j++) {
 							for (let k = -l; k <= l; k++) {
 								let chunck = chunckManager.getChunck(i, j, k);
-								chunck.generateVertices();
-								chunck.generateFaces();
+								if (chunck) {
+									manyChuncks.push(chunck);
+								}
 							}
 						}
 					}
-					skullMesh.dispose();
-					sandMesh.dispose();
-					rockMesh.dispose();
-					dirtMesh.dispose();
-					let t1 = performance.now();
-					console.log(t1 - t0);
+					let loopOut = async () => {
+						await chunckManager.generateManyChuncks(manyChuncks);
+						let t1 = performance.now();
+						console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
+					}
+					loopOut();
+				} else {
+					alert("Scene file not found. My bad. Sven.")
 				}
-			);
+			};
+
+			request.onerror = () => {
+				alert("Unknown error. My bad. Sven.")
+			};
+
+			request.send();
 		}
 
 		new ChunckEditor(chunckManager);

@@ -2,22 +2,39 @@ class ChunckEditor {
 
     private _xPointerDown: number = NaN;
     private _yPointerDown: number = NaN;
-    public currentCubeType: CubeType = CubeType.None;
+
+    public brushCubeType: CubeType = undefined;
     public brushSize: number = 0;
 
     public brushMesh: BABYLON.Mesh;
+    public brushMaterials: BABYLON.StandardMaterial[];
 
     constructor(
         public chunckManager: ChunckManager
     ) {
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
+        this.brushMaterials = []
+        for (let i = 0; i < 4; i++) {
+            this.brushMaterials[i] = new BABYLON.StandardMaterial("brush-material-" + i, Main.Scene);
+            this.brushMaterials[i].alpha = 0.5;
+            this.brushMaterials[i].specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        }
+        this.brushMaterials[0].diffuseColor = BABYLON.Color3.FromHexString("#a86f32");
+        this.brushMaterials[1].diffuseColor = BABYLON.Color3.FromHexString("#8c8c89");
+        this.brushMaterials[2].diffuseColor = BABYLON.Color3.FromHexString("#dbc67b");
+        this.brushMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
         this.updateBrushMesh();
         for (let i = 0; i < 4; i++) {
             let ii = i;
             document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
-                this.currentCubeType = ii;
-                this.applyBrushTypeButtonStyle();
-                this.updateBrushMesh();
+                if (this.brushCubeType === ii) {
+                    this.brushCubeType = undefined;
+                }
+                else {
+                    this.brushCubeType = ii;
+                    this.applyBrushTypeButtonStyle();
+                    this.updateBrushMesh();
+                }
             });
         }
         for (let i = 0; i < 5; i++) {
@@ -31,76 +48,84 @@ class ChunckEditor {
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
-            console.log("StringData length = " + stringData.length);
             window.localStorage.setItem("terrain", stringData);
         })
         Main.Scene.onPointerObservable.add(
 			(eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
-                console.log("Pouet");
-                if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                    this._xPointerDown = eventData.event.clientX;
-                    this._yPointerDown = eventData.event.clientY;
-                }
-				else {
-					let pickInfo = Main.Scene.pickWithRay(
-                        eventData.pickInfo.ray,
-                        (m) => {
-                            return m instanceof Chunck;
-                        }
-                    );
-                    let pickedMesh = pickInfo.pickedMesh;
-					if (pickedMesh instanceof Chunck) {
-						let chunck = pickedMesh as Chunck;
-						let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
-                        let n = pickInfo.getNormal();
-                        localPickedPoint.subtractInPlace(n.scale(0.5));
-                        let coordinates = new BABYLON.Vector3(
-                            Math.floor(localPickedPoint.x),
-                            Math.floor(localPickedPoint.y),
-                            Math.floor(localPickedPoint.z)
-                        );
-                        if (this.currentCubeType !== CubeType.None) {
-                            let absN = new BABYLON.Vector3(
-                                Math.abs(n.x),
-                                Math.abs(n.y),
-                                Math.abs(n.z)
-                            );
-                            if (absN.x > absN.y && absN.x > absN.z) {
-                                if (n.x > 0) {
-                                    coordinates.x++;
-                                }
-                                else {
-                                    coordinates.x--;
-                                }
-                            }
-                            if (absN.y > absN.x && absN.y > absN.z) {
-                                if (n.y > 0) {
-                                    coordinates.y++;
-                                }
-                                else {
-                                    coordinates.y--;
-                                }
-                            }
-                            if (absN.z > absN.x && absN.z > absN.y) {
-                                if (n.z > 0) {
-                                    coordinates.z++;
-                                }
-                                else {
-                                    coordinates.z--;
-                                }
-                            }
-                        }
-                        if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                            if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
-                                this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
-                            }
-                        }
-                        this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
-                        this.brushMesh.position.x += 0.5;
-                        this.brushMesh.position.y += 0.5;
-                        this.brushMesh.position.z += 0.5;
+                let showBrush = false;
+                if (this.brushCubeType !== undefined) {
+                    if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                        this._xPointerDown = eventData.event.clientX;
+                        this._yPointerDown = eventData.event.clientY;
                     }
-				}
+                    else {
+                        let pickInfo = Main.Scene.pickWithRay(
+                            eventData.pickInfo.ray,
+                            (m) => {
+                                return m instanceof Chunck;
+                            }
+                        );
+                        let pickedMesh = pickInfo.pickedMesh;
+                        if (pickedMesh instanceof Chunck) {
+                            let chunck = pickedMesh as Chunck;
+                            let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+                            let n = pickInfo.getNormal();
+                            localPickedPoint.subtractInPlace(n.scale(0.5));
+                            let coordinates = new BABYLON.Vector3(
+                                Math.floor(localPickedPoint.x),
+                                Math.floor(localPickedPoint.y),
+                                Math.floor(localPickedPoint.z)
+                            );
+                            if (this.brushCubeType !== CubeType.None) {
+                                let absN = new BABYLON.Vector3(
+                                    Math.abs(n.x),
+                                    Math.abs(n.y),
+                                    Math.abs(n.z)
+                                );
+                                if (absN.x > absN.y && absN.x > absN.z) {
+                                    if (n.x > 0) {
+                                        coordinates.x++;
+                                    }
+                                    else {
+                                        coordinates.x--;
+                                    }
+                                }
+                                if (absN.y > absN.x && absN.y > absN.z) {
+                                    if (n.y > 0) {
+                                        coordinates.y++;
+                                    }
+                                    else {
+                                        coordinates.y--;
+                                    }
+                                }
+                                if (absN.z > absN.x && absN.z > absN.y) {
+                                    if (n.z > 0) {
+                                        coordinates.z++;
+                                    }
+                                    else {
+                                        coordinates.z--;
+                                    }
+                                }
+                            }
+                            if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                                if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
+                                    this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.brushCubeType, this.brushSize, true);
+                                }
+                            }
+                            this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
+                            this.brushMesh.position.x += 0.5;
+                            this.brushMesh.position.y += 0.5;
+                            this.brushMesh.position.z += 0.5;
+                            showBrush = true;
+                        }
+                    }
+                }
+                if (showBrush) {
+                    this.brushMesh.isVisible = true;
+                }
+                else {
+                    this.brushMesh.isVisible = false;
+                }
 			}
         );
         this.applyBrushTypeButtonStyle();
@@ -116,9 +141,11 @@ class ChunckEditor {
                 }
             }
         );
-        let e = document.getElementById("brush-type-button-" + this.currentCubeType);
-        e.style.background = "black";
-        e.style.color = "white";
+        let e = document.getElementById("brush-type-button-" + this.brushCubeType);
+        if (e) {
+            e.style.background = "black";
+            e.style.color = "white";
+        }
     }
 
     public applyBrushSizeButtonStyle(): void {
@@ -141,5 +168,8 @@ class ChunckEditor {
             height: 1 + 2 * this.brushSize + 0.2,
             depth: 1 + 2 * this.brushSize + 0.2
         }).applyToMesh(this.brushMesh);
+        if (isFinite(this.brushCubeType)) {
+            this.brushMesh.material = this.brushMaterials[this.brushCubeType];
+        }
     }
 }

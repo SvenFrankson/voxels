@@ -13,7 +13,7 @@ class Face {
 
 class Chunck extends BABYLON.Mesh {
 
-
+    public isEmpty: boolean = true;
     public faces: Face[] = [];
     public vertices: Vertex[] = [];
     public cubes: Cube[][][] = [];
@@ -31,6 +31,7 @@ class Chunck extends BABYLON.Mesh {
                 this.cubes[i][j] = [];
             }
             this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
+            this.isEmpty = false;
         }
         else {
             if (this.cubes[i]) {

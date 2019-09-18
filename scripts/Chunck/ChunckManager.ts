@@ -17,6 +17,34 @@ class ChunckManager {
 
     }
 
+    public async generateManyChuncks(chuncks: Chunck[]): Promise<void> {
+        return new Promise<void>(
+            resolve => {
+                let iterator = 0;
+                let step = () => {
+                    let done = false;
+                    while (!done) {
+                        let chunck = chuncks[iterator];
+                        iterator++;
+                        if (chunck) {
+                            if (!chunck.isEmpty) {
+                                chunck.generateVertices();
+                                chunck.generateFaces();
+                                done = true;
+                                requestAnimationFrame(step);
+                            }
+                        }
+                        else {
+                            done = true;
+                            resolve();
+                        }
+                    }
+                }
+                step();
+            }
+        );
+    }
+
     public generateRandom(d: number = 1): void {
         this.generateAroundZero(d);
         for (let i = - d; i <= d; i++) {

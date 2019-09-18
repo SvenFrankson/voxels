@@ -13,6 +13,7 @@ class Chunck extends BABYLON.Mesh {
         this.i = i;
         this.j = j;
         this.k = k;
+        this.isEmpty = true;
         this.faces = [];
         this.vertices = [];
         this.cubes = [];
@@ -29,6 +30,7 @@ class Chunck extends BABYLON.Mesh {
                 this.cubes[i][j] = [];
             }
             this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
+            this.isEmpty = false;
         }
         else {
             if (this.cubes[i]) {
@@ -421,16 +423,31 @@ class ChunckEditor {
         this.chunckManager = chunckManager;
         this._xPointerDown = NaN;
         this._yPointerDown = NaN;
-        this.currentCubeType = CubeType.None;
+        this.brushCubeType = undefined;
         this.brushSize = 0;
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
+        this.brushMaterials = [];
+        for (let i = 0; i < 4; i++) {
+            this.brushMaterials[i] = new BABYLON.StandardMaterial("brush-material-" + i, Main.Scene);
+            this.brushMaterials[i].alpha = 0.5;
+            this.brushMaterials[i].specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        }
+        this.brushMaterials[0].diffuseColor = BABYLON.Color3.FromHexString("#a86f32");
+        this.brushMaterials[1].diffuseColor = BABYLON.Color3.FromHexString("#8c8c89");
+        this.brushMaterials[2].diffuseColor = BABYLON.Color3.FromHexString("#dbc67b");
+        this.brushMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
         this.updateBrushMesh();
         for (let i = 0; i < 4; i++) {
             let ii = i;
             document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
-                this.currentCubeType = ii;
-                this.applyBrushTypeButtonStyle();
-                this.updateBrushMesh();
+                if (this.brushCubeType === ii) {
+                    this.brushCubeType = undefined;
+                }
+                else {
+                    this.brushCubeType = ii;
+                    this.applyBrushTypeButtonStyle();
+                    this.updateBrushMesh();
+                }
             });
         }
         for (let i = 0; i < 5; i++) {
@@ -444,63 +461,71 @@ class ChunckEditor {
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
-            console.log("StringData length = " + stringData.length);
             window.localStorage.setItem("terrain", stringData);
         });
         Main.Scene.onPointerObservable.add((eventData, eventState) => {
-            console.log("Pouet");
-            if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                this._xPointerDown = eventData.event.clientX;
-                this._yPointerDown = eventData.event.clientY;
+            let showBrush = false;
+            if (this.brushCubeType !== undefined) {
+                if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    this._xPointerDown = eventData.event.clientX;
+                    this._yPointerDown = eventData.event.clientY;
+                }
+                else {
+                    let pickInfo = Main.Scene.pickWithRay(eventData.pickInfo.ray, (m) => {
+                        return m instanceof Chunck;
+                    });
+                    let pickedMesh = pickInfo.pickedMesh;
+                    if (pickedMesh instanceof Chunck) {
+                        let chunck = pickedMesh;
+                        let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+                        let n = pickInfo.getNormal();
+                        localPickedPoint.subtractInPlace(n.scale(0.5));
+                        let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+                        if (this.brushCubeType !== CubeType.None) {
+                            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+                            if (absN.x > absN.y && absN.x > absN.z) {
+                                if (n.x > 0) {
+                                    coordinates.x++;
+                                }
+                                else {
+                                    coordinates.x--;
+                                }
+                            }
+                            if (absN.y > absN.x && absN.y > absN.z) {
+                                if (n.y > 0) {
+                                    coordinates.y++;
+                                }
+                                else {
+                                    coordinates.y--;
+                                }
+                            }
+                            if (absN.z > absN.x && absN.z > absN.y) {
+                                if (n.z > 0) {
+                                    coordinates.z++;
+                                }
+                                else {
+                                    coordinates.z--;
+                                }
+                            }
+                        }
+                        if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                            if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
+                                this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.brushCubeType, this.brushSize, true);
+                            }
+                        }
+                        this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
+                        this.brushMesh.position.x += 0.5;
+                        this.brushMesh.position.y += 0.5;
+                        this.brushMesh.position.z += 0.5;
+                        showBrush = true;
+                    }
+                }
+            }
+            if (showBrush) {
+                this.brushMesh.isVisible = true;
             }
             else {
-                let pickInfo = Main.Scene.pickWithRay(eventData.pickInfo.ray, (m) => {
-                    return m instanceof Chunck;
-                });
-                let pickedMesh = pickInfo.pickedMesh;
-                if (pickedMesh instanceof Chunck) {
-                    let chunck = pickedMesh;
-                    let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
-                    let n = pickInfo.getNormal();
-                    localPickedPoint.subtractInPlace(n.scale(0.5));
-                    let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
-                    if (this.currentCubeType !== CubeType.None) {
-                        let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
-                        if (absN.x > absN.y && absN.x > absN.z) {
-                            if (n.x > 0) {
-                                coordinates.x++;
-                            }
-                            else {
-                                coordinates.x--;
-                            }
-                        }
-                        if (absN.y > absN.x && absN.y > absN.z) {
-                            if (n.y > 0) {
-                                coordinates.y++;
-                            }
-                            else {
-                                coordinates.y--;
-                            }
-                        }
-                        if (absN.z > absN.x && absN.z > absN.y) {
-                            if (n.z > 0) {
-                                coordinates.z++;
-                            }
-                            else {
-                                coordinates.z--;
-                            }
-                        }
-                    }
-                    if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                        if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
-                            this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.currentCubeType, this.brushSize, true);
-                        }
-                    }
-                    this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
-                    this.brushMesh.position.x += 0.5;
-                    this.brushMesh.position.y += 0.5;
-                    this.brushMesh.position.z += 0.5;
-                }
+                this.brushMesh.isVisible = false;
             }
         });
         this.applyBrushTypeButtonStyle();
@@ -513,9 +538,11 @@ class ChunckEditor {
                 e.style.color = "black";
             }
         });
-        let e = document.getElementById("brush-type-button-" + this.currentCubeType);
-        e.style.background = "black";
-        e.style.color = "white";
+        let e = document.getElementById("brush-type-button-" + this.brushCubeType);
+        if (e) {
+            e.style.background = "black";
+            e.style.color = "white";
+        }
     }
     applyBrushSizeButtonStyle() {
         document.querySelectorAll(".brush-size-button").forEach(e => {
@@ -534,11 +561,39 @@ class ChunckEditor {
             height: 1 + 2 * this.brushSize + 0.2,
             depth: 1 + 2 * this.brushSize + 0.2
         }).applyToMesh(this.brushMesh);
+        if (isFinite(this.brushCubeType)) {
+            this.brushMesh.material = this.brushMaterials[this.brushCubeType];
+        }
     }
 }
 class ChunckManager {
     constructor() {
         this.chuncks = new Map();
+    }
+    async generateManyChuncks(chuncks) {
+        return new Promise(resolve => {
+            let iterator = 0;
+            let step = () => {
+                let done = false;
+                while (!done) {
+                    let chunck = chuncks[iterator];
+                    iterator++;
+                    if (chunck) {
+                        if (!chunck.isEmpty) {
+                            chunck.generateVertices();
+                            chunck.generateFaces();
+                            done = true;
+                            requestAnimationFrame(step);
+                        }
+                    }
+                    else {
+                        done = true;
+                        resolve();
+                    }
+                }
+            };
+            step();
+        });
     }
     generateRandom(d = 1) {
         this.generateAroundZero(d);
@@ -1080,7 +1135,7 @@ class Main {
         Main.Camera.attachControl(Main.Canvas, true);
         Main.Camera.lowerRadiusLimit = 6;
         Main.Camera.upperRadiusLimit = 200;
-        Main.Camera.wheelPrecision *= 8;
+        Main.Camera.wheelPrecision *= 4;
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
 			precision highp float;
@@ -1134,17 +1189,46 @@ class Main {
         noPostProcessCamera.layerMask = 0x10000000;
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
         // Skybox seed : 1vt3h8rxhb28
-        Main.Skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+        Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
         Main.Skybox.layerMask = 1;
-        Main.Skybox.rotation.y = Math.PI / 2;
         Main.Skybox.infiniteDistance = true;
         let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("./datas/skyboxes/sky", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
-        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+        skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/textures/sky.png", Main.Scene);
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
+        let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
+        borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
+        borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        let borderXP = BABYLON.MeshBuilder.CreateBox("border-xp", {
+            width: 2,
+            depth: 12 * CHUNCK_SIZE + 2,
+            height: 6
+        });
+        borderXP.position.copyFromFloats(6 * CHUNCK_SIZE + 1, 2, -1);
+        borderXP.material = borderMaterial;
+        let borderXM = BABYLON.MeshBuilder.CreateBox("border-xm", {
+            width: 2,
+            depth: 12 * CHUNCK_SIZE + 2,
+            height: 6
+        });
+        borderXM.position.copyFromFloats(-6 * CHUNCK_SIZE - 1, 2, 1);
+        borderXM.material = borderMaterial;
+        let borderZP = BABYLON.MeshBuilder.CreateBox("border-zp", {
+            width: 12 * CHUNCK_SIZE + 2,
+            depth: 2,
+            height: 6
+        });
+        borderZP.position.copyFromFloats(1, 2, 6 * CHUNCK_SIZE + 1);
+        borderZP.material = borderMaterial;
+        let borderZM = BABYLON.MeshBuilder.CreateBox("border-zm", {
+            width: 12 * CHUNCK_SIZE + 2,
+            depth: 2,
+            height: 6
+        });
+        borderZM.position.copyFromFloats(-1, 2, -6 * CHUNCK_SIZE - 1);
+        borderZM.material = borderMaterial;
         let water = BABYLON.MeshBuilder.CreateGround("water", {
             width: 12 * CHUNCK_SIZE,
             height: 12 * CHUNCK_SIZE
@@ -1162,45 +1246,59 @@ class Main {
             let savedTerrain = JSON.parse(savedTerrainString);
             chunckManager.deserialize(savedTerrain);
             let l = 6;
+            let manyChuncks = [];
             for (let i = -l; i <= l; i++) {
                 for (let j = -1; j <= 2 * l - 1; j++) {
                     for (let k = -l; k <= l; k++) {
                         let chunck = chunckManager.getChunck(i, j, k);
                         if (chunck) {
-                            chunck.generateVertices();
-                            chunck.generateFaces();
+                            manyChuncks.push(chunck);
                         }
                     }
                 }
             }
-            let t1 = performance.now();
-            console.log(t1 - t0);
+            let loopOut = async () => {
+                await chunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
         }
         else {
-            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/", "craneo.v2.packed.babylon", Main.Scene, (meshes, particleSystems, skeletons) => {
-                let skullMesh = meshes.find(m => { return m.name === "Crane"; });
-                let sandMesh = meshes.find(m => { return m.name === "Sand"; });
-                let rockMesh = meshes.find(m => { return m.name === "Rock"; });
-                let dirtMesh = meshes.find(m => { return m.name === "Dirt"; });
-                let t0 = performance.now();
-                let l = 6;
-                chunckManager.generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, l);
-                for (let i = -l; i <= l; i++) {
-                    for (let j = -1; j <= 2 * l - 1; j++) {
-                        for (let k = -l; k <= l; k++) {
-                            let chunck = chunckManager.getChunck(i, j, k);
-                            chunck.generateVertices();
-                            chunck.generateFaces();
+            let t0 = performance.now();
+            var request = new XMLHttpRequest();
+            request.open('GET', './datas/scenes/crane_island.json', true);
+            request.onload = () => {
+                if (request.status >= 200 && request.status < 400) {
+                    let defaultTerrain = JSON.parse(request.responseText);
+                    chunckManager.deserialize(defaultTerrain);
+                    let l = 6;
+                    let manyChuncks = [];
+                    for (let i = -l; i <= l; i++) {
+                        for (let j = -1; j <= 2 * l - 1; j++) {
+                            for (let k = -l; k <= l; k++) {
+                                let chunck = chunckManager.getChunck(i, j, k);
+                                if (chunck) {
+                                    manyChuncks.push(chunck);
+                                }
+                            }
                         }
                     }
+                    let loopOut = async () => {
+                        await chunckManager.generateManyChuncks(manyChuncks);
+                        let t1 = performance.now();
+                        console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
+                    };
+                    loopOut();
                 }
-                skullMesh.dispose();
-                sandMesh.dispose();
-                rockMesh.dispose();
-                dirtMesh.dispose();
-                let t1 = performance.now();
-                console.log(t1 - t0);
-            });
+                else {
+                    alert("Scene file not found. My bad. Sven.");
+                }
+            };
+            request.onerror = () => {
+                alert("Unknown error. My bad. Sven.");
+            };
+            request.send();
         }
         new ChunckEditor(chunckManager);
         console.log("Main scene Initialized.");
