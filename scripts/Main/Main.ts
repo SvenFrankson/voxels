@@ -176,13 +176,13 @@ class Main {
 		water.material = waterMaterial;
 
 		let chunckManager = new ChunckManager();
+		let l = 6;
+		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("terrain");
 		if (savedTerrainString) {
 			let t0 = performance.now();
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
 			chunckManager.deserialize(savedTerrain);
-			let l = 6;
-			let manyChuncks = [];
 			for (let i = -l; i <= l; i++) {
 				for (let j = -1; j <= 2 * l - 1; j++) {
 					for (let k = -l; k <= l; k++) {
@@ -209,8 +209,6 @@ class Main {
 				if (request.status >= 200 && request.status < 400) {
 					let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
 					chunckManager.deserialize(defaultTerrain);
-					let l = 6;
-					let manyChuncks = [];
 					for (let i = -l; i <= l; i++) {
 						for (let j = -1; j <= 2 * l - 1; j++) {
 							for (let k = -l; k <= l; k++) {
@@ -240,6 +238,26 @@ class Main {
 		}
 
 		new ChunckEditor(chunckManager);
+
+		/*
+		let sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1}, Main.Scene);
+		sphere.position.copyFromFloats(- 20 + 10 * Math.random(), 40, 15 + 10 * Math.random());
+		let update = () => {
+			sphere.position.y -= 0.1;
+			for (let i = 0; i < manyChuncks.length; i++) {
+				let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
+				if (intersections) {
+					for (let j = 0; j < intersections.length; j++) {
+						console.log("! " + intersections[j].point.toString());
+						let d = sphere.position.subtract(intersections[j].point);
+						sphere.position.addInPlace(d);
+					}
+				}
+			}
+			requestAnimationFrame(update);
+		}
+		update();
+		*/
 		
 		console.log("Main scene Initialized.");
     }

@@ -14,6 +14,7 @@ class Face {
 class Chunck extends BABYLON.Mesh {
 
     public isEmpty: boolean = true;
+
     public faces: Face[] = [];
     public vertices: Vertex[] = [];
     public cubes: Cube[][][] = [];

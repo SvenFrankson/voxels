@@ -1240,13 +1240,13 @@ class Main {
         waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
         water.material = waterMaterial;
         let chunckManager = new ChunckManager();
+        let l = 6;
+        let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("terrain");
         if (savedTerrainString) {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);
             chunckManager.deserialize(savedTerrain);
-            let l = 6;
-            let manyChuncks = [];
             for (let i = -l; i <= l; i++) {
                 for (let j = -1; j <= 2 * l - 1; j++) {
                     for (let k = -l; k <= l; k++) {
@@ -1272,8 +1272,6 @@ class Main {
                 if (request.status >= 200 && request.status < 400) {
                     let defaultTerrain = JSON.parse(request.responseText);
                     chunckManager.deserialize(defaultTerrain);
-                    let l = 6;
-                    let manyChuncks = [];
                     for (let i = -l; i <= l; i++) {
                         for (let j = -1; j <= 2 * l - 1; j++) {
                             for (let k = -l; k <= l; k++) {
@@ -1301,6 +1299,25 @@ class Main {
             request.send();
         }
         new ChunckEditor(chunckManager);
+        /*
+        let sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1}, Main.Scene);
+        sphere.position.copyFromFloats(- 20 + 10 * Math.random(), 40, 15 + 10 * Math.random());
+        let update = () => {
+            sphere.position.y -= 0.1;
+            for (let i = 0; i < manyChuncks.length; i++) {
+                let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        console.log("! " + intersections[j].point.toString());
+                        let d = sphere.position.subtract(intersections[j].point);
+                        sphere.position.addInPlace(d);
+                    }
+                }
+            }
+            requestAnimationFrame(update);
+        }
+        update();
+        */
         console.log("Main scene Initialized.");
     }
     animate() {
@@ -1384,7 +1401,67 @@ class RayIntersection {
         this.normal = normal;
     }
 }
+class SphereIntersection {
+    constructor(point) {
+        this.point = point;
+    }
+}
 class Intersections3D {
+    static SphereCube(center, radius, min, max) {
+        let closest = center.clone();
+        if (closest.x < min.x) {
+            closest.x = min.x;
+        }
+        else if (closest.x > max.x) {
+            closest.x = max.x;
+        }
+        if (closest.y < min.y) {
+            closest.y = min.y;
+        }
+        else if (closest.y > max.y) {
+            closest.y = max.y;
+        }
+        if (closest.z < min.z) {
+            closest.z = min.z;
+        }
+        else if (closest.z > max.z) {
+            closest.z = max.z;
+        }
+        if (BABYLON.Vector3.DistanceSquared(center, closest) < radius * radius) {
+            return new SphereIntersection(closest);
+        }
+        return undefined;
+    }
+    static SphereChunck(center, radius, chunck) {
+        let intersections = [];
+        if (!chunck.isEmpty) {
+            center = center.subtract(chunck.position);
+            if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
+                let min = center;
+                min.x = Math.floor(min.x - radius);
+                min.y = Math.floor(min.y - radius);
+                min.z = Math.floor(min.z - radius);
+                let max = center;
+                max.x = Math.ceil(max.x + radius);
+                max.y = Math.ceil(max.y + radius);
+                max.z = Math.ceil(max.z + radius);
+                for (let i = min.x; i <= max.x; i++) {
+                    for (let j = min.y; j <= max.y; j++) {
+                        for (let k = min.z; k <= max.z; k++) {
+                            if (chunck.getCube(i, j, k)) {
+                                let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i, j, k), new BABYLON.Vector3(i + 1, j + 1, k + 1));
+                                if (intersection) {
+                                    intersection.point.addInPlace(chunck.position);
+                                    intersections.push(intersection);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return intersections;
+    }
     static RayChunck(ray, chunck) {
         let pickingInfo = chunck.getScene().pickWithRay(ray, (m) => {
             return m === chunck;
