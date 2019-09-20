@@ -91,7 +91,7 @@ class Chunck extends BABYLON.Mesh {
         }
     }
 
-    public generateFull(): void {
+    public generateFull(cubeType?: CubeType): void {
         this.cubes = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             this.cubes[i] = [];
@@ -103,10 +103,11 @@ class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
-                    this.cubes[i][j][k] = new Cube(this, i, j, k);
+                    this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
                 }
             }
         }
+        this.isEmpty = false;
     }
 
     public randomizeNiceDouble(): void {

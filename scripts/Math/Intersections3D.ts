@@ -50,17 +50,17 @@ class Intersections3D {
         if (!chunck.isEmpty) {
             center = center.subtract(chunck.position);
             if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
-                let min = center;
+                let min = center.clone();
                 min.x = Math.floor(min.x - radius);
                 min.y = Math.floor(min.y - radius);
                 min.z = Math.floor(min.z - radius);
-                let max = center;
+                let max = center.clone();
                 max.x = Math.ceil(max.x + radius);
                 max.y = Math.ceil(max.y + radius);
                 max.z = Math.ceil(max.z + radius);
-                for (let i = min.x; i <= max.x; i++) {
-                    for (let j = min.y; j <= max.y; j++) {
-                        for (let k = min.z; k <= max.z; k++) {
+                for (let i = min.x; i <= max.x; i += 1) {
+                    for (let j = min.y; j <= max.y; j += 1) {
+                        for (let k = min.z; k <= max.z; k += 1) {
                             if (chunck.getCube(i, j, k)) {
                                 let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i, j, k), new BABYLON.Vector3(i + 1, j + 1, k+ 1));
                                 if (intersection) {

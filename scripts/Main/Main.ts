@@ -8,6 +8,7 @@ class Main {
 	public static Light: BABYLON.Light;
 	public static Camera: BABYLON.ArcRotateCamera;
 	public static Skybox: BABYLON.Mesh;
+	public static ChunckManager: ChunckManager;
 
     public static _cellShadingMaterial: ToonMaterial;
 	public static get cellShadingMaterial(): ToonMaterial {
@@ -30,7 +31,11 @@ class Main {
     constructor(canvasElement: string) {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
-    }
+	}
+	
+	public async initialize(): Promise<void> {
+		await this.initializeScene();
+	}
 
     public async initializeScene(): Promise<void> {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
@@ -175,89 +180,9 @@ class Main {
 		waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
 		water.material = waterMaterial;
 
-		let chunckManager = new ChunckManager();
-		let l = 6;
-		let manyChuncks = [];
-		let savedTerrainString = window.localStorage.getItem("terrain");
-		if (savedTerrainString) {
-			let t0 = performance.now();
-			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
-			chunckManager.deserialize(savedTerrain);
-			for (let i = -l; i <= l; i++) {
-				for (let j = -1; j <= 2 * l - 1; j++) {
-					for (let k = -l; k <= l; k++) {
-						let chunck = chunckManager.getChunck(i, j, k);
-						if (chunck) {
-							manyChuncks.push(chunck);
-						}
-					}
-				}
-			}
-			let loopOut = async () => {
-				await chunckManager.generateManyChuncks(manyChuncks);
-				let t1 = performance.now();
-				console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
-			}
-			loopOut();
-		}
-		else {
-			let t0 = performance.now();
-			var request = new XMLHttpRequest();
-			request.open('GET', './datas/scenes/crane_island.json', true);
+		Main.ChunckManager = new ChunckManager();
 
-			request.onload = () => {
-				if (request.status >= 200 && request.status < 400) {
-					let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
-					chunckManager.deserialize(defaultTerrain);
-					for (let i = -l; i <= l; i++) {
-						for (let j = -1; j <= 2 * l - 1; j++) {
-							for (let k = -l; k <= l; k++) {
-								let chunck = chunckManager.getChunck(i, j, k);
-								if (chunck) {
-									manyChuncks.push(chunck);
-								}
-							}
-						}
-					}
-					let loopOut = async () => {
-						await chunckManager.generateManyChuncks(manyChuncks);
-						let t1 = performance.now();
-						console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
-					}
-					loopOut();
-				} else {
-					alert("Scene file not found. My bad. Sven.")
-				}
-			};
-
-			request.onerror = () => {
-				alert("Unknown error. My bad. Sven.")
-			};
-
-			request.send();
-		}
-
-		new ChunckEditor(chunckManager);
-
-		/*
-		let sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1}, Main.Scene);
-		sphere.position.copyFromFloats(- 20 + 10 * Math.random(), 40, 15 + 10 * Math.random());
-		let update = () => {
-			sphere.position.y -= 0.1;
-			for (let i = 0; i < manyChuncks.length; i++) {
-				let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
-				if (intersections) {
-					for (let j = 0; j < intersections.length; j++) {
-						console.log("! " + intersections[j].point.toString());
-						let d = sphere.position.subtract(intersections[j].point);
-						sphere.position.addInPlace(d);
-					}
-				}
-			}
-			requestAnimationFrame(update);
-		}
-		update();
-		*/
+		new ChunckEditor(Main.ChunckManager);
 		
 		console.log("Main scene Initialized.");
     }
@@ -274,7 +199,23 @@ class Main {
 }
 
 window.addEventListener("load", async () => {
-	let main = new Main("render-canvas");
-	await main.initializeScene();
+	let main: Main;
+	let url = window.location.href;
+	let allParams = url.split("?")[1];
+	if (allParams) {
+		let params = allParams.split("&");
+		for (let i = 0; i < params.length; i++) {
+			let splitParam = params[i].split("=");
+			if (splitParam[0] === "main") {
+				if (splitParam[1] === "skull_island") {
+					main = new SkullIsland("render-canvas");
+				}
+				else if (splitParam[1] === "collisions_test") {
+					main = new CollisionsTest("render-canvas");
+				}
+			}
+		}
+	}
+	await main.initialize();
 	main.animate();
 })

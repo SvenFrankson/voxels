@@ -76,7 +76,7 @@ class Chunck extends BABYLON.Mesh {
             }
         }
     }
-    generateFull() {
+    generateFull(cubeType) {
         this.cubes = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             this.cubes[i] = [];
@@ -87,10 +87,11 @@ class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
-                    this.cubes[i][j][k] = new Cube(this, i, j, k);
+                    this.cubes[i][j][k] = new Cube(this, i, j, k, cubeType);
                 }
             }
         }
+        this.isEmpty = false;
     }
     randomizeNiceDouble() {
         this.cubes = [];
@@ -1127,6 +1128,9 @@ class Main {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
+    async initialize() {
+        await this.initializeScene();
+    }
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
@@ -1239,18 +1243,78 @@ class Main {
         waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
         waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
         water.material = waterMaterial;
-        let chunckManager = new ChunckManager();
-        let l = 6;
+        Main.ChunckManager = new ChunckManager();
+        new ChunckEditor(Main.ChunckManager);
+        console.log("Main scene Initialized.");
+    }
+    animate() {
+        Main.Engine.runRenderLoop(() => {
+            Main.Scene.render();
+        });
+        window.addEventListener("resize", () => {
+            Main.Engine.resize();
+        });
+    }
+}
+window.addEventListener("load", async () => {
+    let main;
+    let url = window.location.href;
+    let allParams = url.split("?")[1];
+    if (allParams) {
+        let params = allParams.split("&");
+        for (let i = 0; i < params.length; i++) {
+            let splitParam = params[i].split("=");
+            if (splitParam[0] === "main") {
+                if (splitParam[1] === "skull_island") {
+                    main = new SkullIsland("render-canvas");
+                }
+                else if (splitParam[1] === "collisions_test") {
+                    main = new CollisionsTest("render-canvas");
+                }
+            }
+        }
+    }
+    await main.initialize();
+    main.animate();
+});
+/// <reference path="./Main.ts"/>
+class CollisionsTest extends Main {
+    static DisplayCross(p, duration = 200) {
+        let crossX = BABYLON.MeshBuilder.CreateBox("cube", {
+            width: 3,
+            height: 0.1,
+            depth: 0.1
+        }, Main.Scene);
+        crossX.position.copyFrom(p);
+        let crossY = BABYLON.MeshBuilder.CreateBox("cube", {
+            width: 0.1,
+            height: 3,
+            depth: 0.1
+        }, Main.Scene);
+        crossY.parent = crossX;
+        let crossZ = BABYLON.MeshBuilder.CreateBox("cube", {
+            width: 0.1,
+            height: 0.1,
+            depth: 3
+        }, Main.Scene);
+        crossZ.parent = crossX;
+        setTimeout(() => {
+            crossX.dispose();
+        }, duration);
+    }
+    async initialize() {
+        await super.initializeScene();
+        let l = 1;
         let manyChuncks = [];
-        let savedTerrainString = window.localStorage.getItem("terrain");
+        let savedTerrainString = window.localStorage.getItem("collisions-test");
         if (savedTerrainString) {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);
-            chunckManager.deserialize(savedTerrain);
+            Main.ChunckManager.deserialize(savedTerrain);
             for (let i = -l; i <= l; i++) {
                 for (let j = -1; j <= 2 * l - 1; j++) {
                     for (let k = -l; k <= l; k++) {
-                        let chunck = chunckManager.getChunck(i, j, k);
+                        let chunck = Main.ChunckManager.getChunck(i, j, k);
                         if (chunck) {
                             manyChuncks.push(chunck);
                         }
@@ -1258,7 +1322,152 @@ class Main {
                 }
             }
             let loopOut = async () => {
-                await chunckManager.generateManyChuncks(manyChuncks);
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
+        }
+        else {
+            let t0 = performance.now();
+            for (let i = -l; i <= l; i++) {
+                for (let j = -1; j <= l; j++) {
+                    for (let k = -l; k <= l; k++) {
+                        let chunck = Main.ChunckManager.createChunck(i, j, k);
+                        if (chunck) {
+                            manyChuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+            for (let i = -l; i <= l; i++) {
+                for (let k = -l; k <= l; k++) {
+                    let chunck = Main.ChunckManager.getChunck(i, -1, k);
+                    chunck.generateFull(CubeType.Dirt);
+                    chunck = Main.ChunckManager.getChunck(i, 0, k);
+                    chunck.generateFull(CubeType.Dirt);
+                }
+            }
+            let loopOut = async () => {
+                console.log(manyChuncks.length);
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
+        }
+        let inputDown = false;
+        let inputUp = false;
+        let inputLeft = false;
+        let inputRight = false;
+        let inputBack = false;
+        let inputForward = false;
+        let sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1 }, Main.Scene);
+        sphere.position.copyFromFloats(0, 10, 0);
+        //let cube = BABYLON.MeshBuilder.CreateBox("cube", { width: 2, height: 2, depth: 2}, Main.Scene);
+        //cube.position.copyFromFloats(3, 10, 3);
+        let update = () => {
+            if (inputLeft) {
+                sphere.position.x -= 0.02;
+            }
+            if (inputRight) {
+                sphere.position.x += 0.02;
+            }
+            if (inputDown) {
+                sphere.position.y -= 0.02;
+            }
+            if (inputUp) {
+                sphere.position.y += 0.02;
+            }
+            if (inputBack) {
+                sphere.position.z -= 0.02;
+            }
+            if (inputForward) {
+                sphere.position.z += 0.02;
+            }
+            //let intersection = Intersections3D.SphereCube(sphere.position, 0.5, cube.getBoundingInfo().minimum.add(cube.position), cube.getBoundingInfo().maximum.add(cube.position));
+            //if (intersection && intersection.point) {
+            //    CollisionsTest.DisplayCross(intersection.point, 200);
+            //}
+            for (let i = 0; i < manyChuncks.length; i++) {
+                let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        CollisionsTest.DisplayCross(intersections[j].point, 200);
+                    }
+                }
+            }
+            requestAnimationFrame(update);
+        };
+        update();
+        window.addEventListener("keyup", (e) => {
+            if (e.keyCode === 81) {
+                inputLeft = false;
+            }
+            else if (e.keyCode === 68) {
+                inputRight = false;
+            }
+            else if (e.keyCode === 65) {
+                inputDown = false;
+            }
+            else if (e.keyCode === 69) {
+                inputUp = false;
+            }
+            else if (e.keyCode === 83) {
+                inputBack = false;
+            }
+            else if (e.keyCode === 90) {
+                inputForward = false;
+            }
+        });
+        window.addEventListener("keydown", (e) => {
+            if (e.keyCode === 81) {
+                inputLeft = true;
+            }
+            else if (e.keyCode === 68) {
+                inputRight = true;
+            }
+            else if (e.keyCode === 65) {
+                inputDown = true;
+            }
+            else if (e.keyCode === 69) {
+                inputUp = true;
+            }
+            else if (e.keyCode === 83) {
+                inputBack = true;
+            }
+            else if (e.keyCode === 90) {
+                inputForward = true;
+            }
+        });
+        Main.Camera.setTarget(sphere);
+        Main.Camera.alpha = -Math.PI / 2;
+        Main.Camera.beta = Math.PI / 4;
+        Main.Camera.radius = 10;
+    }
+}
+class SkullIsland extends Main {
+    async initialize() {
+        await super.initializeScene();
+        let l = 6;
+        let manyChuncks = [];
+        let savedTerrainString = window.localStorage.getItem("terrain");
+        if (savedTerrainString) {
+            let t0 = performance.now();
+            let savedTerrain = JSON.parse(savedTerrainString);
+            Main.ChunckManager.deserialize(savedTerrain);
+            for (let i = -l; i <= l; i++) {
+                for (let j = -1; j <= 2 * l - 1; j++) {
+                    for (let k = -l; k <= l; k++) {
+                        let chunck = Main.ChunckManager.getChunck(i, j, k);
+                        if (chunck) {
+                            manyChuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+            let loopOut = async () => {
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
                 let t1 = performance.now();
                 console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
             };
@@ -1271,11 +1480,11 @@ class Main {
             request.onload = () => {
                 if (request.status >= 200 && request.status < 400) {
                     let defaultTerrain = JSON.parse(request.responseText);
-                    chunckManager.deserialize(defaultTerrain);
+                    Main.ChunckManager.deserialize(defaultTerrain);
                     for (let i = -l; i <= l; i++) {
                         for (let j = -1; j <= 2 * l - 1; j++) {
                             for (let k = -l; k <= l; k++) {
-                                let chunck = chunckManager.getChunck(i, j, k);
+                                let chunck = Main.ChunckManager.getChunck(i, j, k);
                                 if (chunck) {
                                     manyChuncks.push(chunck);
                                 }
@@ -1283,7 +1492,7 @@ class Main {
                         }
                     }
                     let loopOut = async () => {
-                        await chunckManager.generateManyChuncks(manyChuncks);
+                        await Main.ChunckManager.generateManyChuncks(manyChuncks);
                         let t1 = performance.now();
                         console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
                     };
@@ -1298,42 +1507,8 @@ class Main {
             };
             request.send();
         }
-        new ChunckEditor(chunckManager);
-        /*
-        let sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 1}, Main.Scene);
-        sphere.position.copyFromFloats(- 20 + 10 * Math.random(), 40, 15 + 10 * Math.random());
-        let update = () => {
-            sphere.position.y -= 0.1;
-            for (let i = 0; i < manyChuncks.length; i++) {
-                let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
-                if (intersections) {
-                    for (let j = 0; j < intersections.length; j++) {
-                        console.log("! " + intersections[j].point.toString());
-                        let d = sphere.position.subtract(intersections[j].point);
-                        sphere.position.addInPlace(d);
-                    }
-                }
-            }
-            requestAnimationFrame(update);
-        }
-        update();
-        */
-        console.log("Main scene Initialized.");
-    }
-    animate() {
-        Main.Engine.runRenderLoop(() => {
-            Main.Scene.render();
-        });
-        window.addEventListener("resize", () => {
-            Main.Engine.resize();
-        });
     }
 }
-window.addEventListener("load", async () => {
-    let main = new Main("render-canvas");
-    await main.initializeScene();
-    main.animate();
-});
 class SeaMaterial extends BABYLON.ShaderMaterial {
     constructor(name, scene) {
         super(name, scene, {
@@ -1437,17 +1612,17 @@ class Intersections3D {
         if (!chunck.isEmpty) {
             center = center.subtract(chunck.position);
             if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
-                let min = center;
+                let min = center.clone();
                 min.x = Math.floor(min.x - radius);
                 min.y = Math.floor(min.y - radius);
                 min.z = Math.floor(min.z - radius);
-                let max = center;
+                let max = center.clone();
                 max.x = Math.ceil(max.x + radius);
                 max.y = Math.ceil(max.y + radius);
                 max.z = Math.ceil(max.z + radius);
-                for (let i = min.x; i <= max.x; i++) {
-                    for (let j = min.y; j <= max.y; j++) {
-                        for (let k = min.z; k <= max.z; k++) {
+                for (let i = min.x; i <= max.x; i += 1) {
+                    for (let j = min.y; j <= max.y; j += 1) {
+                        for (let k = min.z; k <= max.z; k += 1) {
                             if (chunck.getCube(i, j, k)) {
                                 let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i, j, k), new BABYLON.Vector3(i + 1, j + 1, k + 1));
                                 if (intersection) {
