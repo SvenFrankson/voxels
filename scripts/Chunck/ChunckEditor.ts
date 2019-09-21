@@ -9,6 +9,8 @@ class ChunckEditor {
     public brushMesh: BABYLON.Mesh;
     public brushMaterials: BABYLON.StandardMaterial[];
 
+    public saveSceneName: string = "scene";
+
     constructor(
         public chunckManager: ChunckManager
     ) {
@@ -32,9 +34,9 @@ class ChunckEditor {
                 }
                 else {
                     this.brushCubeType = ii;
-                    this.applyBrushTypeButtonStyle();
-                    this.updateBrushMesh();
                 }
+                this.applyBrushTypeButtonStyle();
+                this.updateBrushMesh();
             });
         }
         for (let i = 0; i < 5; i++) {
@@ -48,7 +50,7 @@ class ChunckEditor {
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
-            window.localStorage.setItem("terrain", stringData);
+            window.localStorage.setItem(this.saveSceneName, stringData);
         })
         Main.Scene.onPointerObservable.add(
 			(eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {

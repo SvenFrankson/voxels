@@ -1,3 +1,33 @@
+class PauseMenu {
+    constructor() {
+    }
+    initialize() {
+        this.background = document.createElement("div");
+        this.background.style.position = "absolute";
+        let canvasBBox = Main.Canvas.getBoundingClientRect();
+        this.background.style.left = canvasBBox.left + "px";
+        this.background.style.top = canvasBBox.top + "px";
+        this.background.style.width = canvasBBox.width + "px";
+        this.background.style.height = canvasBBox.height + "px";
+        this.background.style.backgroundColor = "rgba(0, 0, 0, 40%)";
+        this.background.style.zIndex = "1";
+        document.body.appendChild(this.background);
+        this.background.addEventListener("pointerup", () => {
+            Main.Canvas.requestPointerLock();
+            Main.Canvas.focus();
+        });
+        let update = () => {
+            if (document.pointerLockElement) {
+                this.background.style.display = "none";
+            }
+            else {
+                this.background.style.display = "";
+            }
+            requestAnimationFrame(update);
+        };
+        update();
+    }
+}
 var CHUNCK_SIZE = 8;
 class Face {
     constructor(vertices, cubeType, draw = true) {
@@ -426,6 +456,7 @@ class ChunckEditor {
         this._yPointerDown = NaN;
         this.brushCubeType = undefined;
         this.brushSize = 0;
+        this.saveSceneName = "scene";
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
         this.brushMaterials = [];
         for (let i = 0; i < 4; i++) {
@@ -446,9 +477,9 @@ class ChunckEditor {
                 }
                 else {
                     this.brushCubeType = ii;
-                    this.applyBrushTypeButtonStyle();
-                    this.updateBrushMesh();
                 }
+                this.applyBrushTypeButtonStyle();
+                this.updateBrushMesh();
             });
         }
         for (let i = 0; i < 5; i++) {
@@ -462,7 +493,7 @@ class ChunckEditor {
         document.getElementById("save").addEventListener("click", () => {
             let data = chunckManager.serialize();
             let stringData = JSON.stringify(data);
-            window.localStorage.setItem("terrain", stringData);
+            window.localStorage.setItem(this.saveSceneName, stringData);
         });
         Main.Scene.onPointerObservable.add((eventData, eventState) => {
             let showBrush = false;
@@ -825,6 +856,15 @@ class ChunckManager {
             }
         }
     }
+    foreachChunck(callback) {
+        this.chuncks.forEach(m => {
+            m.forEach(mm => {
+                mm.forEach(chunck => {
+                    callback(chunck);
+                });
+            });
+        });
+    }
     serialize() {
         let data = {
             chuncks: []
@@ -1108,6 +1148,90 @@ class Vertex {
         this.cubeTypes.copyFrom(this.smoothedCubeTypes);
     }
 }
+class Player extends BABYLON.Mesh {
+    constructor() {
+        super("player");
+        this._inputLeft = false;
+        this._inputRight = false;
+        this._inputBack = false;
+        this._inputForward = false;
+        this._downSpeed = 0;
+        this.update = () => {
+            let right = this.getDirection(BABYLON.Axis.X);
+            let forward = this.getDirection(BABYLON.Axis.Z);
+            if (this._inputLeft) {
+                this.position.addInPlace(right.scale(-0.04));
+            }
+            if (this._inputRight) {
+                this.position.addInPlace(right.scale(0.04));
+            }
+            if (this._inputBack) {
+                this.position.addInPlace(forward.scale(-0.04));
+            }
+            if (this._inputForward) {
+                this.position.addInPlace(forward.scale(0.04));
+            }
+            this.position.y -= this._downSpeed;
+            this._downSpeed += 0.005;
+            this._downSpeed *= 0.99;
+            Main.ChunckManager.foreachChunck((chunck) => {
+                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        let d = this.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            this._downSpeed = 0.0;
+                        }
+                        d.scaleInPlace((0.5 - l) * 0.5);
+                        this.position.addInPlace(d);
+                    }
+                }
+            });
+        };
+    }
+    register() {
+        Main.Scene.onBeforeRenderObservable.add(this.update);
+        Main.Canvas.addEventListener("keyup", (e) => {
+            if (e.keyCode === 81) {
+                this._inputLeft = false;
+            }
+            else if (e.keyCode === 68) {
+                this._inputRight = false;
+            }
+            else if (e.keyCode === 83) {
+                this._inputBack = false;
+            }
+            else if (e.keyCode === 90) {
+                this._inputForward = false;
+            }
+            else if (e.keyCode === 32) {
+                this._downSpeed = -0.15;
+            }
+        });
+        Main.Canvas.addEventListener("keydown", (e) => {
+            if (e.keyCode === 81) {
+                this._inputLeft = true;
+            }
+            else if (e.keyCode === 68) {
+                this._inputRight = true;
+            }
+            else if (e.keyCode === 83) {
+                this._inputBack = true;
+            }
+            else if (e.keyCode === 90) {
+                this._inputForward = true;
+            }
+        });
+        Main.Canvas.addEventListener("pointermove", (e) => {
+            this.rotation.y += e.movementX / 200;
+            if (Main.Camera instanceof BABYLON.FreeCamera) {
+                Main.Camera.rotation.x += e.movementY / 200;
+            }
+        });
+    }
+}
 /// <reference path="../../lib/babylon.d.ts"/>
 class Main {
     static get cellShadingMaterial() {
@@ -1128,18 +1252,22 @@ class Main {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
+    initializeCamera() {
+        let camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
+        camera.setPosition(new BABYLON.Vector3(-20, 50, 60));
+        camera.attachControl(Main.Canvas, true);
+        camera.lowerRadiusLimit = 6;
+        camera.upperRadiusLimit = 200;
+        camera.wheelPrecision *= 4;
+        Main.Camera = camera;
+    }
     async initialize() {
         await this.initializeScene();
     }
     async initializeScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
+        this.initializeCamera();
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
-        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
-        Main.Camera.setPosition(new BABYLON.Vector3(-20, 50, 60));
-        Main.Camera.attachControl(Main.Canvas, true);
-        Main.Camera.lowerRadiusLimit = 6;
-        Main.Camera.upperRadiusLimit = 200;
-        Main.Camera.wheelPrecision *= 4;
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
 			precision highp float;
@@ -1244,7 +1372,7 @@ class Main {
         waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
         water.material = waterMaterial;
         Main.ChunckManager = new ChunckManager();
-        new ChunckEditor(Main.ChunckManager);
+        Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
         console.log("Main scene Initialized.");
     }
     animate() {
@@ -1270,6 +1398,9 @@ window.addEventListener("load", async () => {
                 }
                 else if (splitParam[1] === "collisions_test") {
                     main = new CollisionsTest("render-canvas");
+                }
+                else if (splitParam[1] === "player_test") {
+                    main = new PlayerTest("render-canvas");
                 }
             }
         }
@@ -1304,7 +1435,8 @@ class CollisionsTest extends Main {
     }
     async initialize() {
         await super.initializeScene();
-        let l = 1;
+        Main.ChunckEditor.saveSceneName = "collisions-test";
+        let l = 2;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("collisions-test");
         if (savedTerrainString) {
@@ -1356,8 +1488,6 @@ class CollisionsTest extends Main {
             };
             loopOut();
         }
-        let inputDown = false;
-        let inputUp = false;
         let inputLeft = false;
         let inputRight = false;
         let inputBack = false;
@@ -1366,37 +1496,52 @@ class CollisionsTest extends Main {
         sphere.position.copyFromFloats(0, 10, 0);
         //let cube = BABYLON.MeshBuilder.CreateBox("cube", { width: 2, height: 2, depth: 2}, Main.Scene);
         //cube.position.copyFromFloats(3, 10, 3);
+        let downSpeed = 0.005;
         let update = () => {
+            if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
+                sphere.rotation.y = -Math.PI / 2 - Main.Camera.alpha;
+            }
+            let right = sphere.getDirection(BABYLON.Axis.X);
+            let forward = sphere.getDirection(BABYLON.Axis.Z);
             if (inputLeft) {
-                sphere.position.x -= 0.02;
+                sphere.position.addInPlace(right.scale(-0.04));
             }
             if (inputRight) {
-                sphere.position.x += 0.02;
-            }
-            if (inputDown) {
-                sphere.position.y -= 0.02;
-            }
-            if (inputUp) {
-                sphere.position.y += 0.02;
+                sphere.position.addInPlace(right.scale(0.04));
             }
             if (inputBack) {
-                sphere.position.z -= 0.02;
+                sphere.position.addInPlace(forward.scale(-0.04));
             }
             if (inputForward) {
-                sphere.position.z += 0.02;
+                sphere.position.addInPlace(forward.scale(0.04));
             }
+            sphere.position.y -= downSpeed;
+            downSpeed += 0.005;
+            downSpeed *= 0.99;
             //let intersection = Intersections3D.SphereCube(sphere.position, 0.5, cube.getBoundingInfo().minimum.add(cube.position), cube.getBoundingInfo().maximum.add(cube.position));
             //if (intersection && intersection.point) {
             //    CollisionsTest.DisplayCross(intersection.point, 200);
             //}
+            let count = 0;
             for (let i = 0; i < manyChuncks.length; i++) {
                 let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
                 if (intersections) {
                     for (let j = 0; j < intersections.length; j++) {
-                        CollisionsTest.DisplayCross(intersections[j].point, 200);
+                        //CollisionsTest.DisplayCross(intersections[j].point, 200);
+                        let d = sphere.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            downSpeed = 0.0;
+                        }
+                        d.scaleInPlace((0.5 - l) * 0.2);
+                        sphere.position.addInPlace(d);
+                        count++;
                     }
                 }
             }
+            //console.log("DownSpeed = " + downSpeed);
+            console.log("Count = " + count);
             requestAnimationFrame(update);
         };
         update();
@@ -1407,17 +1552,14 @@ class CollisionsTest extends Main {
             else if (e.keyCode === 68) {
                 inputRight = false;
             }
-            else if (e.keyCode === 65) {
-                inputDown = false;
-            }
-            else if (e.keyCode === 69) {
-                inputUp = false;
-            }
             else if (e.keyCode === 83) {
                 inputBack = false;
             }
             else if (e.keyCode === 90) {
                 inputForward = false;
+            }
+            else if (e.keyCode === 32) {
+                downSpeed = -0.15;
             }
         });
         window.addEventListener("keydown", (e) => {
@@ -1427,12 +1569,6 @@ class CollisionsTest extends Main {
             else if (e.keyCode === 68) {
                 inputRight = true;
             }
-            else if (e.keyCode === 65) {
-                inputDown = true;
-            }
-            else if (e.keyCode === 69) {
-                inputUp = true;
-            }
             else if (e.keyCode === 83) {
                 inputBack = true;
             }
@@ -1440,10 +1576,84 @@ class CollisionsTest extends Main {
                 inputForward = true;
             }
         });
-        Main.Camera.setTarget(sphere);
-        Main.Camera.alpha = -Math.PI / 2;
-        Main.Camera.beta = Math.PI / 4;
-        Main.Camera.radius = 10;
+        if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
+            Main.Camera.setTarget(sphere);
+            Main.Camera.alpha = -Math.PI / 2;
+            Main.Camera.beta = Math.PI / 4;
+            Main.Camera.radius = 10;
+        }
+    }
+}
+/// <reference path="./Main.ts"/>
+class PlayerTest extends Main {
+    initializeCamera() {
+        let camera = new BABYLON.FreeCamera("camera1", BABYLON.Vector3.Zero(), Main.Scene);
+        Main.Camera = camera;
+    }
+    async initialize() {
+        await super.initializeScene();
+        Main.ChunckEditor.saveSceneName = "player-test";
+        let l = 2;
+        let manyChuncks = [];
+        let savedTerrainString = window.localStorage.getItem("player-test");
+        if (savedTerrainString) {
+            let t0 = performance.now();
+            let savedTerrain = JSON.parse(savedTerrainString);
+            Main.ChunckManager.deserialize(savedTerrain);
+            for (let i = -l; i <= l; i++) {
+                for (let j = -1; j <= 2 * l - 1; j++) {
+                    for (let k = -l; k <= l; k++) {
+                        let chunck = Main.ChunckManager.getChunck(i, j, k);
+                        if (chunck) {
+                            manyChuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+            let loopOut = async () => {
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
+        }
+        else {
+            let t0 = performance.now();
+            for (let i = -l; i <= l; i++) {
+                for (let j = -1; j <= l; j++) {
+                    for (let k = -l; k <= l; k++) {
+                        let chunck = Main.ChunckManager.createChunck(i, j, k);
+                        if (chunck) {
+                            manyChuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+            for (let i = -l; i <= l; i++) {
+                for (let k = -l; k <= l; k++) {
+                    let chunck = Main.ChunckManager.getChunck(i, -1, k);
+                    chunck.generateFull(CubeType.Dirt);
+                    chunck = Main.ChunckManager.getChunck(i, 0, k);
+                    chunck.generateFull(CubeType.Dirt);
+                }
+            }
+            let loopOut = async () => {
+                console.log(manyChuncks.length);
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
+        }
+        let pauseMenu = new PauseMenu();
+        pauseMenu.initialize();
+        let player = new Player();
+        player.position.y = 10;
+        player.register();
+        if (Main.Camera instanceof BABYLON.FreeCamera) {
+            Main.Camera.parent = player;
+            Main.Camera.position.y = 1.25;
+        }
     }
 }
 class SkullIsland extends Main {

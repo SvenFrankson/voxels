@@ -6,9 +6,10 @@ class Main {
     public static Engine: BABYLON.Engine;
     public static Scene: BABYLON.Scene;
 	public static Light: BABYLON.Light;
-	public static Camera: BABYLON.ArcRotateCamera;
+	public static Camera: BABYLON.Camera;
 	public static Skybox: BABYLON.Mesh;
 	public static ChunckManager: ChunckManager;
+	public static ChunckEditor: ChunckEditor;
 
     public static _cellShadingMaterial: ToonMaterial;
 	public static get cellShadingMaterial(): ToonMaterial {
@@ -32,6 +33,16 @@ class Main {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
 	}
+
+	public initializeCamera(): void {
+        let camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
+        camera.setPosition(new BABYLON.Vector3(- 20, 50, 60));
+		camera.attachControl(Main.Canvas, true);
+		camera.lowerRadiusLimit = 6;
+		camera.upperRadiusLimit = 200;
+		camera.wheelPrecision *= 4;
+		Main.Camera = camera;
+	}
 	
 	public async initialize(): Promise<void> {
 		await this.initializeScene();
@@ -40,14 +51,9 @@ class Main {
     public async initializeScene(): Promise<void> {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 
-        Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
+		this.initializeCamera();
 
-        Main.Camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
-        Main.Camera.setPosition(new BABYLON.Vector3(- 20, 50, 60));
-		Main.Camera.attachControl(Main.Canvas, true);
-		Main.Camera.lowerRadiusLimit = 6;
-		Main.Camera.upperRadiusLimit = 200;
-		Main.Camera.wheelPrecision *= 4;
+        Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -181,8 +187,7 @@ class Main {
 		water.material = waterMaterial;
 
 		Main.ChunckManager = new ChunckManager();
-
-		new ChunckEditor(Main.ChunckManager);
+		Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
 		
 		console.log("Main scene Initialized.");
     }
@@ -212,6 +217,9 @@ window.addEventListener("load", async () => {
 				}
 				else if (splitParam[1] === "collisions_test") {
 					main = new CollisionsTest("render-canvas");
+				}
+				else if (splitParam[1] === "player_test") {
+					main = new PlayerTest("render-canvas");
 				}
 			}
 		}

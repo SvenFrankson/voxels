@@ -42,7 +42,8 @@ class CollisionsTest extends Main {
     }
     public async initialize(): Promise<void> {
         await super.initializeScene();
-        let l = 1;
+        Main.ChunckEditor.saveSceneName = "collisions-test";
+        let l = 2;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("collisions-test");
 		if (savedTerrainString) {
@@ -94,8 +95,7 @@ class CollisionsTest extends Main {
 			}
 			loopOut();
         }
-        let inputDown: boolean = false;
-        let inputUp: boolean = false;
+        
         let inputLeft: boolean = false;
         let inputRight: boolean = false;
         let inputBack: boolean = false;
@@ -106,28 +106,48 @@ class CollisionsTest extends Main {
         
         //let cube = BABYLON.MeshBuilder.CreateBox("cube", { width: 2, height: 2, depth: 2}, Main.Scene);
         //cube.position.copyFromFloats(3, 10, 3);
+        let downSpeed: number = 0.005;
 		let update = () => {
+            if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
+                sphere.rotation.y = - Math.PI / 2 - Main.Camera.alpha;
+            }
 
-            if (inputLeft) { sphere.position.x -= 0.02; }
-            if (inputRight) { sphere.position.x += 0.02; }
-            if (inputDown) { sphere.position.y -= 0.02; }
-            if (inputUp) { sphere.position.y += 0.02; }
-            if (inputBack) { sphere.position.z -= 0.02; }
-            if (inputForward) { sphere.position.z += 0.02; }
+            let right = sphere.getDirection(BABYLON.Axis.X);
+            let forward = sphere.getDirection(BABYLON.Axis.Z);
+
+            if (inputLeft) { sphere.position.addInPlace(right.scale(-0.04)); }
+            if (inputRight) { sphere.position.addInPlace(right.scale(0.04)); }
+            if (inputBack) { sphere.position.addInPlace(forward.scale(-0.04)); }
+            if (inputForward) { sphere.position.addInPlace(forward.scale(0.04)); }
+            sphere.position.y -= downSpeed;
+            downSpeed += 0.005;
+            downSpeed *= 0.99;
 
             //let intersection = Intersections3D.SphereCube(sphere.position, 0.5, cube.getBoundingInfo().minimum.add(cube.position), cube.getBoundingInfo().maximum.add(cube.position));
             //if (intersection && intersection.point) {
             //    CollisionsTest.DisplayCross(intersection.point, 200);
             //}
 
+            let count: number = 0;
 			for (let i = 0; i < manyChuncks.length; i++) {
 				let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
 				if (intersections) {
 					for (let j = 0; j < intersections.length; j++) {
-                        CollisionsTest.DisplayCross(intersections[j].point, 200);
+                        //CollisionsTest.DisplayCross(intersections[j].point, 200);
+                        let d = sphere.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            downSpeed = 0.0;
+                        }
+                        d.scaleInPlace((0.5 - l) * 0.2);
+                        sphere.position.addInPlace(d);
+                        count++;
 					}
 				}
-			}
+            }
+            //console.log("DownSpeed = " + downSpeed);
+            console.log("Count = " + count);
 			requestAnimationFrame(update);
 		}
         update();
@@ -139,17 +159,14 @@ class CollisionsTest extends Main {
             else if (e.keyCode === 68) {
                 inputRight = false;
             }
-            else if (e.keyCode === 65) {
-                inputDown = false;
-            }
-            else if (e.keyCode === 69) {
-                inputUp = false;
-            }
             else if (e.keyCode === 83) {
                 inputBack = false;
             }
             else if (e.keyCode === 90) {
                 inputForward = false;
+            }
+            else if (e.keyCode === 32) {
+                downSpeed = -0.15;
             }
         });
         
@@ -160,12 +177,6 @@ class CollisionsTest extends Main {
             else if (e.keyCode === 68) {
                 inputRight = true;
             }
-            else if (e.keyCode === 65) {
-                inputDown = true;
-            }
-            else if (e.keyCode === 69) {
-                inputUp = true;
-            }
             else if (e.keyCode === 83) {
                 inputBack = true;
             }
@@ -174,9 +185,11 @@ class CollisionsTest extends Main {
             }
         });
         
-        Main.Camera.setTarget(sphere);
-        Main.Camera.alpha = - Math.PI / 2;
-        Main.Camera.beta = Math.PI / 4;
-        Main.Camera.radius = 10;
+        if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
+            Main.Camera.setTarget(sphere);
+            Main.Camera.alpha = - Math.PI / 2;
+            Main.Camera.beta = Math.PI / 4;
+            Main.Camera.radius = 10;
+        }
     }
 }

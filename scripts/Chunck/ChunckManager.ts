@@ -314,6 +314,22 @@ class ChunckManager {
         }
     }
 
+    public foreachChunck(callback: (chunck: Chunck) => void): void {
+        this.chuncks.forEach(
+            m => {
+                m.forEach(
+                    mm => {
+                        mm.forEach(
+                            chunck => {
+                                callback(chunck);
+                            }
+                        )
+                    }
+                )
+            }
+        );
+    }
+
     public serialize(): TerrainData {
         let data = {
             chuncks: []
