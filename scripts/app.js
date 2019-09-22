@@ -459,16 +459,6 @@ class ChunckEditor {
         this.saveSceneName = "scene";
         document.getElementById("chunck-editor").style.display = "block";
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
-        this.brushMaterials = [];
-        for (let i = 0; i < 4; i++) {
-            this.brushMaterials[i] = new BABYLON.StandardMaterial("brush-material-" + i, Main.Scene);
-            this.brushMaterials[i].alpha = 0.5;
-            this.brushMaterials[i].specularColor.copyFromFloats(0.1, 0.1, 0.1);
-        }
-        this.brushMaterials[0].diffuseColor = BABYLON.Color3.FromHexString("#a86f32");
-        this.brushMaterials[1].diffuseColor = BABYLON.Color3.FromHexString("#8c8c89");
-        this.brushMaterials[2].diffuseColor = BABYLON.Color3.FromHexString("#dbc67b");
-        this.brushMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
         this.updateBrushMesh();
         for (let i = 0; i < 4; i++) {
             let ii = i;
@@ -595,7 +585,7 @@ class ChunckEditor {
             depth: 1 + 2 * this.brushSize + 0.2
         }).applyToMesh(this.brushMesh);
         if (isFinite(this.brushCubeType)) {
-            this.brushMesh.material = this.brushMaterials[this.brushCubeType];
+            this.brushMesh.material = Cube.PreviewMaterials[this.brushCubeType];
         }
     }
 }
@@ -952,6 +942,21 @@ class Cube {
             this.cubeType = Math.floor(Math.random() * 3);
         }
     }
+    static get PreviewMaterials() {
+        if (!Cube._PreviewMaterials) {
+            Cube._PreviewMaterials = [];
+            for (let i = 0; i < 4; i++) {
+                Cube._PreviewMaterials[i] = new BABYLON.StandardMaterial("brush-material-" + i, Main.Scene);
+                Cube._PreviewMaterials[i].alpha = 0.5;
+                Cube._PreviewMaterials[i].specularColor.copyFromFloats(0.1, 0.1, 0.1);
+            }
+            Cube._PreviewMaterials[0].diffuseColor = BABYLON.Color3.FromHexString("#a86f32");
+            Cube._PreviewMaterials[1].diffuseColor = BABYLON.Color3.FromHexString("#8c8c89");
+            Cube._PreviewMaterials[2].diffuseColor = BABYLON.Color3.FromHexString("#dbc67b");
+            Cube._PreviewMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
+        }
+        return Cube._PreviewMaterials;
+    }
     addVertex(v) {
         if (v.i === this.i) {
             if (v.j === this.j) {
@@ -1304,13 +1309,28 @@ class PlayerActionTemplate {
     static CreateCubeAction(cubeType) {
         let action = new PlayerAction();
         let previewMesh;
+        action.iconUrl = "./datas/textures/";
+        if (cubeType === CubeType.Dirt) {
+            action.iconUrl += "dirt";
+        }
+        if (cubeType === CubeType.Rock) {
+            action.iconUrl += "rock";
+        }
+        if (cubeType === CubeType.Sand) {
+            action.iconUrl += "sand";
+        }
+        if (cubeType === CubeType.None) {
+            action.iconUrl += "delete";
+        }
+        action.iconUrl += ".png";
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
             if (coordinates) {
                 if (!previewMesh) {
-                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1 });
+                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    previewMesh.material = Cube.PreviewMaterials[cubeType];
                 }
                 previewMesh.position.copyFrom(coordinates.chunck.position);
                 previewMesh.position.addInPlace(coordinates.coordinates);
@@ -1351,15 +1371,23 @@ class PlayerActionManager {
         Main.Canvas.addEventListener("keyup", (e) => {
             let index = e.keyCode - 48;
             if (this.linkedActions[index]) {
+                // Unequip current action
                 if (this.player.currentAction) {
                     if (this.player.currentAction.onUnequip) {
                         this.player.currentAction.onUnequip();
                     }
                 }
-                this.player.currentAction = this.linkedActions[index];
-                if (this.player.currentAction) {
-                    if (this.player.currentAction.onEquip) {
-                        this.player.currentAction.onEquip();
+                // If request action was already equiped, remove it.
+                if (this.player.currentAction === this.linkedActions[index]) {
+                    this.player.currentAction = undefined;
+                }
+                // Equip new action.
+                else {
+                    this.player.currentAction = this.linkedActions[index];
+                    if (this.player.currentAction) {
+                        if (this.player.currentAction.onEquip) {
+                            this.player.currentAction.onEquip();
+                        }
                     }
                 }
             }
@@ -1368,11 +1396,13 @@ class PlayerActionManager {
     linkAction(action, index) {
         if (index >= 0 && index <= 9) {
             this.linkedActions[index] = action;
+            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "url(" + action.iconUrl + ")";
         }
     }
     unlinkAction(index) {
         if (index >= 0 && index <= 9) {
             this.linkedActions[index] = undefined;
+            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "";
         }
     }
 }

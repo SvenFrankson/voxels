@@ -22,15 +22,23 @@ class PlayerActionManager {
         Main.Canvas.addEventListener("keyup", (e) => {
             let index = e.keyCode - 48;
             if (this.linkedActions[index]) {
+                // Unequip current action
                 if (this.player.currentAction) {
                     if (this.player.currentAction.onUnequip) {
                         this.player.currentAction.onUnequip();
                     }
                 }
-                this.player.currentAction = this.linkedActions[index];
-                if (this.player.currentAction) {
-                    if (this.player.currentAction.onEquip) {
-                        this.player.currentAction.onEquip();
+                // If request action was already equiped, remove it.
+                if (this.player.currentAction === this.linkedActions[index]) {
+                    this.player.currentAction = undefined;
+                }
+                // Equip new action.
+                else {
+                    this.player.currentAction = this.linkedActions[index];
+                    if (this.player.currentAction) {
+                        if (this.player.currentAction.onEquip) {
+                            this.player.currentAction.onEquip();
+                        }
                     }
                 }
             }
@@ -40,12 +48,14 @@ class PlayerActionManager {
     public linkAction(action: PlayerAction, index: number): void {
         if (index >= 0 && index <= 9) {
             this.linkedActions[index] = action;
+            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "url(" + action.iconUrl + ")";
         }
     }
 
     public unlinkAction(index: number): void {
         if (index >= 0 && index <= 9) {
             this.linkedActions[index] = undefined;
+            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "";
         }
     }
 }

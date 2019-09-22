@@ -4,6 +4,21 @@ class PlayerActionTemplate {
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
 
+        action.iconUrl = "./datas/textures/";
+        if (cubeType === CubeType.Dirt) {
+            action.iconUrl += "dirt";
+        }
+        if (cubeType === CubeType.Rock) {
+            action.iconUrl += "rock";
+        }
+        if (cubeType === CubeType.Sand) {
+            action.iconUrl += "sand";
+        }
+        if (cubeType === CubeType.None) {
+            action.iconUrl += "delete";
+        }
+        action.iconUrl += ".png";
+
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
@@ -11,7 +26,8 @@ class PlayerActionTemplate {
             let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
             if (coordinates) {
                 if (!previewMesh) {
-                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1 });
+                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    previewMesh.material = Cube.PreviewMaterials[cubeType];
                 }
                 previewMesh.position.copyFrom(coordinates.chunck.position);
                 previewMesh.position.addInPlace(coordinates.coordinates);

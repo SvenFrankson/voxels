@@ -7,6 +7,23 @@ enum CubeType {
 
 class Cube {
 
+    public static get PreviewMaterials(): BABYLON.StandardMaterial[] {
+        if (!Cube._PreviewMaterials) {
+            Cube._PreviewMaterials = []
+            for (let i = 0; i < 4; i++) {
+                Cube._PreviewMaterials[i] = new BABYLON.StandardMaterial("brush-material-" + i, Main.Scene);
+                Cube._PreviewMaterials[i].alpha = 0.5;
+                Cube._PreviewMaterials[i].specularColor.copyFromFloats(0.1, 0.1, 0.1);
+            }
+            Cube._PreviewMaterials[0].diffuseColor = BABYLON.Color3.FromHexString("#a86f32");
+            Cube._PreviewMaterials[1].diffuseColor = BABYLON.Color3.FromHexString("#8c8c89");
+            Cube._PreviewMaterials[2].diffuseColor = BABYLON.Color3.FromHexString("#dbc67b");
+            Cube._PreviewMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
+        }
+        return Cube._PreviewMaterials;
+    }
+    private static _PreviewMaterials: BABYLON.StandardMaterial[];
+
     public v000: Vertex;
     public v001: Vertex;
     public v010: Vertex;
