@@ -191,5 +191,6 @@ class CollisionsTest extends Main {
             Main.Camera.beta = Math.PI / 4;
             Main.Camera.radius = 10;
         }
+		Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
     }
 }

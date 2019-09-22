@@ -62,5 +62,6 @@ class SkullIsland extends Main {
 
 			request.send();
 		}
+		Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
     }
 }

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+  <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
   <title>Voxels</title>
   <script src="./lib/babylon.js"></script>
   <script src="./lib/babylon.cellMaterial.js"></script>
@@ -10,15 +11,21 @@
   <link rel="stylesheet" type="text/css" href="./styles/app.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bangers">
 </head>
+
 <body>
   <canvas id="render-canvas"></canvas>
-  <div id="chunck-editor">
+
+  <div id="chunck-editor" style="display: none">
     <div class="editor-panel">
-        <div class="editor-label">Brush Type</div>
-        <button id="brush-type-button-3" class="chunck-editor-button brush-type-button"><span id="destroy-icon-button" class="chunck-editor-icon-button">□</span> DESTROY</button>
-        <button id="brush-type-button-0" class="chunck-editor-button brush-type-button"><span id="dirt-icon-button" class="chunck-editor-icon-button">■ </span>DIRT</button>
-        <button id="brush-type-button-1" class="chunck-editor-button brush-type-button"><span id="rock-icon-button" class="chunck-editor-icon-button">■ </span>ROCK</button>
-        <button id="brush-type-button-2" class="chunck-editor-button brush-type-button"><span id="sand-icon-button" class="chunck-editor-icon-button">■ </span>SAND</button>
+      <div class="editor-label">Brush Type</div>
+      <button id="brush-type-button-3" class="chunck-editor-button brush-type-button"><span id="destroy-icon-button"
+          class="chunck-editor-icon-button">□</span> DESTROY</button>
+      <button id="brush-type-button-0" class="chunck-editor-button brush-type-button"><span id="dirt-icon-button"
+          class="chunck-editor-icon-button">■ </span>DIRT</button>
+      <button id="brush-type-button-1" class="chunck-editor-button brush-type-button"><span id="rock-icon-button"
+          class="chunck-editor-icon-button">■ </span>ROCK</button>
+      <button id="brush-type-button-2" class="chunck-editor-button brush-type-button"><span id="sand-icon-button"
+          class="chunck-editor-icon-button">■ </span>SAND</button>
     </div>
     <div class="editor-panel">
       <div class="editor-label">Brush Size</div>
@@ -28,17 +35,61 @@
       <button id="brush-size-button-3" class="brush-size-button">4</button>
       <button id="brush-size-button-4" class="brush-size-button">5</button>
     </div>
-    <button id="save" class="chunck-editor-button"><span id="save-icon-button" class="chunck-editor-icon-button">■ </span>SAVE</button>
+    <button id="save" class="chunck-editor-button"><span id="save-icon-button" class="chunck-editor-icon-button">■
+      </span>SAVE</button>
   </div>
-  
-    <div id="credit">
-      <div id="credit-dev">
-        <a href="http://www.svenfrankson.com">> Sven Frankson</a>
-      </div>
-      <div id="credit-art">
-        original skull model courtesy of <a href="https://twitter.com/dgordillo">DGordillo</a>
-      </div>
+
+  <div id="player-actions" style="display: none">
+    <div id="player-action-1" class="player-action">
+      <span class="player-action-label">1</span>
+      <div id="player-action-1-icon" class="player-action-icon"></div>
     </div>
-  </a>
+    <div id="player-action-2" class="player-action">
+      <span class="player-action-label">2</span>
+      <div id="player-action-2-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-3" class="player-action">
+      <span class="player-action-label">3</span>
+      <div id="player-action-3-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-4" class="player-action">
+      <span class="player-action-label">4</span>
+      <div id="player-action-4-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-5" class="player-action">
+      <span class="player-action-label">5</span>
+      <div id="player-action-5-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-6" class="player-action">
+      <span class="player-action-label">6</span>
+      <div id="player-action-6-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-7" class="player-action">
+      <span class="player-action-label">7</span>
+      <div id="player-action-7-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-8" class="player-action">
+      <span class="player-action-label">8</span>
+      <div id="player-action-8-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-9" class="player-action">
+      <span class="player-action-label">9</span>
+      <div id="player-action-9-icon" class="player-action-icon"></div>
+    </div>
+    <div id="player-action-0" class="player-action">
+      <span class="player-action-label">0</span>
+      <div id="player-action-0-icon" class="player-action-icon"></div>
+    </div>
+  </div>
+
+  <div id="credit">
+    <div id="credit-dev">
+      <a href="http://www.svenfrankson.com">> Sven Frankson</a>
+    </div>
+    <div id="credit-art">
+      original skull model courtesy of <a href="https://twitter.com/dgordillo">DGordillo</a>
+    </div>
+  </div>
 </body>
+
 </html>

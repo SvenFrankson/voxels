@@ -9,7 +9,7 @@ class PlayerTest extends Main {
 
     public async initialize(): Promise<void> {
         await super.initializeScene();
-        Main.ChunckEditor.saveSceneName = "player-test";
+        //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 2;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("player-test");

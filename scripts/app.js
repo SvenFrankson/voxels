@@ -457,6 +457,7 @@ class ChunckEditor {
         this.brushCubeType = undefined;
         this.brushSize = 0;
         this.saveSceneName = "scene";
+        document.getElementById("chunck-editor").style.display = "block";
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
         this.brushMaterials = [];
         for (let i = 0; i < 4; i++) {
@@ -887,6 +888,52 @@ class ChunckManager {
         }
     }
 }
+class ChunckUtils {
+    static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
+        let pickInfo = Main.Scene.pick(x, y, (m) => {
+            return m instanceof Chunck;
+        });
+        let pickedMesh = pickInfo.pickedMesh;
+        if (pickedMesh instanceof Chunck) {
+            let chunck = pickedMesh;
+            let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+            let n = pickInfo.getNormal();
+            localPickedPoint.subtractInPlace(n.scale(0.5));
+            let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+            if (!behindPickedFace) {
+                if (absN.x > absN.y && absN.x > absN.z) {
+                    if (n.x > 0) {
+                        coordinates.x++;
+                    }
+                    else {
+                        coordinates.x--;
+                    }
+                }
+                if (absN.y > absN.x && absN.y > absN.z) {
+                    if (n.y > 0) {
+                        coordinates.y++;
+                    }
+                    else {
+                        coordinates.y--;
+                    }
+                }
+                if (absN.z > absN.x && absN.z > absN.y) {
+                    if (n.z > 0) {
+                        coordinates.z++;
+                    }
+                    else {
+                        coordinates.z--;
+                    }
+                }
+            }
+            return {
+                chunck: chunck,
+                coordinates: coordinates
+            };
+        }
+    }
+}
 var CubeType;
 (function (CubeType) {
     CubeType[CubeType["Dirt"] = 0] = "Dirt";
@@ -1189,9 +1236,22 @@ class Player extends BABYLON.Mesh {
                     }
                 }
             });
+            if (this.currentAction) {
+                if (this.currentAction.onUpdate) {
+                    this.currentAction.onUpdate();
+                }
+            }
         };
+        this.playerActionManager = new PlayerActionManager(this);
     }
     register() {
+        this.playerActionManager.register();
+        let dirtAction = PlayerActionTemplate.CreateCubeAction(CubeType.Dirt);
+        this.playerActionManager.linkAction(dirtAction, 1);
+        let rockAction = PlayerActionTemplate.CreateCubeAction(CubeType.Rock);
+        this.playerActionManager.linkAction(rockAction, 2);
+        let sandAction = PlayerActionTemplate.CreateCubeAction(CubeType.Sand);
+        this.playerActionManager.linkAction(sandAction, 3);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (e.keyCode === 81) {
@@ -1227,9 +1287,93 @@ class Player extends BABYLON.Mesh {
         Main.Canvas.addEventListener("pointermove", (e) => {
             this.rotation.y += e.movementX / 200;
             if (Main.Camera instanceof BABYLON.FreeCamera) {
-                Main.Camera.rotation.x += e.movementY / 200;
+                Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2), Math.PI / 2);
             }
         });
+        Main.Canvas.addEventListener("pointerup", (e) => {
+            if (this.currentAction) {
+                if (this.currentAction.onClick) {
+                    this.currentAction.onClick();
+                }
+            }
+        });
+        document.getElementById("player-actions").style.display = "block";
+    }
+}
+class PlayerActionTemplate {
+    static CreateCubeAction(cubeType) {
+        let action = new PlayerAction();
+        let previewMesh;
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
+            if (coordinates) {
+                if (!previewMesh) {
+                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1 });
+                }
+                previewMesh.position.copyFrom(coordinates.chunck.position);
+                previewMesh.position.addInPlace(coordinates.coordinates);
+                previewMesh.position.addInPlaceFromFloats(0.5, 0.5, 0.5);
+            }
+            else {
+                if (previewMesh) {
+                    previewMesh.dispose();
+                    previewMesh = undefined;
+                }
+            }
+        };
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
+            if (coordinates) {
+                Main.ChunckManager.setChunckCube(coordinates.chunck, coordinates.coordinates.x, coordinates.coordinates.y, coordinates.coordinates.z, cubeType, 0, true);
+            }
+        };
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+        };
+        return action;
+    }
+}
+class PlayerAction {
+}
+class PlayerActionManager {
+    constructor(player) {
+        this.player = player;
+        this.linkedActions = [];
+    }
+    register() {
+        Main.Canvas.addEventListener("keyup", (e) => {
+            let index = e.keyCode - 48;
+            if (this.linkedActions[index]) {
+                if (this.player.currentAction) {
+                    if (this.player.currentAction.onUnequip) {
+                        this.player.currentAction.onUnequip();
+                    }
+                }
+                this.player.currentAction = this.linkedActions[index];
+                if (this.player.currentAction) {
+                    if (this.player.currentAction.onEquip) {
+                        this.player.currentAction.onEquip();
+                    }
+                }
+            }
+        });
+    }
+    linkAction(action, index) {
+        if (index >= 0 && index <= 9) {
+            this.linkedActions[index] = action;
+        }
+    }
+    unlinkAction(index) {
+        if (index >= 0 && index <= 9) {
+            this.linkedActions[index] = undefined;
+        }
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -1372,7 +1516,6 @@ class Main {
         waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
         water.material = waterMaterial;
         Main.ChunckManager = new ChunckManager();
-        Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
         console.log("Main scene Initialized.");
     }
     animate() {
@@ -1582,6 +1725,7 @@ class CollisionsTest extends Main {
             Main.Camera.beta = Math.PI / 4;
             Main.Camera.radius = 10;
         }
+        Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
     }
 }
 /// <reference path="./Main.ts"/>
@@ -1592,7 +1736,7 @@ class PlayerTest extends Main {
     }
     async initialize() {
         await super.initializeScene();
-        Main.ChunckEditor.saveSceneName = "player-test";
+        //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 2;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("player-test");
@@ -1717,6 +1861,7 @@ class SkullIsland extends Main {
             };
             request.send();
         }
+        Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
     }
 }
 class SeaMaterial extends BABYLON.ShaderMaterial {

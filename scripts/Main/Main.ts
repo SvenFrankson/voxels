@@ -187,7 +187,6 @@ class Main {
 		water.material = waterMaterial;
 
 		Main.ChunckManager = new ChunckManager();
-		Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
 		
 		console.log("Main scene Initialized.");
     }

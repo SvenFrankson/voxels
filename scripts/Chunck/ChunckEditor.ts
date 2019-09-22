@@ -14,6 +14,7 @@ class ChunckEditor {
     constructor(
         public chunckManager: ChunckManager
     ) {
+        document.getElementById("chunck-editor").style.display = "block";
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
         this.brushMaterials = []
         for (let i = 0; i < 4; i++) {
