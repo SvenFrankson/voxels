@@ -23,6 +23,8 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(rockAction, 2);
         let sandAction = PlayerActionTemplate.CreateCubeAction(CubeType.Sand);
         this.playerActionManager.linkAction(sandAction, 3);
+        let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
+        this.playerActionManager.linkAction(deleteCubeAction, 0);
 
         Main.Scene.onBeforeRenderObservable.add(this.update);
 

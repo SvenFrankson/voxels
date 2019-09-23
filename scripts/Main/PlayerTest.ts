@@ -18,7 +18,7 @@ class PlayerTest extends Main {
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
 			Main.ChunckManager.deserialize(savedTerrain);
 			for (let i = -l; i <= l; i++) {
-				for (let j = -1; j <= 2 * l - 1; j++) {
+				for (let j = -1; j <= l; j++) {
 					for (let k = -l; k <= l; k++) {
 						let chunck = Main.ChunckManager.getChunck(i, j, k);
 						if (chunck) {

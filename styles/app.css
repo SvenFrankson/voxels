@@ -149,3 +149,19 @@ a {
     margin: 0px 0px 0px 10px;
     background-size: cover;
 }
+
+.pause-menu-button {
+    position: absolute;
+    font-family: "Bangers";
+    color: black;
+    display: block;
+    font-size: 50px;
+    margin: 0;
+    background: lightgray;
+    border: 2px solid black;
+    width: 240px;
+    height: 80px;
+    padding: 10px;
+    text-align: center;
+    letter-spacing: 3px;
+}
