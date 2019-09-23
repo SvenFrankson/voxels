@@ -352,49 +352,83 @@ class Chunck extends BABYLON.Mesh {
         let indices = [];
         for (let i = 0; i < this.faces.length; i++) {
             let f = this.faces[i];
+            let p0 = f.vertices[0];
+            let p1 = f.vertices[8];
+            let p2 = f.vertices[1];
+            let p3 = f.vertices[2];
+            let diag0 = p0.position.subtract(p2.position);
+            let diag1 = p1.position.subtract(p3.position);
+            let nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            let d0 = diag0.length();
+            let d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
             if (f.draw) {
-                let p0 = f.vertices[0];
-                let p1 = f.vertices[8];
-                let p2 = f.vertices[1];
-                let p3 = f.vertices[2];
-                let d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                let d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-                p0 = f.vertices[0];
-                p1 = f.vertices[2];
-                p2 = f.vertices[3];
-                p3 = f.vertices[4];
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+            p0 = f.vertices[0];
+            p1 = f.vertices[2];
+            p2 = f.vertices[3];
+            p3 = f.vertices[4];
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-                p0 = f.vertices[0];
-                p1 = f.vertices[4];
-                p2 = f.vertices[5];
-                p3 = f.vertices[6];
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+            p0 = f.vertices[0];
+            p1 = f.vertices[4];
+            p2 = f.vertices[5];
+            p3 = f.vertices[6];
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-                p0 = f.vertices[0];
-                p1 = f.vertices[6];
-                p2 = f.vertices[7];
-                p3 = f.vertices[8];
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+            p0 = f.vertices[0];
+            p1 = f.vertices[6];
+            p2 = f.vertices[7];
+            p3 = f.vertices[8];
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
@@ -406,8 +440,12 @@ class Chunck extends BABYLON.Mesh {
         data.positions = positions;
         data.colors = colors;
         data.indices = indices;
-        data.normals = [];
-        BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+        let normals = [];
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].normalSum.normalize();
+            normals.push(...this.vertices[i].normalSum.asArray());
+        }
+        data.normals = normals;
         this.position.x = CHUNCK_SIZE * this.i;
         this.position.y = CHUNCK_SIZE * this.j;
         this.position.z = CHUNCK_SIZE * this.k;
@@ -1166,6 +1204,7 @@ class Vertex {
         this.faces = [];
         this.cubeTypes = new VertexCubeType();
         this.smoothedCubeTypes = new VertexCubeType();
+        this.normalSum = BABYLON.Vector3.Zero();
         this.position = new BABYLON.Vector3(i, j, k);
         this.smoothedPosition = this.position.clone();
         while (this.i < 0) {
@@ -1470,7 +1509,21 @@ class Main {
 			uniform sampler2D depthSampler;
 			uniform float 		width;
 			uniform float 		height;
-			void make_kernel(inout float n[9], sampler2D tex, vec2 coord)
+			void make_kernel_color(inout vec4 n[9], sampler2D tex, vec2 coord)
+			{
+				float w = 1.0 / width;
+				float h = 1.0 / height;
+				n[0] = texture2D(tex, coord + vec2( -w, -h));
+				n[1] = texture2D(tex, coord + vec2(0.0, -h));
+				n[2] = texture2D(tex, coord + vec2(  w, -h));
+				n[3] = texture2D(tex, coord + vec2( -w, 0.0));
+				n[4] = texture2D(tex, coord);
+				n[5] = texture2D(tex, coord + vec2(  w, 0.0));
+				n[6] = texture2D(tex, coord + vec2( -w, h));
+				n[7] = texture2D(tex, coord + vec2(0.0, h));
+				n[8] = texture2D(tex, coord + vec2(  w, h));
+			}
+			void make_kernel_depth(inout float n[9], sampler2D tex, vec2 coord)
 			{
 				float w = 1.0 / width;
 				float h = 1.0 / height;
@@ -1486,17 +1539,29 @@ class Main {
 			}
 			void main(void) 
 			{
-				float n[9];
-				make_kernel( n, depthSampler, vUV );
-				float sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
-				float sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
-				float sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				float threshold = 0.002;
-				if (sobel < threshold) {
-					gl_FragColor = texture2D(textureSampler, vUV);
-				} else {
-					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-				}
+				vec4 d = texture2D(depthSampler, vUV);
+				float depth = d.r * (1000.0 - 0.2) + 0.2;
+				
+				float nD[9];
+				make_kernel_depth( nD, depthSampler, vUV );
+				float sobel_depth_edge_h = nD[2] + (2.0*nD[5]) + nD[8] - (nD[0] + (2.0*nD[3]) + nD[6]);
+				float sobel_depth_edge_v = nD[0] + (2.0*nD[1]) + nD[2] - (nD[6] + (2.0*nD[7]) + nD[8]);
+				float sobel_depth = sqrt((sobel_depth_edge_h * sobel_depth_edge_h) + (sobel_depth_edge_v * sobel_depth_edge_v));
+				float thresholdDepth = 0.002;
+
+				vec4 n[9];
+				make_kernel_color( n, textureSampler, vUV );
+				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
+				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
+				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
+				float threshold = 0.4 + max((depth - 20.) / 30., 0.);
+				
+				gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+				if (sobel_depth < thresholdDepth) {
+					if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
+						gl_FragColor = n[4];
+					}
+				} 
 			}
         `;
         BABYLON.Engine.ShadersRepository = "./shaders/";
@@ -1958,7 +2023,7 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             attributes: ["position", "normal", "uv", "color"],
             uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
         });
-        this.setVector3("lightInvDirW", (new BABYLON.Vector3(1, 3, 2)).normalize());
+        this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
         this.setColor3("colGrass", BABYLON.Color3.FromHexString("#47a632"));
         this.setColor3("colDirt", BABYLON.Color3.FromHexString("#a86f32"));
         this.setColor3("colRock", BABYLON.Color3.FromHexString("#8c8c89"));

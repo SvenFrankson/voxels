@@ -63,6 +63,8 @@ class Vertex {
     public cubeTypes: VertexCubeType = new VertexCubeType();
     public smoothedCubeTypes: VertexCubeType = new VertexCubeType();
 
+    public normalSum: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+
     constructor(
         public i: number,
         public j: number,

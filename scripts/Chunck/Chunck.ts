@@ -322,7 +322,7 @@ class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].applySmooth();
         }
-
+        
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].smooth(1);
         }
@@ -345,56 +345,90 @@ class Chunck extends BABYLON.Mesh {
 
         for (let i = 0; i < this.faces.length; i++) {
             let f = this.faces[i];
-            if (f.draw) {
-                let p0 = f.vertices[0];
-                let p1 = f.vertices[8];
-                let p2 = f.vertices[1];
-                let p3 = f.vertices[2];
+            let p0 = f.vertices[0];
+            let p1 = f.vertices[8];
+            let p2 = f.vertices[1];
+            let p3 = f.vertices[2];
 
-                let d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                let d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            let diag0 = p0.position.subtract(p2.position);
+            let diag1 = p1.position.subtract(p3.position);
+            let nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            let d0 = diag0.length();
+            let d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-    
-                p0 = f.vertices[0];
-                p1 = f.vertices[2];
-                p2 = f.vertices[3];
-                p3 = f.vertices[4];
-    
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+
+            p0 = f.vertices[0];
+            p1 = f.vertices[2];
+            p2 = f.vertices[3];
+            p3 = f.vertices[4];
+
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-    
-                p0 = f.vertices[0];
-                p1 = f.vertices[4];
-                p2 = f.vertices[5];
-                p3 = f.vertices[6];
-    
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+
+            p0 = f.vertices[0];
+            p1 = f.vertices[4];
+            p2 = f.vertices[5];
+            p3 = f.vertices[6];
+
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
                 else {
                     indices.push(p0.index, p3.index, p1.index, p3.index, p2.index, p1.index);
                 }
-    
-                p0 = f.vertices[0];
-                p1 = f.vertices[6];
-                p2 = f.vertices[7];
-                p3 = f.vertices[8];
-    
-                d0 = BABYLON.Vector3.DistanceSquared(p0.position, p2.position);
-                d1 = BABYLON.Vector3.DistanceSquared(p1.position, p3.position);
+            }
+
+            p0 = f.vertices[0];
+            p1 = f.vertices[6];
+            p2 = f.vertices[7];
+            p3 = f.vertices[8];
+
+            diag0 = p0.position.subtract(p2.position);
+            diag1 = p1.position.subtract(p3.position);
+            nFace = BABYLON.Vector3.Cross(diag0, diag1);
+            d0 = diag0.length();
+            d1 = diag1.length();
+            p0.normalSum.addInPlace(nFace);
+            p1.normalSum.addInPlace(nFace);
+            p2.normalSum.addInPlace(nFace);
+            p3.normalSum.addInPlace(nFace);
+            if (f.draw) {
                 if (d0 < d1) {
                     indices.push(p0.index, p2.index, p1.index, p0.index, p3.index, p2.index);
                 }
@@ -407,8 +441,12 @@ class Chunck extends BABYLON.Mesh {
         data.positions = positions;
         data.colors = colors;
         data.indices = indices;
-        data.normals = [];
-        BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+        let normals = [];
+        for (let i = 0; i < this.vertices.length; i++) {
+            this.vertices[i].normalSum.normalize();
+            normals.push(...this.vertices[i].normalSum.asArray());
+        }
+        data.normals = normals;
 
         this.position.x = CHUNCK_SIZE * this.i;
         this.position.y = CHUNCK_SIZE * this.j;
