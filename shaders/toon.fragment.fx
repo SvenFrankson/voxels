@@ -18,9 +18,9 @@ uniform vec3 colSand;
 void main(void) {
     float ToonThresholds[4];
     ToonThresholds[0] = 0.8;
-    ToonThresholds[1] = 0.6;
-    ToonThresholds[2] = 0.4;
-    ToonThresholds[3] = 0.1;
+    ToonThresholds[1] = 0.5;
+    ToonThresholds[2] = 0.2;
+    ToonThresholds[3] = - 0.1;
 
     float ToonBrightnessLevels[5];
     ToonBrightnessLevels[0] = 1.0;
@@ -30,7 +30,7 @@ void main(void) {
     ToonBrightnessLevels[4] = 0.2;
 
     // diffuse
-    float ndl = max(0., dot(vNormalW, lightInvDirW));
+    float ndl = dot(vNormalW, lightInvDirW);
 
     vec3 color = colDirt;
     if (vNormalW.y > 0.5) {

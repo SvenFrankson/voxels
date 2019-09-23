@@ -52,6 +52,8 @@ class Main {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 
 		this.initializeCamera();
+		Main.Camera.minZ = 0.2;
+		Main.Camera.maxZ = 1000;
 
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
@@ -64,32 +66,30 @@ class Main {
 			uniform sampler2D depthSampler;
 			uniform float 		width;
 			uniform float 		height;
-			void make_kernel(inout vec4 n[9], sampler2D tex, vec2 coord)
+			void make_kernel(inout float n[9], sampler2D tex, vec2 coord)
 			{
 				float w = 1.0 / width;
 				float h = 1.0 / height;
-				n[0] = texture2D(tex, coord + vec2( -w, -h));
-				n[1] = texture2D(tex, coord + vec2(0.0, -h));
-				n[2] = texture2D(tex, coord + vec2(  w, -h));
-				n[3] = texture2D(tex, coord + vec2( -w, 0.0));
-				n[4] = texture2D(tex, coord);
-				n[5] = texture2D(tex, coord + vec2(  w, 0.0));
-				n[6] = texture2D(tex, coord + vec2( -w, h));
-				n[7] = texture2D(tex, coord + vec2(0.0, h));
-				n[8] = texture2D(tex, coord + vec2(  w, h));
+				n[0] = texture2D(tex, coord + vec2( -w, -h)).r;
+				n[1] = texture2D(tex, coord + vec2(0.0, -h)).r;
+				n[2] = texture2D(tex, coord + vec2(  w, -h)).r;
+				n[3] = texture2D(tex, coord + vec2( -w, 0.0)).r;
+				n[4] = texture2D(tex, coord).r;
+				n[5] = texture2D(tex, coord + vec2(  w, 0.0)).r;
+				n[6] = texture2D(tex, coord + vec2( -w, h)).r;
+				n[7] = texture2D(tex, coord + vec2(0.0, h)).r;
+				n[8] = texture2D(tex, coord + vec2(  w, h)).r;
 			}
 			void main(void) 
 			{
-				vec4 d = texture2D(depthSampler, vUV);
-				float depth = d.r * (2000.0 - 0.5) + 0.5;
-				vec4 n[9];
-				make_kernel( n, textureSampler, vUV );
-				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
-				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
-				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				float threshold = 0.1 + max((depth - 10.) / 30., 0.);
-				if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
-					gl_FragColor = n[4];
+				float n[9];
+				make_kernel( n, depthSampler, vUV );
+				float sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
+				float sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
+				float sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
+				float threshold = 0.002;
+				if (sobel < threshold) {
+					gl_FragColor = texture2D(textureSampler, vUV);
 				} else {
 					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 				}
@@ -105,7 +105,6 @@ class Main {
 			effect.setFloat("width", Main.Engine.getRenderWidth());
 			effect.setFloat("height", Main.Engine.getRenderHeight());
 		};
-		
 		
 		let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
 		noPostProcessCamera.parent = Main.Camera;
