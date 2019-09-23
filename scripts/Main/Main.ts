@@ -87,7 +87,7 @@ class Main {
 				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
 				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
 				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				float threshold = 0.4 + max((depth - 10.) / 30., 0.);
+				float threshold = 0.1 + max((depth - 10.) / 30., 0.);
 				if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 					gl_FragColor = n[4];
 				} else {

@@ -5,6 +5,7 @@ class SkullIsland extends Main {
         let l = 6;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("terrain");
+		console.log(savedTerrainString);
 		if (savedTerrainString) {
 			let t0 = performance.now();
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;

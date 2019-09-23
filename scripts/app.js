@@ -1491,7 +1491,7 @@ class Main {
 				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
 				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
 				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				float threshold = 0.4 + max((depth - 10.) / 30., 0.);
+				float threshold = 0.1 + max((depth - 10.) / 30., 0.);
 				if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 					gl_FragColor = n[4];
 				} else {
@@ -1791,16 +1791,9 @@ class PlayerTest extends Main {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);
             Main.ChunckManager.deserialize(savedTerrain);
-            for (let i = -l; i <= l; i++) {
-                for (let j = -1; j <= l; j++) {
-                    for (let k = -l; k <= l; k++) {
-                        let chunck = Main.ChunckManager.getChunck(i, j, k);
-                        if (chunck) {
-                            manyChuncks.push(chunck);
-                        }
-                    }
-                }
-            }
+            Main.ChunckManager.foreachChunck(chunck => {
+                manyChuncks.push(chunck);
+            });
             let loopOut = async () => {
                 await Main.ChunckManager.generateManyChuncks(manyChuncks);
                 let t1 = performance.now();
@@ -1810,36 +1803,35 @@ class PlayerTest extends Main {
         }
         else {
             let t0 = performance.now();
-            for (let i = -l; i <= l; i++) {
-                for (let j = -1; j <= l; j++) {
-                    for (let k = -l; k <= l; k++) {
-                        let chunck = Main.ChunckManager.createChunck(i, j, k);
-                        if (chunck) {
-                            manyChuncks.push(chunck);
-                        }
-                    }
+            var request = new XMLHttpRequest();
+            request.open('GET', './datas/scenes/island.json', true);
+            request.onload = () => {
+                if (request.status >= 200 && request.status < 400) {
+                    let defaultTerrain = JSON.parse(request.responseText);
+                    Main.ChunckManager.deserialize(defaultTerrain);
+                    Main.ChunckManager.foreachChunck(chunck => {
+                        manyChuncks.push(chunck);
+                    });
+                    let loopOut = async () => {
+                        await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                        let t1 = performance.now();
+                        console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
+                    };
+                    loopOut();
                 }
-            }
-            for (let i = -l; i <= l; i++) {
-                for (let k = -l; k <= l; k++) {
-                    let chunck = Main.ChunckManager.getChunck(i, -1, k);
-                    chunck.generateFull(CubeType.Dirt);
-                    chunck = Main.ChunckManager.getChunck(i, 0, k);
-                    chunck.generateFull(CubeType.Dirt);
+                else {
+                    alert("Scene file not found. My bad. Sven.");
                 }
-            }
-            let loopOut = async () => {
-                console.log(manyChuncks.length);
-                await Main.ChunckManager.generateManyChuncks(manyChuncks);
-                let t1 = performance.now();
-                console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
             };
-            loopOut();
+            request.onerror = () => {
+                alert("Unknown error. My bad. Sven.");
+            };
+            request.send();
         }
         let pauseMenu = new PauseMenu();
         pauseMenu.initialize();
         let player = new Player();
-        player.position.y = 10;
+        player.position.y = 100;
         player.register();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
@@ -1853,6 +1845,7 @@ class SkullIsland extends Main {
         let l = 6;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("terrain");
+        console.log(savedTerrainString);
         if (savedTerrainString) {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);

@@ -17,16 +17,11 @@ class PlayerTest extends Main {
 			let t0 = performance.now();
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
 			Main.ChunckManager.deserialize(savedTerrain);
-			for (let i = -l; i <= l; i++) {
-				for (let j = -1; j <= l; j++) {
-					for (let k = -l; k <= l; k++) {
-						let chunck = Main.ChunckManager.getChunck(i, j, k);
-						if (chunck) {
-							manyChuncks.push(chunck);
-						}
-					}
+			Main.ChunckManager.foreachChunck(
+				chunck => {
+					manyChuncks.push(chunck);
 				}
-			}
+			);
 			let loopOut = async () => {
 				await Main.ChunckManager.generateManyChuncks(manyChuncks);
 				let t1 = performance.now();
@@ -36,38 +31,41 @@ class PlayerTest extends Main {
 		}
 		else {
 			let t0 = performance.now();
-			for (let i = -l; i <= l; i++) {
-				for (let j = -1; j <= l; j++) {
-					for (let k = -l; k <= l; k++) {
-						let chunck = Main.ChunckManager.createChunck(i, j, k);
-						if (chunck) {
+			var request = new XMLHttpRequest();
+			request.open('GET', './datas/scenes/island.json', true);
+
+			request.onload = () => {
+				if (request.status >= 200 && request.status < 400) {
+					let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
+					Main.ChunckManager.deserialize(defaultTerrain);
+					Main.ChunckManager.foreachChunck(
+						chunck => {
 							manyChuncks.push(chunck);
 						}
+					);
+					let loopOut = async () => {
+						await Main.ChunckManager.generateManyChuncks(manyChuncks);
+						let t1 = performance.now();
+						console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
 					}
+					loopOut();
+				} else {
+					alert("Scene file not found. My bad. Sven.")
 				}
-            }
-            for (let i = - l; i <= l; i++) {
-                for (let k = - l; k <= l; k++) {
-                    let chunck = Main.ChunckManager.getChunck(i, - 1, k);
-                    chunck.generateFull(CubeType.Dirt);
-                    chunck = Main.ChunckManager.getChunck(i, 0, k);
-                    chunck.generateFull(CubeType.Dirt);
-                }
-            }
-			let loopOut = async () => {
-                console.log(manyChuncks.length);
-				await Main.ChunckManager.generateManyChuncks(manyChuncks);
-				let t1 = performance.now();
-				console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
-			}
-			loopOut();
+			};
+
+			request.onerror = () => {
+				alert("Unknown error. My bad. Sven.")
+			};
+
+			request.send();
 		}
 		
 		let pauseMenu = new PauseMenu();
 		pauseMenu.initialize();
         
         let player = new Player();
-        player.position.y = 10;
+        player.position.y = 100;
         player.register();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;

@@ -17,8 +17,8 @@ uniform vec3 colSand;
 
 void main(void) {
     float ToonThresholds[4];
-    ToonThresholds[0] = 0.99;
-    ToonThresholds[1] = 0.7;
+    ToonThresholds[0] = 0.8;
+    ToonThresholds[1] = 0.6;
     ToonThresholds[2] = 0.4;
     ToonThresholds[3] = 0.1;
 
@@ -26,7 +26,7 @@ void main(void) {
     ToonBrightnessLevels[0] = 1.0;
     ToonBrightnessLevels[1] = 0.8;
     ToonBrightnessLevels[2] = 0.6;
-    ToonBrightnessLevels[3] = 0.35;
+    ToonBrightnessLevels[3] = 0.4;
     ToonBrightnessLevels[4] = 0.2;
 
     // diffuse
@@ -41,11 +41,22 @@ void main(void) {
     float dSand = vColor.b;
     if (dRock > d) {
         d = dRock;
-        color = colRock;
+        if (vNormalW.y < 0.5) {
+            color = colRock * 0.8;
+        }
+        else {
+            color = colRock * 1.2;
+        }
     }
     if (dSand > d) {
         d = dSand;
         color = colSand;
+        if (vNormalW.y < 0.5) {
+            color = colSand * 0.8;
+        }
+        else {
+            color = colSand * 1.2;
+        }
     }
 
     if (ndl > ToonThresholds[0])
