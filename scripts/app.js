@@ -43,6 +43,45 @@ class PauseMenu {
         update();
     }
 }
+class Block extends BABYLON.Mesh {
+    constructor(reference) {
+        super("block-" + reference);
+        this.reference = reference;
+        this.i = 0;
+        this.j = 0;
+        this.k = 0;
+        this.r = 0;
+        if (reference === "cube") {
+            BABYLON.VertexData.CreateBox({
+                size: 0.5,
+                faceColors: [
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1)
+                ]
+            }).applyToMesh(this);
+        }
+        else if (reference === "plate") {
+            BABYLON.VertexData.CreateBox({
+                width: 1.5,
+                height: 0.5,
+                depth: 1.5,
+                faceColors: [
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
+                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1)
+                ]
+            }).applyToMesh(this);
+        }
+        this.material = Main.cellShadingMaterial;
+    }
+}
 var CHUNCK_SIZE = 8;
 class Face {
     constructor(vertices, cubeType, draw = true) {
@@ -1313,6 +1352,10 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(sandAction, 3);
         let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
         this.playerActionManager.linkAction(deleteCubeAction, 0);
+        let cubeAction = PlayerActionTemplate.CreateBlockAction("cube");
+        this.playerActionManager.linkAction(cubeAction, 4);
+        let plateAction = PlayerActionTemplate.CreateBlockAction("plate");
+        this.playerActionManager.linkAction(plateAction, 5);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (e.keyCode === 81) {
@@ -1405,6 +1448,64 @@ class PlayerActionTemplate {
             let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y, cubeType === CubeType.None);
             if (coordinates) {
                 Main.ChunckManager.setChunckCube(coordinates.chunck, coordinates.coordinates.x, coordinates.coordinates.y, coordinates.coordinates.z, cubeType, 0, true);
+            }
+        };
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+        };
+        return action;
+    }
+    static CreateBlockAction(blockReference) {
+        let action = new PlayerAction();
+        let previewMesh;
+        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl += ".png";
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(x, y, (m) => {
+                return m !== previewMesh;
+            });
+            if (pickInfo.hit) {
+                let coordinates = pickInfo.pickedPoint.clone();
+                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                if (coordinates) {
+                    if (!previewMesh) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
+                        previewMesh.material = Cube.PreviewMaterials[CubeType.None];
+                    }
+                    previewMesh.position.copyFrom(coordinates);
+                }
+                else {
+                    if (previewMesh) {
+                        previewMesh.dispose();
+                        previewMesh = undefined;
+                    }
+                }
+            }
+        };
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(x, y, (m) => {
+                return m !== previewMesh;
+            });
+            if (pickInfo.hit) {
+                let coordinates = pickInfo.pickedPoint.clone();
+                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                if (coordinates) {
+                    let block = new Block(blockReference);
+                    block.position.copyFrom(coordinates);
+                }
             }
         };
         action.onUnequip = () => {

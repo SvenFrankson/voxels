@@ -60,4 +60,78 @@ class PlayerActionTemplate {
         
         return action;
     }
+
+    public static CreateBlockAction(blockReference: string): PlayerAction {
+        let action = new PlayerAction();
+        let previewMesh: BABYLON.Mesh;
+
+        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl += ".png";
+
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m !== previewMesh;
+                }
+            );
+            if (pickInfo.hit) {
+                let coordinates = pickInfo.pickedPoint.clone();
+                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                if (coordinates) {
+                    if (!previewMesh) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
+                        previewMesh.material = Cube.PreviewMaterials[CubeType.None];
+                    }
+                    previewMesh.position.copyFrom(coordinates);
+                }
+                else {
+                    if (previewMesh) {
+                        previewMesh.dispose();
+                        previewMesh = undefined;
+                    }
+                }
+            }
+        }
+
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m !== previewMesh;
+                }
+            );
+            if (pickInfo.hit) {
+                let coordinates = pickInfo.pickedPoint.clone();
+                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                if (coordinates) {
+                    let block = new Block(blockReference);
+                    block.position.copyFrom(coordinates);
+                }
+            }
+        }
+
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+        }
+        
+        return action;
+    }
 }
