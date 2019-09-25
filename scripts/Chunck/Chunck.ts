@@ -453,7 +453,7 @@ class Chunck extends BABYLON.Mesh {
         this.position.z = CHUNCK_SIZE * this.k;
         data.applyToMesh(this);
 
-        this.material = Main.cellShadingMaterial;
+        this.material = Main.terrainCellShadingMaterial;
     }
 
     public serialize(): ChunckData {

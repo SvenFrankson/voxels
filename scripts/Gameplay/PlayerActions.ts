@@ -4,6 +4,7 @@ class PlayerAction {
 
     public onUpdate: () => void;
     public onClick: () => void;
+    public onKeyUp: (e: KeyboardEvent) => void;
     public onEquip: () => void;
     public onUnequip: () => void;
 }

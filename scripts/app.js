@@ -654,7 +654,7 @@ class Chunck extends BABYLON.Mesh {
         this.position.y = CHUNCK_SIZE * this.j;
         this.position.z = CHUNCK_SIZE * this.k;
         data.applyToMesh(this);
-        this.material = Main.cellShadingMaterial;
+        this.material = Main.terrainCellShadingMaterial;
     }
     serialize() {
         let data = "";
@@ -1525,6 +1525,11 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(wallCornerOutAction, 6);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
+            if (this.currentAction) {
+                if (this.currentAction.onKeyUp) {
+                    this.currentAction.onKeyUp(e);
+                }
+            }
             if (e.keyCode === 81) {
                 this._inputLeft = false;
             }
@@ -1628,7 +1633,14 @@ class PlayerActionTemplate {
     static CreateBlockAction(blockReference) {
         let action = new PlayerAction();
         let previewMesh;
+        let r = 0;
         action.iconUrl = "./datas/textures/delete.png";
+        action.onKeyUp = (e) => {
+            if (e.keyCode === 82) {
+                r = (r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * r;
+            }
+        };
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
@@ -1686,6 +1698,8 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     let block = new Block(blockReference);
                     block.position.copyFrom(coordinates);
+                    block.r = r;
+                    block.rotation.y = Math.PI / 2 * block.r;
                 }
             }
         };
@@ -1752,13 +1766,11 @@ class Main {
         }
         return Main._cellShadingMaterial;
     }
-    static get groundMaterial() {
-        if (!Main._groundMaterial) {
-            Main._groundMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-            Main._groundMaterial.diffuseTexture = new BABYLON.Texture("img/ground.jpg", Main.Scene);
-            Main._groundMaterial.specularColor.copyFromFloats(0, 0, 0);
+    static get terrainCellShadingMaterial() {
+        if (!Main._terrainCellShadingMaterial) {
+            Main._terrainCellShadingMaterial = new TerrainToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
         }
-        return Main._groundMaterial;
+        return Main._terrainCellShadingMaterial;
     }
     constructor(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
@@ -2297,6 +2309,22 @@ class SeaMaterial extends BABYLON.ShaderMaterial {
         scene.registerBeforeRender(this._updateTime);
     }
 }
+class TerrainToonMaterial extends BABYLON.ShaderMaterial {
+    constructor(name, color, scene) {
+        super(name, scene, {
+            vertex: "terrainToon",
+            fragment: "terrainToon",
+        }, {
+            attributes: ["position", "normal", "uv", "color"],
+            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+        });
+        this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
+        this.setColor3("colGrass", BABYLON.Color3.FromHexString("#47a632"));
+        this.setColor3("colDirt", BABYLON.Color3.FromHexString("#a86f32"));
+        this.setColor3("colRock", BABYLON.Color3.FromHexString("#8c8c89"));
+        this.setColor3("colSand", BABYLON.Color3.FromHexString("#dbc67b"));
+    }
+}
 class ToonMaterial extends BABYLON.ShaderMaterial {
     constructor(name, color, scene) {
         super(name, scene, {
@@ -2307,10 +2335,6 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
-        this.setColor3("colGrass", BABYLON.Color3.FromHexString("#47a632"));
-        this.setColor3("colDirt", BABYLON.Color3.FromHexString("#a86f32"));
-        this.setColor3("colRock", BABYLON.Color3.FromHexString("#8c8c89"));
-        this.setColor3("colSand", BABYLON.Color3.FromHexString("#dbc67b"));
     }
 }
 class RayIntersection {

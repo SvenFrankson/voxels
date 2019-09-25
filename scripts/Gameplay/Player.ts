@@ -36,6 +36,12 @@ class Player extends BABYLON.Mesh {
         Main.Scene.onBeforeRenderObservable.add(this.update);
 
         Main.Canvas.addEventListener("keyup", (e) => {
+            if (this.currentAction) {
+                if (this.currentAction.onKeyUp) {
+                    this.currentAction.onKeyUp(e);
+                }
+            }
+            
             if (e.keyCode === 81) {
                 this._inputLeft = false;
             }

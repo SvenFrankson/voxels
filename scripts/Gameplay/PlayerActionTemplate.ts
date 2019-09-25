@@ -64,8 +64,16 @@ class PlayerActionTemplate {
     public static CreateBlockAction(blockReference: string): PlayerAction {
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
+        let r = 0;
 
         action.iconUrl = "./datas/textures/delete.png";
+
+        action.onKeyUp = (e: KeyboardEvent) => {
+            if (e.keyCode === 82) {
+                r = (r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * r;
+            }
+        }
 
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
@@ -141,6 +149,8 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     let block = new Block(blockReference);
                     block.position.copyFrom(coordinates);
+                    block.r = r;
+                    block.rotation.y = Math.PI / 2 * block.r;
                 }
             }
         }

@@ -10,6 +10,11 @@ varying vec2 vUV;
 uniform sampler2D textureSampler;
 uniform vec3 lightInvDirW;
 
+uniform vec3 colGrass;
+uniform vec3 colDirt;
+uniform vec3 colRock;
+uniform vec3 colSand;
+
 void main(void) {
     float ToonThresholds[5];
     ToonThresholds[0] = 0.8;
@@ -29,7 +34,32 @@ void main(void) {
     // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
 
-    vec3 color = vec3(1., 1., 1.);
+    vec3 color = colDirt;
+    if (vNormalW.y > 0.6) {
+        color = colGrass;
+    }
+    float d = vColor.r;
+    float dRock = vColor.g;
+    float dSand = vColor.b;
+    if (dRock > d) {
+        d = dRock;
+        if (vNormalW.y < 0.7) {
+            color = colRock * 0.9;
+        }
+        else {
+            color = colRock * 1.1;
+        }
+    }
+    if (dSand > d) {
+        d = dSand;
+        color = colSand;
+        if (vNormalW.y < 0.7) {
+            color = colSand * 0.9;
+        }
+        else {
+            color = colSand * 1.1;
+        }
+    }
 
     if (ndl > ToonThresholds[0])
     {

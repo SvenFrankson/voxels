@@ -19,14 +19,12 @@ class Main {
 		return Main._cellShadingMaterial;
 	}
 
-    public static _groundMaterial: BABYLON.StandardMaterial;
-	public static get groundMaterial(): BABYLON.StandardMaterial {
-		if (!Main._groundMaterial) {
-            Main._groundMaterial = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
-            Main._groundMaterial.diffuseTexture = new BABYLON.Texture("img/ground.jpg", Main.Scene);
-			Main._groundMaterial.specularColor.copyFromFloats(0, 0, 0);
+    public static _terrainCellShadingMaterial: TerrainToonMaterial;
+	public static get terrainCellShadingMaterial(): TerrainToonMaterial {
+		if (!Main._terrainCellShadingMaterial) {
+			Main._terrainCellShadingMaterial = new TerrainToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
 		}
-		return Main._groundMaterial;
+		return Main._terrainCellShadingMaterial;
 	}
 
     constructor(canvasElement: string) {
