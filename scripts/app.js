@@ -43,6 +43,156 @@ class PauseMenu {
         update();
     }
 }
+class VertexDataLoader {
+    constructor(scene) {
+        this.scene = scene;
+        this._vertexDatas = new Map();
+        VertexDataLoader.instance = this;
+    }
+    static clone(data) {
+        let clonedData = new BABYLON.VertexData();
+        clonedData.positions = [...data.positions];
+        clonedData.indices = [...data.indices];
+        clonedData.normals = [...data.normals];
+        if (data.matricesIndices) {
+            clonedData.matricesIndices = [...data.matricesIndices];
+        }
+        if (data.matricesWeights) {
+            clonedData.matricesWeights = [...data.matricesWeights];
+        }
+        if (data.uvs) {
+            clonedData.uvs = [...data.uvs];
+        }
+        if (data.colors) {
+            clonedData.colors = [...data.colors];
+        }
+        return clonedData;
+    }
+    async get(name) {
+        if (this._vertexDatas.get(name)) {
+            return this._vertexDatas.get(name);
+        }
+        let vertexData = undefined;
+        let loadedFile = await BABYLON.SceneLoader.ImportMeshAsync("", "./datas/meshes/" + name + ".babylon", "", Main.Scene);
+        let vertexDatas = [];
+        loadedFile.meshes = loadedFile.meshes.sort((m1, m2) => {
+            if (m1.name < m2.name) {
+                return -1;
+            }
+            else if (m1.name > m2.name) {
+                return 1;
+            }
+            return 0;
+        });
+        for (let i = 0; i < loadedFile.meshes.length; i++) {
+            let loadedMesh = loadedFile.meshes[i];
+            if (loadedMesh instanceof BABYLON.Mesh) {
+                vertexData = BABYLON.VertexData.ExtractFromMesh(loadedMesh);
+                vertexDatas.push(vertexData);
+            }
+        }
+        loadedFile.meshes.forEach(m => { m.dispose(); });
+        loadedFile.skeletons.forEach(s => { s.dispose(); });
+        return vertexDatas;
+    }
+    async getColorized(name, baseColorHex = "#FFFFFF", frameColorHex = "", color1Hex = "", // Replace red
+    color2Hex = "", // Replace green
+    color3Hex = "" // Replace blue
+    ) {
+        let vertexDatas = await this.getColorizedMultiple(name, baseColorHex, frameColorHex, color1Hex, color2Hex, color3Hex);
+        return vertexDatas[0];
+    }
+    async getColorizedMultiple(name, baseColorHex = "#FFFFFF", frameColorHex = "", color1Hex = "", // Replace red
+    color2Hex = "", // Replace green
+    color3Hex = "" // Replace blue
+    ) {
+        let baseColor;
+        if (baseColorHex !== "") {
+            baseColor = BABYLON.Color3.FromHexString(baseColorHex);
+        }
+        let frameColor;
+        if (frameColorHex !== "") {
+            frameColor = BABYLON.Color3.FromHexString(frameColorHex);
+        }
+        let color1;
+        if (color1Hex !== "") {
+            color1 = BABYLON.Color3.FromHexString(color1Hex);
+        }
+        let color2;
+        if (color2Hex !== "") {
+            color2 = BABYLON.Color3.FromHexString(color2Hex);
+        }
+        let color3;
+        if (color3Hex !== "") {
+            color3 = BABYLON.Color3.FromHexString(color3Hex);
+        }
+        let vertexDatas = await VertexDataLoader.instance.get(name);
+        let colorizedVertexDatas = [];
+        for (let d = 0; d < vertexDatas.length; d++) {
+            let vertexData = vertexDatas[d];
+            let colorizedVertexData = VertexDataLoader.clone(vertexData);
+            if (colorizedVertexData.colors) {
+                for (let i = 0; i < colorizedVertexData.colors.length / 4; i++) {
+                    let r = colorizedVertexData.colors[4 * i];
+                    let g = colorizedVertexData.colors[4 * i + 1];
+                    let b = colorizedVertexData.colors[4 * i + 2];
+                    if (baseColor) {
+                        if (r === 1 && g === 1 && b === 1) {
+                            colorizedVertexData.colors[4 * i] = baseColor.r;
+                            colorizedVertexData.colors[4 * i + 1] = baseColor.g;
+                            colorizedVertexData.colors[4 * i + 2] = baseColor.b;
+                            continue;
+                        }
+                    }
+                    if (frameColor) {
+                        if (r === 0.502 && g === 0.502 && b === 0.502) {
+                            colorizedVertexData.colors[4 * i] = frameColor.r;
+                            colorizedVertexData.colors[4 * i + 1] = frameColor.g;
+                            colorizedVertexData.colors[4 * i + 2] = frameColor.b;
+                            continue;
+                        }
+                    }
+                    if (color1) {
+                        if (r === 1 && g === 0 && b === 0) {
+                            colorizedVertexData.colors[4 * i] = color1.r;
+                            colorizedVertexData.colors[4 * i + 1] = color1.g;
+                            colorizedVertexData.colors[4 * i + 2] = color1.b;
+                            continue;
+                        }
+                    }
+                    if (color2) {
+                        if (r === 0 && g === 1 && b === 0) {
+                            colorizedVertexData.colors[4 * i] = color2.r;
+                            colorizedVertexData.colors[4 * i + 1] = color2.g;
+                            colorizedVertexData.colors[4 * i + 2] = color2.b;
+                            continue;
+                        }
+                    }
+                    if (color3) {
+                        if (r === 0 && g === 0 && b === 1) {
+                            colorizedVertexData.colors[4 * i] = color3.r;
+                            colorizedVertexData.colors[4 * i + 1] = color3.g;
+                            colorizedVertexData.colors[4 * i + 2] = color3.b;
+                            continue;
+                        }
+                    }
+                }
+            }
+            else {
+                let colors = [];
+                for (let i = 0; i < colorizedVertexData.positions.length / 3; i++) {
+                    colors[4 * i] = baseColor.r;
+                    colors[4 * i + 1] = baseColor.g;
+                    colors[4 * i + 2] = baseColor.b;
+                    colors[4 * i + 3] = 1;
+                }
+                colorizedVertexData.colors = colors;
+            }
+            colorizedVertexDatas.push(colorizedVertexData);
+        }
+        return colorizedVertexDatas;
+    }
+}
 class Block extends BABYLON.Mesh {
     constructor(reference) {
         super("block-" + reference);
@@ -78,6 +228,21 @@ class Block extends BABYLON.Mesh {
                     new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1)
                 ]
             }).applyToMesh(this);
+        }
+        else if (reference === "wall") {
+            VertexDataLoader.instance.get("wall").then(datas => {
+                datas[0].applyToMesh(this);
+            });
+        }
+        else if (reference === "wall-hole") {
+            VertexDataLoader.instance.get("wall").then(datas => {
+                datas[1].applyToMesh(this);
+            });
+        }
+        else if (reference === "wall-corner-out") {
+            VertexDataLoader.instance.get("wall").then(datas => {
+                datas[2].applyToMesh(this);
+            });
         }
         this.material = Main.cellShadingMaterial;
     }
@@ -1352,10 +1517,12 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(sandAction, 3);
         let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
         this.playerActionManager.linkAction(deleteCubeAction, 0);
-        let cubeAction = PlayerActionTemplate.CreateBlockAction("cube");
-        this.playerActionManager.linkAction(cubeAction, 4);
-        let plateAction = PlayerActionTemplate.CreateBlockAction("plate");
-        this.playerActionManager.linkAction(plateAction, 5);
+        let wallAction = PlayerActionTemplate.CreateBlockAction("wall");
+        this.playerActionManager.linkAction(wallAction, 4);
+        let wallHoleAction = PlayerActionTemplate.CreateBlockAction("wall-hole");
+        this.playerActionManager.linkAction(wallHoleAction, 5);
+        let wallCornerOutAction = PlayerActionTemplate.CreateBlockAction("wall-corner-out");
+        this.playerActionManager.linkAction(wallCornerOutAction, 6);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (e.keyCode === 81) {
@@ -1462,7 +1629,6 @@ class PlayerActionTemplate {
         let action = new PlayerAction();
         let previewMesh;
         action.iconUrl = "./datas/textures/delete.png";
-        action.iconUrl += ".png";
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
@@ -1478,6 +1644,21 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
+                        if (blockReference === "wall") {
+                            VertexDataLoader.instance.get("wall").then(datas => {
+                                datas[0].applyToMesh(previewMesh);
+                            });
+                        }
+                        else if (blockReference === "wall-hole") {
+                            VertexDataLoader.instance.get("wall").then(datas => {
+                                datas[1].applyToMesh(previewMesh);
+                            });
+                        }
+                        else if (blockReference === "wall-corner-out") {
+                            VertexDataLoader.instance.get("wall").then(datas => {
+                                datas[2].applyToMesh(previewMesh);
+                            });
+                        }
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);
@@ -1729,6 +1910,7 @@ class Main {
         waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
         water.material = waterMaterial;
         Main.ChunckManager = new ChunckManager();
+        new VertexDataLoader(Main.Scene);
         console.log("Main scene Initialized.");
     }
     animate() {

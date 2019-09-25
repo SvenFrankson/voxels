@@ -43,6 +43,27 @@ class Block extends BABYLON.Mesh {
                 }
             ).applyToMesh(this);
         }
+        else if (reference === "wall") {
+            VertexDataLoader.instance.get("wall").then(
+                datas => {
+                    datas[0].applyToMesh(this);
+                }
+            )
+        }
+        else if (reference === "wall-hole") {
+            VertexDataLoader.instance.get("wall").then(
+                datas => {
+                    datas[1].applyToMesh(this);
+                }
+            )
+        }
+        else if (reference === "wall-corner-out") {
+            VertexDataLoader.instance.get("wall").then(
+                datas => {
+                    datas[2].applyToMesh(this);
+                }
+            )
+        }
         this.material = Main.cellShadingMaterial;
     }
 }

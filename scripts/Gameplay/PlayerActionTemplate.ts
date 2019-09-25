@@ -66,7 +66,6 @@ class PlayerActionTemplate {
         let previewMesh: BABYLON.Mesh;
 
         action.iconUrl = "./datas/textures/delete.png";
-        action.iconUrl += ".png";
 
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
@@ -88,6 +87,27 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
+                        if (blockReference === "wall") {
+                            VertexDataLoader.instance.get("wall").then(
+                                datas => {
+                                    datas[0].applyToMesh(previewMesh);
+                                }
+                            )
+                        }
+                        else if (blockReference === "wall-hole") {
+                            VertexDataLoader.instance.get("wall").then(
+                                datas => {
+                                    datas[1].applyToMesh(previewMesh);
+                                }
+                            )
+                        }
+                        else if (blockReference === "wall-corner-out") {
+                            VertexDataLoader.instance.get("wall").then(
+                                datas => {
+                                    datas[2].applyToMesh(previewMesh);
+                                }
+                            )
+                        }
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);

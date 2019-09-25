@@ -212,6 +212,7 @@ class Main {
 		water.material = waterMaterial;
 
 		Main.ChunckManager = new ChunckManager();
+		new VertexDataLoader(Main.Scene);
 		
 		console.log("Main scene Initialized.");
     }
