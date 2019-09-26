@@ -19,6 +19,8 @@ class Chunck extends BABYLON.Mesh {
     public vertices: Vertex[] = [];
     public cubes: Cube[][][] = [];
 
+    public blocks: Block[] = [];
+
     public getCube(i: number, j: number, k: number): Cube {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
     }
@@ -456,6 +458,11 @@ class Chunck extends BABYLON.Mesh {
         this.material = Main.terrainCellShadingMaterial;
     }
 
+    public addBlock(block: Block): void {
+        block.chunck = this;
+        this.blocks.push(block);
+    }
+
     public serialize(): ChunckData {
         let data = "";
         for (let i = 0; i < CHUNCK_SIZE; i++) {
@@ -471,21 +478,26 @@ class Chunck extends BABYLON.Mesh {
                 }
             }
         }
+        let blockDatas = [];
+        for (let i = 0; i < this.blocks.length; i++) {
+            blockDatas.push(this.blocks[i].serialize());
+        }
         return {
             i: this.i,
             j: this.j,
             k: this.k,
-            data: data
+            data: data,
+            blocks: blockDatas
         };
     }
 
-    public deserialize(data: string): void {
+    public deserialize(data: ChunckData): void {
         let l = CHUNCK_SIZE * CHUNCK_SIZE * CHUNCK_SIZE;
         let i = 0;
         let j = 0;
         let k = 0;
         for (let n = 0; n < l; n++) {
-            let v = data[n];
+            let v = data.data[n];
             if (v === "0") {
                 this.setCube(i, j, k, CubeType.Dirt);
             }
@@ -503,6 +515,13 @@ class Chunck extends BABYLON.Mesh {
                     j = 0;
                     i++;
                 }
+            }
+        }
+        if (data.blocks) {
+            for (let b = 0; b < data.blocks.length; b++) {
+                let block = new Block();
+                block.deserialize(data.blocks[b]);
+                this.addBlock(block);
             }
         }
     }

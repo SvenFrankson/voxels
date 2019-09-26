@@ -119,6 +119,7 @@ class PlayerActionTemplate {
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);
+                    console.log("Coordinates " + coordinates.toString());
                 }
                 else {
                     if (previewMesh) {
@@ -141,16 +142,15 @@ class PlayerActionTemplate {
                 }
             );
             if (pickInfo.hit) {
-                let coordinates = pickInfo.pickedPoint.clone();
-                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
-                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
-                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
-                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
-                    let block = new Block(blockReference);
-                    block.position.copyFrom(coordinates);
+                    let block = new Block();
+                    block.setReference(blockReference);
+                    coordinates.chunck.addBlock(block);
+                    block.setCoordinates(coordinates.coordinates);
                     block.r = r;
-                    block.rotation.y = Math.PI / 2 * block.r;
                 }
             }
         }

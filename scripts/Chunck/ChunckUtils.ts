@@ -1,5 +1,21 @@
 class ChunckUtils {
 
+    public static WorldPositionToChunckBlockCoordinates(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+
+        let coordinates = world.clone();
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
+        
+        return {
+            chunck: Main.ChunckManager.getChunck(I, J, K),
+            coordinates: coordinates
+        }
+    }
+
     public static XYScreenToChunckCoordinates(x: number, y: number, behindPickedFace: boolean = false): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
         let pickInfo = Main.Scene.pick(
             x, y,

@@ -194,13 +194,57 @@ class VertexDataLoader {
     }
 }
 class Block extends BABYLON.Mesh {
-    constructor(reference) {
-        super("block-" + reference);
+    constructor() {
+        super("block");
+        this._i = 0;
+        this._j = 0;
+        this._k = 0;
+        this._r = 0;
+        this.material = Main.cellShadingMaterial;
+    }
+    get chunck() {
+        return this._chunck;
+    }
+    set chunck(c) {
+        this._chunck = c;
+        this.parent = this.chunck;
+    }
+    get i() {
+        return this._i;
+    }
+    set i(v) {
+        this._i = v;
+        this.position.x = this.i + 0.25;
+    }
+    get j() {
+        return this._j;
+    }
+    set j(v) {
+        this._j = v;
+        this.position.y = this.j + 0.25;
+    }
+    get k() {
+        return this._k;
+    }
+    set k(v) {
+        this._k = v;
+        this.position.z = this.k + 0.25;
+    }
+    get r() {
+        return this._r;
+    }
+    set r(v) {
+        this._r = v;
+        this.rotation.y = Math.PI / 2 * this.r;
+    }
+    setCoordinates(coordinates) {
+        this.i = coordinates.x;
+        this.j = coordinates.y;
+        this.k = coordinates.z;
+    }
+    setReference(reference) {
         this.reference = reference;
-        this.i = 0;
-        this.j = 0;
-        this.k = 0;
-        this.r = 0;
+        this.name = "block-" + this.reference;
         if (reference === "cube") {
             BABYLON.VertexData.CreateBox({
                 size: 0.5,
@@ -244,7 +288,22 @@ class Block extends BABYLON.Mesh {
                 datas[2].applyToMesh(this);
             });
         }
-        this.material = Main.cellShadingMaterial;
+    }
+    serialize() {
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            r: this.r,
+            reference: this.reference
+        };
+    }
+    deserialize(data) {
+        this.i = data.i;
+        this.j = data.j;
+        this.k = data.k;
+        this.r = data.r;
+        this.setReference(data.reference);
     }
 }
 var CHUNCK_SIZE = 8;
@@ -266,6 +325,7 @@ class Chunck extends BABYLON.Mesh {
         this.faces = [];
         this.vertices = [];
         this.cubes = [];
+        this.blocks = [];
     }
     getCube(i, j, k) {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
@@ -656,6 +716,10 @@ class Chunck extends BABYLON.Mesh {
         data.applyToMesh(this);
         this.material = Main.terrainCellShadingMaterial;
     }
+    addBlock(block) {
+        block.chunck = this;
+        this.blocks.push(block);
+    }
     serialize() {
         let data = "";
         for (let i = 0; i < CHUNCK_SIZE; i++) {
@@ -671,11 +735,16 @@ class Chunck extends BABYLON.Mesh {
                 }
             }
         }
+        let blockDatas = [];
+        for (let i = 0; i < this.blocks.length; i++) {
+            blockDatas.push(this.blocks[i].serialize());
+        }
         return {
             i: this.i,
             j: this.j,
             k: this.k,
-            data: data
+            data: data,
+            blocks: blockDatas
         };
     }
     deserialize(data) {
@@ -684,7 +753,7 @@ class Chunck extends BABYLON.Mesh {
         let j = 0;
         let k = 0;
         for (let n = 0; n < l; n++) {
-            let v = data[n];
+            let v = data.data[n];
             if (v === "0") {
                 this.setCube(i, j, k, CubeType.Dirt);
             }
@@ -702,6 +771,13 @@ class Chunck extends BABYLON.Mesh {
                     j = 0;
                     i++;
                 }
+            }
+        }
+        if (data.blocks) {
+            for (let b = 0; b < data.blocks.length; b++) {
+                let block = new Block();
+                block.deserialize(data.blocks[b]);
+                this.addBlock(block);
             }
         }
     }
@@ -1130,12 +1206,25 @@ class ChunckManager {
         for (let i = 0; i < data.chuncks.length; i++) {
             let d = data.chuncks[i];
             if (d) {
-                this.createChunck(d.i, d.j, d.k).deserialize(d.data);
+                this.createChunck(d.i, d.j, d.k).deserialize(d);
             }
         }
     }
 }
 class ChunckUtils {
+    static WorldPositionToChunckBlockCoordinates(world) {
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let coordinates = world.clone();
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
+        return {
+            chunck: Main.ChunckManager.getChunck(I, J, K),
+            coordinates: coordinates
+        };
+    }
     static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
         let pickInfo = Main.Scene.pick(x, y, (m) => {
             return m instanceof Chunck;
@@ -1674,6 +1763,7 @@ class PlayerActionTemplate {
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);
+                    console.log("Coordinates " + coordinates.toString());
                 }
                 else {
                     if (previewMesh) {
@@ -1690,16 +1780,15 @@ class PlayerActionTemplate {
                 return m !== previewMesh;
             });
             if (pickInfo.hit) {
-                let coordinates = pickInfo.pickedPoint.clone();
-                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
-                coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
-                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
-                coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
-                    let block = new Block(blockReference);
-                    block.position.copyFrom(coordinates);
+                    let block = new Block();
+                    block.setReference(blockReference);
+                    coordinates.chunck.addBlock(block);
+                    block.setCoordinates(coordinates.coordinates);
                     block.r = r;
-                    block.rotation.y = Math.PI / 2 * block.r;
                 }
             }
         };

@@ -3,6 +3,7 @@ interface ChunckData {
     j: number;
     k: number;
     data: string;
+    blocks: BlockData[];
 }
 
 interface TerrainData {
@@ -354,7 +355,7 @@ class ChunckManager {
         for (let i = 0; i < data.chuncks.length; i++) {
             let d = data.chuncks[i];
             if (d) {
-                this.createChunck(d.i, d.j, d.k).deserialize(d.data);
+                this.createChunck(d.i, d.j, d.k).deserialize(d);
             }
         }
     }
