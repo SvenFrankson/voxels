@@ -55,6 +55,16 @@ class Block extends BABYLON.Mesh {
         this.material = Main.cellShadingMaterial;
     }
 
+    public highlight() {
+        this.renderOutline = true;
+        this.outlineColor = BABYLON.Color3.Blue();
+        this.outlineWidth = 0.01;
+    }
+
+    public unlit() {
+        this.renderOutline = false;
+    }
+
     public setCoordinates(coordinates: BABYLON.Vector3) {
         this.i = coordinates.x;
         this.j = coordinates.y;

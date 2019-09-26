@@ -137,6 +137,7 @@ class Main {
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
 
 		// Skybox seed : 1vt3h8rxhb28
+		/*
 		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
 		Main.Skybox.layerMask = 1;
 		Main.Skybox.infiniteDistance = true;
@@ -149,6 +150,7 @@ class Main {
 		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
+		*/
 
 		let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
 		borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);

@@ -32,6 +32,9 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(wallHoleAction, 5);
         let wallCornerOutAction = PlayerActionTemplate.CreateBlockAction("wall-corner-out");
         this.playerActionManager.linkAction(wallCornerOutAction, 6);
+        
+        let editBlockAction = PlayerActionTemplate.EditBlockAction();
+        this.playerActionManager.linkAction(editBlockAction, 7);
 
         Main.Scene.onBeforeRenderObservable.add(this.update);
 

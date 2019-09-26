@@ -460,7 +460,17 @@ class Chunck extends BABYLON.Mesh {
 
     public addBlock(block: Block): void {
         block.chunck = this;
-        this.blocks.push(block);
+        let i = this.blocks.indexOf(block);
+        if (i === -1) {
+            this.blocks.push(block);
+        }
+    }
+
+    public removeBlock(block: Block): void {
+        let i = this.blocks.indexOf(block);
+        if (i !== -1) {
+            this.blocks.splice(i, 1);
+        }
     }
 
     public serialize(): ChunckData {

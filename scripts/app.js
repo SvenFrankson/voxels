@@ -237,6 +237,14 @@ class Block extends BABYLON.Mesh {
         this._r = v;
         this.rotation.y = Math.PI / 2 * this.r;
     }
+    highlight() {
+        this.renderOutline = true;
+        this.outlineColor = BABYLON.Color3.Blue();
+        this.outlineWidth = 0.01;
+    }
+    unlit() {
+        this.renderOutline = false;
+    }
     setCoordinates(coordinates) {
         this.i = coordinates.x;
         this.j = coordinates.y;
@@ -718,7 +726,16 @@ class Chunck extends BABYLON.Mesh {
     }
     addBlock(block) {
         block.chunck = this;
-        this.blocks.push(block);
+        let i = this.blocks.indexOf(block);
+        if (i === -1) {
+            this.blocks.push(block);
+        }
+    }
+    removeBlock(block) {
+        let i = this.blocks.indexOf(block);
+        if (i !== -1) {
+            this.blocks.splice(i, 1);
+        }
     }
     serialize() {
         let data = "";
@@ -1612,6 +1629,8 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager.linkAction(wallHoleAction, 5);
         let wallCornerOutAction = PlayerActionTemplate.CreateBlockAction("wall-corner-out");
         this.playerActionManager.linkAction(wallCornerOutAction, 6);
+        let editBlockAction = PlayerActionTemplate.EditBlockAction();
+        this.playerActionManager.linkAction(editBlockAction, 7);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (this.currentAction) {
@@ -1715,6 +1734,85 @@ class PlayerActionTemplate {
             if (previewMesh) {
                 previewMesh.dispose();
                 previewMesh = undefined;
+            }
+        };
+        return action;
+    }
+    static EditBlockAction() {
+        let action = new PlayerAction();
+        let pickedBlock;
+        let aimedBlock;
+        action.iconUrl = "./datas/textures/delete.png";
+        action.onKeyUp = (e) => {
+            if (e.keyCode === 82) {
+                if (pickedBlock) {
+                    pickedBlock.r = (pickedBlock.r + 1) % 4;
+                }
+            }
+        };
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            if (!pickedBlock) {
+                let pickInfo = Main.Scene.pick(x, y);
+                if (pickInfo.hit) {
+                    if (pickInfo.pickedMesh !== aimedBlock) {
+                        if (aimedBlock) {
+                            aimedBlock.unlit();
+                        }
+                        aimedBlock = undefined;
+                        if (pickInfo.pickedMesh instanceof Block) {
+                            aimedBlock = pickInfo.pickedMesh;
+                            aimedBlock.highlight();
+                        }
+                    }
+                }
+            }
+            else {
+                let pickInfo = Main.Scene.pick(x, y, (m) => {
+                    return m !== pickedBlock;
+                });
+                if (pickInfo.hit) {
+                    let coordinates = pickInfo.pickedPoint.clone();
+                    coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                    coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                    coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                    coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                    if (coordinates) {
+                        pickedBlock.position.copyFrom(coordinates);
+                    }
+                }
+            }
+        };
+        action.onClick = () => {
+            if (!pickedBlock) {
+                if (aimedBlock) {
+                    pickedBlock = aimedBlock;
+                    if (pickedBlock.chunck) {
+                        pickedBlock.chunck.removeBlock(pickedBlock);
+                        pickedBlock.chunck = undefined;
+                    }
+                }
+            }
+            else {
+                let x = Main.Engine.getRenderWidth() * 0.5;
+                let y = Main.Engine.getRenderHeight() * 0.5;
+                let pickInfo = Main.Scene.pick(x, y, (m) => {
+                    return m !== pickedBlock;
+                });
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                if (coordinates) {
+                    coordinates.chunck.addBlock(pickedBlock);
+                    pickedBlock.setCoordinates(coordinates.coordinates);
+                }
+                pickedBlock = undefined;
+            }
+        };
+        action.onUnequip = () => {
+            if (aimedBlock) {
+                aimedBlock.unlit();
             }
         };
         return action;
@@ -1960,15 +2058,20 @@ class Main {
         noPostProcessCamera.layerMask = 0x10000000;
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
         // Skybox seed : 1vt3h8rxhb28
+        /*
         Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
-        Main.Skybox.layerMask = 0x10000000;
+        Main.Skybox.layerMask = 1;
         Main.Skybox.infiniteDistance = true;
-        let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
+        let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/textures/sky.png", Main.Scene);
+        skyboxMaterial.emissiveTexture = new BABYLON.Texture(
+            "./datas/textures/sky.png",
+            Main.Scene
+        );
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
+        */
         let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
         borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
         borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);

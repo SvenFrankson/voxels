@@ -61,6 +61,102 @@ class PlayerActionTemplate {
         return action;
     }
 
+    public static EditBlockAction(): PlayerAction {
+        let action = new PlayerAction();
+        let pickedBlock: Block;
+        let aimedBlock: Block;
+
+        action.iconUrl = "./datas/textures/delete.png";
+
+        action.onKeyUp = (e: KeyboardEvent) => {
+            if (e.keyCode === 82) {
+                if (pickedBlock) {
+                    pickedBlock.r = (pickedBlock.r + 1) % 4;
+                }
+            }
+        }
+
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            if (!pickedBlock) {
+                let pickInfo = Main.Scene.pick(
+                    x, y
+                );
+                if (pickInfo.hit) {
+                    if (pickInfo.pickedMesh !== aimedBlock) {
+                        if (aimedBlock) {
+                            aimedBlock.unlit();
+                        }
+                        aimedBlock = undefined;
+                        if (pickInfo.pickedMesh instanceof Block) {
+                            aimedBlock = pickInfo.pickedMesh;
+                            aimedBlock.highlight();
+                        }
+                    }
+                }
+            }
+            else {
+                let pickInfo = Main.Scene.pick(
+                    x, y,
+                    (m) => {
+                        return m !== pickedBlock;
+                    }
+                );
+                if (pickInfo.hit) {
+                    let coordinates = pickInfo.pickedPoint.clone();
+                    coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                    coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
+                    coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                    coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
+                    if (coordinates) {
+                        pickedBlock.position.copyFrom(coordinates);
+                    }
+                }
+            }
+        }
+
+        action.onClick = () => {
+            if (!pickedBlock) {
+                if (aimedBlock) {
+                    pickedBlock = aimedBlock;
+                    if (pickedBlock.chunck) {
+                        pickedBlock.chunck.removeBlock(pickedBlock);
+                        pickedBlock.chunck = undefined;
+                    }
+                }
+            }
+            else {
+                let x = Main.Engine.getRenderWidth() * 0.5;
+                let y = Main.Engine.getRenderHeight() * 0.5;
+                let pickInfo = Main.Scene.pick(
+                    x, y,
+                    (m) => {
+                        return m !== pickedBlock;
+                    }
+                );
+
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                if (coordinates) {
+                    coordinates.chunck.addBlock(pickedBlock);
+                    pickedBlock.setCoordinates(coordinates.coordinates);
+                }
+                pickedBlock = undefined;
+            }
+        }
+
+        action.onUnequip = () => {
+            if (aimedBlock) {
+                aimedBlock.unlit();
+            }
+        }
+
+        return action;
+    }
+
     public static CreateBlockAction(blockReference: string): PlayerAction {
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
