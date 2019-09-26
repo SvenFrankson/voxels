@@ -51,7 +51,7 @@ class Main {
 
 		this.initializeCamera();
 		Main.Camera.minZ = 0.2;
-		Main.Camera.maxZ = 1000;
+		Main.Camera.maxZ = 2000;
 
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
 
@@ -95,7 +95,7 @@ class Main {
 			void main(void) 
 			{
 				vec4 d = texture2D(depthSampler, vUV);
-				float depth = d.r * (1000.0 - 0.2) + 0.2;
+				float depth = d.r * (2000.0 - 0.2) + 0.2;
 				
 				float nD[9];
 				make_kernel_depth( nD, depthSampler, vUV );

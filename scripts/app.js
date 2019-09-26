@@ -1881,7 +1881,7 @@ class Main {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.initializeCamera();
         Main.Camera.minZ = 0.2;
-        Main.Camera.maxZ = 1000;
+        Main.Camera.maxZ = 2000;
         Main.Light = new BABYLON.HemisphericLight("AmbientLight", new BABYLON.Vector3(1, 3, 2), Main.Scene);
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -1923,7 +1923,7 @@ class Main {
 			void main(void) 
 			{
 				vec4 d = texture2D(depthSampler, vUV);
-				float depth = d.r * (1000.0 - 0.2) + 0.2;
+				float depth = d.r * (2000.0 - 0.2) + 0.2;
 				
 				float nD[9];
 				make_kernel_depth( nD, depthSampler, vUV );
@@ -1961,7 +1961,7 @@ class Main {
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
         // Skybox seed : 1vt3h8rxhb28
         Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
-        Main.Skybox.layerMask = 1;
+        Main.Skybox.layerMask = 0x10000000;
         Main.Skybox.infiniteDistance = true;
         let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
