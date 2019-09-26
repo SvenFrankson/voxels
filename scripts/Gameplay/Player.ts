@@ -78,7 +78,7 @@ class Player extends BABYLON.Mesh {
             this.rotation.y += e.movementX / 200;
             if (Main.Camera instanceof BABYLON.FreeCamera) {
                 Main.Camera.rotation.x = Math.min(Math.max(
-                    Main.Camera.rotation.x + e.movementY / 200, - Math.PI / 2), Math.PI / 2 
+                    Main.Camera.rotation.x + e.movementY / 200, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60
                 )
                     
             }
