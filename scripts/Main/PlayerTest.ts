@@ -60,13 +60,57 @@ class PlayerTest extends Main {
 
 			request.send();
 		}
-		
-		let pauseMenu = new PauseMenu();
-		pauseMenu.initialize();
         
         let player = new Player();
         player.position.y = 100;
         player.register();
+		
+		let pauseMenu = new PauseMenu();
+		pauseMenu.initialize();
+
+		let inventory = new Inventory(player);
+		inventory.initialize();
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall"));
+		inventory.addItem(InventoryItem.Block("wall-hole"));
+		inventory.addItem(InventoryItem.Block("wall-hole"));
+		inventory.addItem(InventoryItem.Block("wall-hole"));
+		inventory.addItem(InventoryItem.Block("wall-hole"));
+		inventory.addItem(InventoryItem.Block("wall-corner-out"));
+		inventory.addItem(InventoryItem.Block("wall-corner-out"));
+		inventory.update();
+
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;

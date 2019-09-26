@@ -1945,6 +1945,142 @@ class PlayerActionManager {
         }
     }
 }
+var InventorySection;
+(function (InventorySection) {
+    InventorySection[InventorySection["Action"] = 0] = "Action";
+    InventorySection[InventorySection["Cube"] = 1] = "Cube";
+    InventorySection[InventorySection["Block"] = 2] = "Block";
+})(InventorySection || (InventorySection = {}));
+class InventoryItem {
+    constructor() {
+        this.count = 1;
+    }
+    static Block(reference) {
+        let it = new InventoryItem();
+        it.section = InventorySection.Block;
+        it.name = reference;
+        it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        return it;
+    }
+    static Cube(cubeType) {
+        let it = new InventoryItem();
+        it.section = InventorySection.Cube;
+        it.name = "Cube-" + cubeType;
+        it.playerAction = PlayerActionTemplate.CreateCubeAction(cubeType);
+        return it;
+    }
+}
+class Inventory {
+    constructor(player) {
+        this.player = player;
+        this.items = [];
+    }
+    initialize() {
+        for (let i = 0; i < 10; i++) {
+            let ii = i;
+            let playerAction = document.getElementById("player-action-" + i + "-icon");
+            playerAction.ondragover = (e) => {
+                e.preventDefault();
+            };
+            playerAction.ondrop = (e) => {
+                if (this._draggedItem) {
+                    this.player.playerActionManager.linkAction(this._draggedItem.playerAction, ii);
+                }
+                this._draggedItem = undefined;
+            };
+        }
+        this._sectionActions = document.getElementById("section-actions");
+        this._sectionActions.addEventListener("click", () => {
+            this.currentSection = InventorySection.Action;
+            this.update();
+        });
+        this._sectionCubes = document.getElementById("section-cubes");
+        this._sectionCubes.addEventListener("click", () => {
+            this.currentSection = InventorySection.Cube;
+            this.update();
+        });
+        this._sectionBlocks = document.getElementById("section-blocks");
+        this._sectionBlocks.addEventListener("click", () => {
+            this.currentSection = InventorySection.Block;
+            this.update();
+        });
+        this._subSections = document.getElementById("sub-sections");
+        this._items = document.getElementById("items");
+        this.update();
+    }
+    addItem(item) {
+        let same = this.items.find(it => { return it.name === item.name; });
+        if (same) {
+            same.count++;
+        }
+        else {
+            this.items.push(item);
+        }
+    }
+    getCurrentSectionItems() {
+        let sectionItems = [];
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].section === this.currentSection) {
+                sectionItems.push(this.items[i]);
+            }
+        }
+        return sectionItems;
+    }
+    update() {
+        if (this.currentSection === InventorySection.Action) {
+            this._sectionActions.style.background = "white";
+            this._sectionActions.style.color = "black";
+        }
+        else {
+            this._sectionActions.style.background = "black";
+            this._sectionActions.style.color = "white";
+        }
+        if (this.currentSection === InventorySection.Cube) {
+            this._sectionCubes.style.background = "white";
+            this._sectionCubes.style.color = "black";
+        }
+        else {
+            this._sectionCubes.style.background = "black";
+            this._sectionCubes.style.color = "white";
+        }
+        if (this.currentSection === InventorySection.Block) {
+            this._sectionBlocks.style.background = "white";
+            this._sectionBlocks.style.color = "black";
+        }
+        else {
+            this._sectionBlocks.style.background = "black";
+            this._sectionBlocks.style.color = "white";
+        }
+        this.clearSubsections();
+        this.clearItems();
+        let currentSectionItems = this.getCurrentSectionItems();
+        for (let i = 0; i < currentSectionItems.length; i++) {
+            let it = currentSectionItems[i];
+            let itemDiv = document.createElement("div");
+            itemDiv.classList.add("item");
+            if (it.playerAction) {
+                itemDiv.setAttribute("draggable", "true");
+                itemDiv.ondragstart = (e) => {
+                    this._draggedItem = it;
+                };
+                itemDiv.ondragend = (e) => {
+                    this._draggedItem = undefined;
+                };
+            }
+            let itemCount = document.createElement("div");
+            itemCount.classList.add("item-count");
+            itemCount.innerText = it.count.toFixed(0);
+            itemDiv.appendChild(itemCount);
+            this._items.appendChild(itemDiv);
+        }
+    }
+    clearSubsections() {
+        this._subSections.innerHTML = "";
+    }
+    clearItems() {
+        this._items.innerHTML = "";
+    }
+}
 /// <reference path="../../lib/babylon.d.ts"/>
 class Main {
     static get cellShadingMaterial() {
@@ -2380,11 +2516,53 @@ class PlayerTest extends Main {
             };
             request.send();
         }
-        let pauseMenu = new PauseMenu();
-        pauseMenu.initialize();
         let player = new Player();
         player.position.y = 100;
         player.register();
+        let pauseMenu = new PauseMenu();
+        pauseMenu.initialize();
+        let inventory = new Inventory(player);
+        inventory.initialize();
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall"));
+        inventory.addItem(InventoryItem.Block("wall-hole"));
+        inventory.addItem(InventoryItem.Block("wall-hole"));
+        inventory.addItem(InventoryItem.Block("wall-hole"));
+        inventory.addItem(InventoryItem.Block("wall-hole"));
+        inventory.addItem(InventoryItem.Block("wall-corner-out"));
+        inventory.addItem(InventoryItem.Block("wall-corner-out"));
+        inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
