@@ -253,6 +253,9 @@ window.addEventListener("load", async () => {
 				else if (splitParam[1] === "player_test") {
 					main = new PlayerTest("render-canvas");
 				}
+				else if (splitParam[1] === "miniature") {
+					main = new Miniature("render-canvas");
+				}
 			}
 		}
 	}
