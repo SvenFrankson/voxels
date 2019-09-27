@@ -1,3 +1,44 @@
+enum MenuPage {
+    Pause,
+    Inventory
+}
+
+class MenuManager {
+
+    public pauseMenu: PauseMenu;
+    public inventory: Inventory;
+
+    public currentMenu: MenuPage = MenuPage.Pause;
+
+    public initialize(): void {
+        let update = () => {
+            if (document.pointerLockElement) {
+                if (this.pauseMenu) {
+                    this.pauseMenu.background.style.display = "none";
+                }
+                if (this.inventory) {
+                    this.inventory.body.style.display = "none";
+                }
+            }
+            if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
+                if (!document.pointerLockElement) {
+                    this.pauseMenu.background.style.display = "";
+                }
+            }
+            else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
+                if (!document.pointerLockElement) {
+                    this.inventory.body.style.display = "";
+                }
+            }
+            if (this.currentMenu === undefined) {
+                this.currentMenu = MenuPage.Pause;
+            }
+            requestAnimationFrame(update);
+        }
+        update();
+    }
+}
+
 class PauseMenu {
 
     public background: HTMLDivElement;
@@ -7,7 +48,7 @@ class PauseMenu {
     public resumeButton: HTMLButtonElement;
 
     constructor() {
-        
+        Main.MenuManager.pauseMenu = this;
     }
 
     public initialize(): void {
@@ -43,17 +84,6 @@ class PauseMenu {
             let data = Main.ChunckManager.serialize();
             let stringData = JSON.stringify(data);
             window.localStorage.setItem("player-test", stringData);
-        })
-
-        let update = () => {
-            if (document.pointerLockElement) {
-                this.background.style.display = "none";
-            }
-            else {
-                this.background.style.display = "";
-            }
-            requestAnimationFrame(update);
-        }
-        update();
+        });
     }
 }

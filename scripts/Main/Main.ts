@@ -10,6 +10,7 @@ class Main {
 	public static Skybox: BABYLON.Mesh;
 	public static ChunckManager: ChunckManager;
 	public static ChunckEditor: ChunckEditor;
+	public static MenuManager: MenuManager;
 
     public static _cellShadingMaterial: ToonMaterial;
 	public static get cellShadingMaterial(): ToonMaterial {
@@ -213,6 +214,12 @@ class Main {
 
 		Main.ChunckManager = new ChunckManager();
 		new VertexDataLoader(Main.Scene);
+
+		Main.MenuManager = new MenuManager();
+		Main.MenuManager.initialize();
+		
+		let pauseMenu = new PauseMenu();
+		pauseMenu.initialize();
 		
 		console.log("Main scene Initialized.");
     }

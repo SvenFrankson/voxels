@@ -1,5 +1,43 @@
+var MenuPage;
+(function (MenuPage) {
+    MenuPage[MenuPage["Pause"] = 0] = "Pause";
+    MenuPage[MenuPage["Inventory"] = 1] = "Inventory";
+})(MenuPage || (MenuPage = {}));
+class MenuManager {
+    constructor() {
+        this.currentMenu = MenuPage.Pause;
+    }
+    initialize() {
+        let update = () => {
+            if (document.pointerLockElement) {
+                if (this.pauseMenu) {
+                    this.pauseMenu.background.style.display = "none";
+                }
+                if (this.inventory) {
+                    this.inventory.body.style.display = "none";
+                }
+            }
+            if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
+                if (!document.pointerLockElement) {
+                    this.pauseMenu.background.style.display = "";
+                }
+            }
+            else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
+                if (!document.pointerLockElement) {
+                    this.inventory.body.style.display = "";
+                }
+            }
+            if (this.currentMenu === undefined) {
+                this.currentMenu = MenuPage.Pause;
+            }
+            requestAnimationFrame(update);
+        };
+        update();
+    }
+}
 class PauseMenu {
     constructor() {
+        Main.MenuManager.pauseMenu = this;
     }
     initialize() {
         let canvasBBox = Main.Canvas.getBoundingClientRect();
@@ -31,16 +69,6 @@ class PauseMenu {
             let stringData = JSON.stringify(data);
             window.localStorage.setItem("player-test", stringData);
         });
-        let update = () => {
-            if (document.pointerLockElement) {
-                this.background.style.display = "none";
-            }
-            else {
-                this.background.style.display = "";
-            }
-            requestAnimationFrame(update);
-        };
-        update();
     }
 }
 class VertexDataLoader {
@@ -1669,9 +1697,11 @@ class Player extends BABYLON.Mesh {
             }
         });
         Main.Canvas.addEventListener("pointermove", (e) => {
-            this.rotation.y += e.movementX / 200;
-            if (Main.Camera instanceof BABYLON.FreeCamera) {
-                Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+            if (document.pointerLockElement) {
+                this.rotation.y += e.movementX / 200;
+                if (Main.Camera instanceof BABYLON.FreeCamera) {
+                    Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                }
             }
         });
         Main.Canvas.addEventListener("pointerup", (e) => {
@@ -1976,6 +2006,7 @@ class Inventory {
         this.items = [];
     }
     initialize() {
+        Main.MenuManager.inventory = this;
         for (let i = 0; i < 10; i++) {
             let ii = i;
             let playerAction = document.getElementById("player-action-" + i + "-icon");
@@ -1989,23 +2020,35 @@ class Inventory {
                 this._draggedItem = undefined;
             };
         }
+        this.body = document.getElementById("inventory");
         this._sectionActions = document.getElementById("section-actions");
-        this._sectionActions.addEventListener("click", () => {
+        this._sectionActions.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Action;
             this.update();
         });
         this._sectionCubes = document.getElementById("section-cubes");
-        this._sectionCubes.addEventListener("click", () => {
+        this._sectionCubes.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Cube;
             this.update();
         });
         this._sectionBlocks = document.getElementById("section-blocks");
-        this._sectionBlocks.addEventListener("click", () => {
+        this._sectionBlocks.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Block;
             this.update();
         });
         this._subSections = document.getElementById("sub-sections");
         this._items = document.getElementById("items");
+        document.getElementById("inventory-close").addEventListener("pointerup", () => {
+            delete Main.MenuManager.currentMenu;
+            Main.Canvas.requestPointerLock();
+            Main.Canvas.focus();
+        });
+        Main.Canvas.addEventListener("keyup", (e) => {
+            if (e.keyCode === 73) {
+                Main.MenuManager.currentMenu = MenuPage.Inventory;
+                document.exitPointerLock();
+            }
+        });
         this.update();
     }
     addItem(item) {
@@ -2251,6 +2294,10 @@ class Main {
         water.material = waterMaterial;
         Main.ChunckManager = new ChunckManager();
         new VertexDataLoader(Main.Scene);
+        Main.MenuManager = new MenuManager();
+        Main.MenuManager.initialize();
+        let pauseMenu = new PauseMenu();
+        pauseMenu.initialize();
         console.log("Main scene Initialized.");
     }
     animate() {
@@ -2519,8 +2566,6 @@ class PlayerTest extends Main {
         let player = new Player();
         player.position.y = 100;
         player.register();
-        let pauseMenu = new PauseMenu();
-        pauseMenu.initialize();
         let inventory = new Inventory(player);
         inventory.initialize();
         inventory.addItem(InventoryItem.Cube(CubeType.Dirt));

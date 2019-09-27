@@ -16,6 +16,12 @@
     margin: 5px 10px 5px 10px;
 }
 
+#inventory-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
 #sections {
     letter-spacing: 0px;
     margin-bottom: 5px;

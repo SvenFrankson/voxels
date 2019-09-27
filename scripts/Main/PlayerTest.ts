@@ -64,9 +64,6 @@ class PlayerTest extends Main {
         let player = new Player();
         player.position.y = 100;
         player.register();
-		
-		let pauseMenu = new PauseMenu();
-		pauseMenu.initialize();
 
 		let inventory = new Inventory(player);
 		inventory.initialize();

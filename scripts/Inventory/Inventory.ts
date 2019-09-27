@@ -34,6 +34,8 @@ class Inventory {
     public currentSection: InventorySection;
     public items: InventoryItem[] = [];
 
+    public body: HTMLDivElement;
+
     private _sectionActions: HTMLButtonElement;
     private _sectionCubes: HTMLButtonElement;
     private _sectionBlocks: HTMLButtonElement;
@@ -50,6 +52,8 @@ class Inventory {
     }
 
     public initialize(): void {
+        Main.MenuManager.inventory = this;
+
         for (let i = 0; i < 10; i++) {
             let ii = i;
             let playerAction = document.getElementById("player-action-" + i + "-icon");
@@ -64,23 +68,36 @@ class Inventory {
             }
         }
 
+        this.body = document.getElementById("inventory") as HTMLDivElement;
+
         this._sectionActions = document.getElementById("section-actions") as HTMLButtonElement;
-        this._sectionActions.addEventListener("click", () => {
+        this._sectionActions.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Action;
             this.update();
         });
         this._sectionCubes = document.getElementById("section-cubes") as HTMLButtonElement;
-        this._sectionCubes.addEventListener("click", () => {
+        this._sectionCubes.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Cube;
             this.update();
         });
         this._sectionBlocks = document.getElementById("section-blocks") as HTMLButtonElement;
-        this._sectionBlocks.addEventListener("click", () => {
+        this._sectionBlocks.addEventListener("pointerup", () => {
             this.currentSection = InventorySection.Block;
             this.update();
         });
         this._subSections = document.getElementById("sub-sections") as HTMLDivElement;
         this._items = document.getElementById("items") as HTMLDivElement;
+        document.getElementById("inventory-close").addEventListener("pointerup", () => {
+            delete Main.MenuManager.currentMenu;
+            Main.Canvas.requestPointerLock();
+            Main.Canvas.focus();
+        });
+        Main.Canvas.addEventListener("keyup", (e) => {
+            if (e.keyCode === 73) {
+                Main.MenuManager.currentMenu = MenuPage.Inventory;
+                document.exitPointerLock();
+            }
+        });
         this.update();
     }
 
