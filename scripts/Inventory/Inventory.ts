@@ -11,12 +11,14 @@ class InventoryItem {
     public count: number = 1;
     public name: string;
     public playerAction: PlayerAction;
+    public iconUrl: string;
 
     public static Block(reference: string): InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
         it.name = reference;
         it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
 
@@ -25,6 +27,7 @@ class InventoryItem {
         it.section = InventorySection.Cube;
         it.name = "Cube-" + cubeType;
         it.playerAction = PlayerActionTemplate.CreateCubeAction(cubeType);
+        it.iconUrl = "./datas/textures/miniatures/" + ChunckUtils.CubeTypeToString(cubeType) + "-miniature.png";
         return it;
     }
 }
@@ -153,6 +156,7 @@ class Inventory {
             let it = currentSectionItems[i];
             let itemDiv = document.createElement("div");
             itemDiv.classList.add("item");
+            itemDiv.style.backgroundImage = "url(" + it.iconUrl + ")";
             if (it.playerAction) {
                 itemDiv.setAttribute("draggable", "true");
                 itemDiv.ondragstart = (e: DragEvent) => {

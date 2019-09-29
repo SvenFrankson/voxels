@@ -114,14 +114,14 @@ class Block extends BABYLON.Mesh {
                 }
             )
         }
-        else if (reference === "wall-hole") {
+        else if (reference === "wall-corner-out") {
             VertexDataLoader.instance.get("wall").then(
                 datas => {
                     datas[1].applyToMesh(this);
                 }
             )
         }
-        else if (reference === "wall-corner-out") {
+        else if (reference === "wall-hole") {
             VertexDataLoader.instance.get("wall").then(
                 datas => {
                     datas[2].applyToMesh(this);

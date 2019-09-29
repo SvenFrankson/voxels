@@ -92,6 +92,18 @@ class Chunck extends BABYLON.Mesh {
             }
         }
     }
+    
+    public makeEmpty(): void {
+        this.cubes = [];
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            this.cubes[i] = [];
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                this.cubes[i][j] = [];
+            }
+        }
+        
+        this.isEmpty = false;
+    }
 
     public generateFull(cubeType?: CubeType): void {
         this.cubes = [];

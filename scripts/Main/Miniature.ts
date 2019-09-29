@@ -44,13 +44,29 @@ class Miniature extends Main {
 
         console.log("Miniature initialized.");
 
-		this.runAllScreenShots();
+		let loop = () => {
+			if (document.pointerLockElement) {
+				setTimeout(
+					() => {
+						this.runAllScreenShots();
+					},
+					100
+				);
+			}
+			else {
+				requestAnimationFrame(loop);
+			}
+		}
+		loop();
 	}
 
 	public async runAllScreenShots(): Promise<void> {
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
+        await this.createBlock("wall");
+        await this.createBlock("wall-hole");
+        await this.createBlock("wall-corner-out");
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {
@@ -78,7 +94,42 @@ class Miniature extends Main {
                         this.updateCameraPosition();
                         setTimeout(
                             async () => {
-                                await this.makeScreenShot(cubeType.toFixed(0), false);
+                                await this.makeScreenShot(ChunckUtils.CubeTypeToString(cubeType).toLocaleLowerCase(), false);
+                                resolve();
+                            },
+                            100
+                        )
+                    },
+                    100
+                )
+            }
+        )
+	}
+
+	public async createBlock(reference: string): Promise<void> {
+		let chunck = Main.ChunckManager.createChunck(0, 0, 0);
+
+        chunck.makeEmpty();
+        chunck.generateVertices();
+        chunck.generateFaces();
+
+		chunck.computeWorldMatrix(true);
+		
+		let block = new Block();
+		block.setReference(reference);
+		block.rotation.y = Math.PI;
+		
+		this.targets = [block];
+		
+		return new Promise<void>(
+            resolve => {
+                setTimeout(
+                    () => {
+                        this.updateCameraPosition();
+                        setTimeout(
+                            async () => {
+								await this.makeScreenShot(reference, false);
+								block.dispose();
                                 resolve();
                             },
                             200

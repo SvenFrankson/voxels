@@ -71,6 +71,7 @@
     margin: 2px;
     margin-bottom: 5px;
     background: black;
+    background-size: cover;
 }
 
 .item-count {

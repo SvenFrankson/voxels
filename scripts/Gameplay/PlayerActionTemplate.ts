@@ -4,7 +4,7 @@ class PlayerActionTemplate {
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
 
-        action.iconUrl = "./datas/textures/";
+        action.iconUrl = "./datas/textures/miniatures/";
         if (cubeType === CubeType.Dirt) {
             action.iconUrl += "dirt";
         }
@@ -17,7 +17,7 @@ class PlayerActionTemplate {
         if (cubeType === CubeType.None) {
             action.iconUrl += "delete";
         }
-        action.iconUrl += ".png";
+        action.iconUrl += "-miniature.png";
 
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
@@ -162,7 +162,7 @@ class PlayerActionTemplate {
         let previewMesh: BABYLON.Mesh;
         let r = 0;
 
-        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl = "./datas/textures/miniatures/" + blockReference + "-miniature.png";
 
         action.onKeyUp = (e: KeyboardEvent) => {
             if (e.keyCode === 82) {
@@ -198,14 +198,14 @@ class PlayerActionTemplate {
                                 }
                             )
                         }
-                        else if (blockReference === "wall-hole") {
+                        else if (blockReference === "wall-corner-out") {
                             VertexDataLoader.instance.get("wall").then(
                                 datas => {
                                     datas[1].applyToMesh(previewMesh);
                                 }
                             )
                         }
-                        else if (blockReference === "wall-corner-out") {
+                        else if (blockReference === "wall-hole") {
                             VertexDataLoader.instance.get("wall").then(
                                 datas => {
                                     datas[2].applyToMesh(previewMesh);

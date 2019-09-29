@@ -1,5 +1,20 @@
 class ChunckUtils {
 
+    public static CubeTypeToString(cubeType: CubeType): string {
+        if (cubeType === CubeType.Dirt) {
+            return "Dirt";
+        }
+        if (cubeType === CubeType.Rock) {
+            return "Rock";
+        }
+        if (cubeType === CubeType.Sand) {
+            return "Sand";
+        }
+        if (cubeType === CubeType.None) {
+            return "None";
+        }
+    }
+
     public static WorldPositionToChunckBlockCoordinates(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);

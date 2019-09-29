@@ -314,12 +314,12 @@ class Block extends BABYLON.Mesh {
                 datas[0].applyToMesh(this);
             });
         }
-        else if (reference === "wall-hole") {
+        else if (reference === "wall-corner-out") {
             VertexDataLoader.instance.get("wall").then(datas => {
                 datas[1].applyToMesh(this);
             });
         }
-        else if (reference === "wall-corner-out") {
+        else if (reference === "wall-hole") {
             VertexDataLoader.instance.get("wall").then(datas => {
                 datas[2].applyToMesh(this);
             });
@@ -420,6 +420,16 @@ class Chunck extends BABYLON.Mesh {
                 }
             }
         }
+    }
+    makeEmpty() {
+        this.cubes = [];
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            this.cubes[i] = [];
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                this.cubes[i][j] = [];
+            }
+        }
+        this.isEmpty = false;
     }
     generateFull(cubeType) {
         this.cubes = [];
@@ -1257,6 +1267,20 @@ class ChunckManager {
     }
 }
 class ChunckUtils {
+    static CubeTypeToString(cubeType) {
+        if (cubeType === CubeType.Dirt) {
+            return "Dirt";
+        }
+        if (cubeType === CubeType.Rock) {
+            return "Rock";
+        }
+        if (cubeType === CubeType.Sand) {
+            return "Sand";
+        }
+        if (cubeType === CubeType.None) {
+            return "None";
+        }
+    }
     static WorldPositionToChunckBlockCoordinates(world) {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);
@@ -1718,7 +1742,7 @@ class PlayerActionTemplate {
     static CreateCubeAction(cubeType) {
         let action = new PlayerAction();
         let previewMesh;
-        action.iconUrl = "./datas/textures/";
+        action.iconUrl = "./datas/textures/miniatures/";
         if (cubeType === CubeType.Dirt) {
             action.iconUrl += "dirt";
         }
@@ -1731,7 +1755,7 @@ class PlayerActionTemplate {
         if (cubeType === CubeType.None) {
             action.iconUrl += "delete";
         }
-        action.iconUrl += ".png";
+        action.iconUrl += "-miniature.png";
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
@@ -1851,7 +1875,7 @@ class PlayerActionTemplate {
         let action = new PlayerAction();
         let previewMesh;
         let r = 0;
-        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl = "./datas/textures/miniatures/" + blockReference + "-miniature.png";
         action.onKeyUp = (e) => {
             if (e.keyCode === 82) {
                 r = (r + 1) % 4;
@@ -1878,12 +1902,12 @@ class PlayerActionTemplate {
                                 datas[0].applyToMesh(previewMesh);
                             });
                         }
-                        else if (blockReference === "wall-hole") {
+                        else if (blockReference === "wall-corner-out") {
                             VertexDataLoader.instance.get("wall").then(datas => {
                                 datas[1].applyToMesh(previewMesh);
                             });
                         }
-                        else if (blockReference === "wall-corner-out") {
+                        else if (blockReference === "wall-hole") {
                             VertexDataLoader.instance.get("wall").then(datas => {
                                 datas[2].applyToMesh(previewMesh);
                             });
@@ -1990,6 +2014,7 @@ class InventoryItem {
         it.section = InventorySection.Block;
         it.name = reference;
         it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
     static Cube(cubeType) {
@@ -1997,6 +2022,7 @@ class InventoryItem {
         it.section = InventorySection.Cube;
         it.name = "Cube-" + cubeType;
         it.playerAction = PlayerActionTemplate.CreateCubeAction(cubeType);
+        it.iconUrl = "./datas/textures/miniatures/" + ChunckUtils.CubeTypeToString(cubeType) + "-miniature.png";
         return it;
     }
 }
@@ -2101,6 +2127,7 @@ class Inventory {
             let it = currentSectionItems[i];
             let itemDiv = document.createElement("div");
             itemDiv.classList.add("item");
+            itemDiv.style.backgroundImage = "url(" + it.iconUrl + ")";
             if (it.playerAction) {
                 itemDiv.setAttribute("draggable", "true");
                 itemDiv.ondragstart = (e) => {
@@ -2545,12 +2572,25 @@ class Miniature extends Main {
         super.initialize();
         Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
         console.log("Miniature initialized.");
-        this.runAllScreenShots();
+        let loop = () => {
+            if (document.pointerLockElement) {
+                setTimeout(() => {
+                    this.runAllScreenShots();
+                }, 100);
+            }
+            else {
+                requestAnimationFrame(loop);
+            }
+        };
+        loop();
     }
     async runAllScreenShots() {
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
+        await this.createBlock("wall");
+        await this.createBlock("wall-hole");
+        await this.createBlock("wall-corner-out");
     }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
@@ -2570,7 +2610,28 @@ class Miniature extends Main {
             setTimeout(() => {
                 this.updateCameraPosition();
                 setTimeout(async () => {
-                    await this.makeScreenShot(cubeType.toFixed(0), false);
+                    await this.makeScreenShot(ChunckUtils.CubeTypeToString(cubeType).toLocaleLowerCase(), false);
+                    resolve();
+                }, 100);
+            }, 100);
+        });
+    }
+    async createBlock(reference) {
+        let chunck = Main.ChunckManager.createChunck(0, 0, 0);
+        chunck.makeEmpty();
+        chunck.generateVertices();
+        chunck.generateFaces();
+        chunck.computeWorldMatrix(true);
+        let block = new Block();
+        block.setReference(reference);
+        block.rotation.y = Math.PI;
+        this.targets = [block];
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.updateCameraPosition();
+                setTimeout(async () => {
+                    await this.makeScreenShot(reference, false);
+                    block.dispose();
                     resolve();
                 }, 200);
             }, 200);
