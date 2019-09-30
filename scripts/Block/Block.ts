@@ -75,59 +75,11 @@ class Block extends BABYLON.Mesh {
         this.reference = reference;
         this.name = "block-" + this.reference;
 
-        if (reference === "cube") {
-            BABYLON.VertexData.CreateBox(
-                {
-                    size: 0.5,
-                    faceColors: [
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1)
-                    ]
-                }
-            ).applyToMesh(this);
-        }
-        else if (reference === "plate") {
-            BABYLON.VertexData.CreateBox(
-                {
-                    width: 1.5,
-                    height: 0.5,
-                    depth: 1.5,
-                    faceColors: [
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                        new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1)
-                    ]
-                }
-            ).applyToMesh(this);
-        }
-        else if (reference === "wall") {
-            VertexDataLoader.instance.get("wall").then(
-                datas => {
-                    datas[0].applyToMesh(this);
-                }
-            )
-        }
-        else if (reference === "wall-corner-out") {
-            VertexDataLoader.instance.get("wall").then(
-                datas => {
-                    datas[1].applyToMesh(this);
-                }
-            )
-        }
-        else if (reference === "wall-hole") {
-            VertexDataLoader.instance.get("wall").then(
-                datas => {
-                    datas[2].applyToMesh(this);
-                }
-            )
-        }
+        BlockVertexData.GetVertexData(this.reference).then(
+            data => {
+                data.applyToMesh(this);
+            }
+        )
     }
 
     public serialize(): BlockData {

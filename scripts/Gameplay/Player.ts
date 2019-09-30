@@ -17,24 +17,11 @@ class Player extends BABYLON.Mesh {
 
     public register(): void {
         this.playerActionManager.register();
-        let dirtAction = PlayerActionTemplate.CreateCubeAction(CubeType.Dirt);
-        this.playerActionManager.linkAction(dirtAction, 1);
-        let rockAction = PlayerActionTemplate.CreateCubeAction(CubeType.Rock);
-        this.playerActionManager.linkAction(rockAction, 2);
-        let sandAction = PlayerActionTemplate.CreateCubeAction(CubeType.Sand);
-        this.playerActionManager.linkAction(sandAction, 3);
         let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
         this.playerActionManager.linkAction(deleteCubeAction, 0);
         
-        let wallAction = PlayerActionTemplate.CreateBlockAction("wall");
-        this.playerActionManager.linkAction(wallAction, 4);
-        let wallHoleAction = PlayerActionTemplate.CreateBlockAction("wall-hole");
-        this.playerActionManager.linkAction(wallHoleAction, 5);
-        let wallCornerOutAction = PlayerActionTemplate.CreateBlockAction("wall-corner-out");
-        this.playerActionManager.linkAction(wallCornerOutAction, 6);
-        
         let editBlockAction = PlayerActionTemplate.EditBlockAction();
-        this.playerActionManager.linkAction(editBlockAction, 7);
+        this.playerActionManager.linkAction(editBlockAction, 9);
 
         Main.Scene.onBeforeRenderObservable.add(this.update);
 

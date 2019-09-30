@@ -14,7 +14,7 @@ class Miniature extends Main {
                     let bbox = t.getBoundingInfo();
                     height = Math.max(height, bbox.maximum.y - bbox.minimum.y);
                 }
-            )
+			)
             let groundWidth = 0;
             this.targets.forEach(
                 t => {
@@ -67,6 +67,13 @@ class Miniature extends Main {
         await this.createBlock("wall");
         await this.createBlock("wall-hole");
         await this.createBlock("wall-corner-out");
+        await this.createBlock("brick-1-1-1");
+        await this.createBlock("brick-1-1-2");
+        await this.createBlock("brick-1-1-4");
+        await this.createBlock("ramp-1-1-2");
+        await this.createBlock("ramp-1-1-4");
+        await this.createBlock("guard");
+        await this.createBlock("guard-corner");
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {

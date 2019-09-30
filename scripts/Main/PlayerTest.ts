@@ -106,6 +106,24 @@ class PlayerTest extends Main {
 		inventory.addItem(InventoryItem.Block("wall-hole"));
 		inventory.addItem(InventoryItem.Block("wall-corner-out"));
 		inventory.addItem(InventoryItem.Block("wall-corner-out"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+		inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+		inventory.addItem(InventoryItem.Block("guard"));
+		inventory.addItem(InventoryItem.Block("guard"));
+		inventory.addItem(InventoryItem.Block("guard-corner"));
+		inventory.addItem(InventoryItem.Block("guard-corner"));
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

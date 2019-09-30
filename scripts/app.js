@@ -281,49 +281,9 @@ class Block extends BABYLON.Mesh {
     setReference(reference) {
         this.reference = reference;
         this.name = "block-" + this.reference;
-        if (reference === "cube") {
-            BABYLON.VertexData.CreateBox({
-                size: 0.5,
-                faceColors: [
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(27 / 256, 153 / 256, 155 / 256, 1)
-                ]
-            }).applyToMesh(this);
-        }
-        else if (reference === "plate") {
-            BABYLON.VertexData.CreateBox({
-                width: 1.5,
-                height: 0.5,
-                depth: 1.5,
-                faceColors: [
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1),
-                    new BABYLON.Color4(153 / 256, 27 / 256, 155 / 256, 1)
-                ]
-            }).applyToMesh(this);
-        }
-        else if (reference === "wall") {
-            VertexDataLoader.instance.get("wall").then(datas => {
-                datas[0].applyToMesh(this);
-            });
-        }
-        else if (reference === "wall-corner-out") {
-            VertexDataLoader.instance.get("wall").then(datas => {
-                datas[1].applyToMesh(this);
-            });
-        }
-        else if (reference === "wall-hole") {
-            VertexDataLoader.instance.get("wall").then(datas => {
-                datas[2].applyToMesh(this);
-            });
-        }
+        BlockVertexData.GetVertexData(this.reference).then(data => {
+            data.applyToMesh(this);
+        });
     }
     serialize() {
         return {
@@ -340,6 +300,57 @@ class Block extends BABYLON.Mesh {
         this.k = data.k;
         this.r = data.r;
         this.setReference(data.reference);
+    }
+}
+class BlockVertexData {
+    static async GetVertexData(reference) {
+        let fileName = "";
+        let meshIndex = 0;
+        if (reference === "wall") {
+            fileName = "wall";
+            meshIndex = 0;
+        }
+        else if (reference === "wall-corner-out") {
+            fileName = "wall";
+            meshIndex = 1;
+        }
+        else if (reference === "wall-hole") {
+            fileName = "wall";
+            meshIndex = 2;
+        }
+        else if (reference === "brick-1-1-1") {
+            fileName = "block-basic";
+            meshIndex = 0;
+        }
+        else if (reference === "brick-1-1-2") {
+            fileName = "block-basic";
+            meshIndex = 1;
+        }
+        else if (reference === "brick-1-1-4") {
+            fileName = "block-basic";
+            meshIndex = 2;
+        }
+        else if (reference === "ramp-1-1-2") {
+            fileName = "block-basic";
+            meshIndex = 3;
+        }
+        else if (reference === "ramp-1-1-4") {
+            fileName = "block-basic";
+            meshIndex = 4;
+        }
+        else if (reference === "guard") {
+            fileName = "block-guard";
+            meshIndex = 0;
+        }
+        else if (reference === "guard-corner") {
+            fileName = "block-guard";
+            meshIndex = 1;
+        }
+        return new Promise(resolve => {
+            VertexDataLoader.instance.get(fileName).then(datas => {
+                resolve(datas[meshIndex]);
+            });
+        });
     }
 }
 var CHUNCK_SIZE = 8;
@@ -1667,22 +1678,10 @@ class Player extends BABYLON.Mesh {
     }
     register() {
         this.playerActionManager.register();
-        let dirtAction = PlayerActionTemplate.CreateCubeAction(CubeType.Dirt);
-        this.playerActionManager.linkAction(dirtAction, 1);
-        let rockAction = PlayerActionTemplate.CreateCubeAction(CubeType.Rock);
-        this.playerActionManager.linkAction(rockAction, 2);
-        let sandAction = PlayerActionTemplate.CreateCubeAction(CubeType.Sand);
-        this.playerActionManager.linkAction(sandAction, 3);
         let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
         this.playerActionManager.linkAction(deleteCubeAction, 0);
-        let wallAction = PlayerActionTemplate.CreateBlockAction("wall");
-        this.playerActionManager.linkAction(wallAction, 4);
-        let wallHoleAction = PlayerActionTemplate.CreateBlockAction("wall-hole");
-        this.playerActionManager.linkAction(wallHoleAction, 5);
-        let wallCornerOutAction = PlayerActionTemplate.CreateBlockAction("wall-corner-out");
-        this.playerActionManager.linkAction(wallCornerOutAction, 6);
         let editBlockAction = PlayerActionTemplate.EditBlockAction();
-        this.playerActionManager.linkAction(editBlockAction, 7);
+        this.playerActionManager.linkAction(editBlockAction, 9);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (this.currentAction) {
@@ -1897,25 +1896,12 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
-                        if (blockReference === "wall") {
-                            VertexDataLoader.instance.get("wall").then(datas => {
-                                datas[0].applyToMesh(previewMesh);
-                            });
-                        }
-                        else if (blockReference === "wall-corner-out") {
-                            VertexDataLoader.instance.get("wall").then(datas => {
-                                datas[1].applyToMesh(previewMesh);
-                            });
-                        }
-                        else if (blockReference === "wall-hole") {
-                            VertexDataLoader.instance.get("wall").then(datas => {
-                                datas[2].applyToMesh(previewMesh);
-                            });
-                        }
+                        BlockVertexData.GetVertexData(blockReference).then(data => {
+                            data.applyToMesh(previewMesh);
+                        });
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);
-                    console.log("Coordinates " + coordinates.toString());
                 }
                 else {
                     if (previewMesh) {
@@ -2591,6 +2577,13 @@ class Miniature extends Main {
         await this.createBlock("wall");
         await this.createBlock("wall-hole");
         await this.createBlock("wall-corner-out");
+        await this.createBlock("brick-1-1-1");
+        await this.createBlock("brick-1-1-2");
+        await this.createBlock("brick-1-1-4");
+        await this.createBlock("ramp-1-1-2");
+        await this.createBlock("ramp-1-1-4");
+        await this.createBlock("guard");
+        await this.createBlock("guard-corner");
     }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
@@ -2816,6 +2809,24 @@ class PlayerTest extends Main {
         inventory.addItem(InventoryItem.Block("wall-hole"));
         inventory.addItem(InventoryItem.Block("wall-corner-out"));
         inventory.addItem(InventoryItem.Block("wall-corner-out"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+        inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+        inventory.addItem(InventoryItem.Block("guard"));
+        inventory.addItem(InventoryItem.Block("guard"));
+        inventory.addItem(InventoryItem.Block("guard-corner"));
+        inventory.addItem(InventoryItem.Block("guard-corner"));
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;

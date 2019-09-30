@@ -191,31 +191,15 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
-                        if (blockReference === "wall") {
-                            VertexDataLoader.instance.get("wall").then(
-                                datas => {
-                                    datas[0].applyToMesh(previewMesh);
-                                }
-                            )
-                        }
-                        else if (blockReference === "wall-corner-out") {
-                            VertexDataLoader.instance.get("wall").then(
-                                datas => {
-                                    datas[1].applyToMesh(previewMesh);
-                                }
-                            )
-                        }
-                        else if (blockReference === "wall-hole") {
-                            VertexDataLoader.instance.get("wall").then(
-                                datas => {
-                                    datas[2].applyToMesh(previewMesh);
-                                }
-                            )
-                        }
+
+                        BlockVertexData.GetVertexData(blockReference).then(
+                            data => {
+                                data.applyToMesh(previewMesh);
+                            }
+                        )
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
                     }
                     previewMesh.position.copyFrom(coordinates);
-                    console.log("Coordinates " + coordinates.toString());
                 }
                 else {
                     if (previewMesh) {
