@@ -1678,10 +1678,6 @@ class Player extends BABYLON.Mesh {
     }
     register() {
         this.playerActionManager.register();
-        let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
-        this.playerActionManager.linkAction(deleteCubeAction, 0);
-        let editBlockAction = PlayerActionTemplate.EditBlockAction();
-        this.playerActionManager.linkAction(editBlockAction, 9);
         Main.Scene.onBeforeRenderObservable.add(this.update);
         Main.Canvas.addEventListener("keyup", (e) => {
             if (this.currentAction) {
@@ -1795,7 +1791,7 @@ class PlayerActionTemplate {
         let action = new PlayerAction();
         let pickedBlock;
         let aimedBlock;
-        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         action.onKeyUp = (e) => {
             if (e.keyCode === 82) {
                 if (pickedBlock) {
@@ -2723,6 +2719,12 @@ class PlayerTest extends Main {
         player.register();
         let inventory = new Inventory(player);
         inventory.initialize();
+        let inventoryEditBlock = new InventoryItem();
+        inventoryEditBlock.name = "EditBlock";
+        inventoryEditBlock.section = InventorySection.Action;
+        inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
+        inventory.addItem(inventoryEditBlock);
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
         }

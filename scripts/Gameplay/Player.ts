@@ -17,11 +17,6 @@ class Player extends BABYLON.Mesh {
 
     public register(): void {
         this.playerActionManager.register();
-        let deleteCubeAction = PlayerActionTemplate.CreateCubeAction(CubeType.None);
-        this.playerActionManager.linkAction(deleteCubeAction, 0);
-        
-        let editBlockAction = PlayerActionTemplate.EditBlockAction();
-        this.playerActionManager.linkAction(editBlockAction, 9);
 
         Main.Scene.onBeforeRenderObservable.add(this.update);
 

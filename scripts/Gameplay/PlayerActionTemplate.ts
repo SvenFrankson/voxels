@@ -66,7 +66,7 @@ class PlayerActionTemplate {
         let pickedBlock: Block;
         let aimedBlock: Block;
 
-        action.iconUrl = "./datas/textures/delete.png";
+        action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
 
         action.onKeyUp = (e: KeyboardEvent) => {
             if (e.keyCode === 82) {

@@ -67,6 +67,14 @@ class PlayerTest extends Main {
 
 		let inventory = new Inventory(player);
 		inventory.initialize();
+
+		let inventoryEditBlock = new InventoryItem();
+		inventoryEditBlock.name = "EditBlock";
+		inventoryEditBlock.section = InventorySection.Action;
+		inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
+		inventory.addItem(inventoryEditBlock);
+
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
 		}
