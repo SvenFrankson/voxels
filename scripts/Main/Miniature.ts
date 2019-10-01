@@ -8,30 +8,19 @@ class Miniature extends Main {
         if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
             Main.Camera.lowerRadiusLimit = 0.01;
             Main.Camera.upperRadiusLimit = 1000;
-            let height = 0;
+            let size = 0;
             this.targets.forEach(
                 t => {
                     let bbox = t.getBoundingInfo();
-                    height = Math.max(height, bbox.maximum.y - bbox.minimum.y);
+                    size = Math.max(size, bbox.maximum.x - bbox.minimum.x);
+                    size = Math.max(size, bbox.maximum.y - bbox.minimum.y);
+                    size = Math.max(size, bbox.maximum.z - bbox.minimum.z);
                 }
 			)
-            let groundWidth = 0;
-            this.targets.forEach(
-                t => {
-                    let bbox = t.getBoundingInfo();
-                    groundWidth = Math.max(
-                        groundWidth,
-                        Math.max(
-                            bbox.maximum.x - bbox.minimum.x,
-                            bbox.maximum.z - bbox.minimum.z
-                        )
-                    );
-                }
-            )
             let bbox = this.targets[0].getBoundingInfo();
             Main.Camera.target.copyFrom(bbox.maximum).addInPlace(bbox.minimum).scaleInPlace(0.5);
-            let cameraPosition = new BABYLON.Vector3(- 0.6, 1, 1);
-            cameraPosition.scaleInPlace(Math.max(height, groundWidth) * 1.5);
+            let cameraPosition = new BABYLON.Vector3(- 1, 0.6, 0.8);
+            cameraPosition.scaleInPlace(size * 1.8);
             cameraPosition.addInPlace(Main.Camera.target);
             Main.Camera.setPosition(cameraPosition);
         }
@@ -72,8 +61,6 @@ class Miniature extends Main {
         await this.createBlock("brick-1-1-4");
         await this.createBlock("ramp-1-1-2");
         await this.createBlock("ramp-1-1-4");
-        await this.createBlock("guard");
-        await this.createBlock("guard-corner");
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {
@@ -124,7 +111,6 @@ class Miniature extends Main {
 		
 		let block = new Block();
 		block.setReference(reference);
-		block.rotation.y = Math.PI;
 		
 		this.targets = [block];
 		

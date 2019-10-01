@@ -67,63 +67,39 @@ class PlayerTest extends Main {
 
 		let inventory = new Inventory(player);
 		inventory.initialize();
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-		inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall"));
-		inventory.addItem(InventoryItem.Block("wall-hole"));
-		inventory.addItem(InventoryItem.Block("wall-hole"));
-		inventory.addItem(InventoryItem.Block("wall-hole"));
-		inventory.addItem(InventoryItem.Block("wall-hole"));
-		inventory.addItem(InventoryItem.Block("wall-corner-out"));
-		inventory.addItem(InventoryItem.Block("wall-corner-out"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-		inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-		inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-		inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
-		inventory.addItem(InventoryItem.Block("guard"));
-		inventory.addItem(InventoryItem.Block("guard"));
-		inventory.addItem(InventoryItem.Block("guard-corner"));
-		inventory.addItem(InventoryItem.Block("guard-corner"));
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("wall"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("wall-hole"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("wall-corner-out"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+		}
+		for (let i = 0; i <= Math.random() * 100; i++) {
+			inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+		}
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

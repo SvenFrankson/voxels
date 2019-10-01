@@ -2264,47 +2264,6 @@ class Main {
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
         */
-        let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
-        borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
-        borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-        let borderXP = BABYLON.MeshBuilder.CreateBox("border-xp", {
-            width: 2,
-            depth: 12 * CHUNCK_SIZE + 2,
-            height: 6
-        });
-        borderXP.position.copyFromFloats(6 * CHUNCK_SIZE + 1, 2, -1);
-        borderXP.material = borderMaterial;
-        let borderXM = BABYLON.MeshBuilder.CreateBox("border-xm", {
-            width: 2,
-            depth: 12 * CHUNCK_SIZE + 2,
-            height: 6
-        });
-        borderXM.position.copyFromFloats(-6 * CHUNCK_SIZE - 1, 2, 1);
-        borderXM.material = borderMaterial;
-        let borderZP = BABYLON.MeshBuilder.CreateBox("border-zp", {
-            width: 12 * CHUNCK_SIZE + 2,
-            depth: 2,
-            height: 6
-        });
-        borderZP.position.copyFromFloats(1, 2, 6 * CHUNCK_SIZE + 1);
-        borderZP.material = borderMaterial;
-        let borderZM = BABYLON.MeshBuilder.CreateBox("border-zm", {
-            width: 12 * CHUNCK_SIZE + 2,
-            depth: 2,
-            height: 6
-        });
-        borderZM.position.copyFromFloats(-1, 2, -6 * CHUNCK_SIZE - 1);
-        borderZM.material = borderMaterial;
-        let water = BABYLON.MeshBuilder.CreateGround("water", {
-            width: 12 * CHUNCK_SIZE,
-            height: 12 * CHUNCK_SIZE
-        }, Main.Scene);
-        water.position.y = 4.5;
-        let waterMaterial = new BABYLON.StandardMaterial("water-material", Main.Scene);
-        waterMaterial.alpha = 0.3;
-        waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
-        waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-        water.material = waterMaterial;
         Main.ChunckManager = new ChunckManager();
         new VertexDataLoader(Main.Scene);
         Main.MenuManager = new MenuManager();
@@ -2536,20 +2495,17 @@ class Miniature extends Main {
         if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
             Main.Camera.lowerRadiusLimit = 0.01;
             Main.Camera.upperRadiusLimit = 1000;
-            let height = 0;
+            let size = 0;
             this.targets.forEach(t => {
                 let bbox = t.getBoundingInfo();
-                height = Math.max(height, bbox.maximum.y - bbox.minimum.y);
-            });
-            let groundWidth = 0;
-            this.targets.forEach(t => {
-                let bbox = t.getBoundingInfo();
-                groundWidth = Math.max(groundWidth, Math.max(bbox.maximum.x - bbox.minimum.x, bbox.maximum.z - bbox.minimum.z));
+                size = Math.max(size, bbox.maximum.x - bbox.minimum.x);
+                size = Math.max(size, bbox.maximum.y - bbox.minimum.y);
+                size = Math.max(size, bbox.maximum.z - bbox.minimum.z);
             });
             let bbox = this.targets[0].getBoundingInfo();
             Main.Camera.target.copyFrom(bbox.maximum).addInPlace(bbox.minimum).scaleInPlace(0.5);
-            let cameraPosition = new BABYLON.Vector3(-0.6, 1, 1);
-            cameraPosition.scaleInPlace(Math.max(height, groundWidth) * 1.5);
+            let cameraPosition = new BABYLON.Vector3(-1, 0.6, 0.8);
+            cameraPosition.scaleInPlace(size * 1.8);
             cameraPosition.addInPlace(Main.Camera.target);
             Main.Camera.setPosition(cameraPosition);
         }
@@ -2582,8 +2538,6 @@ class Miniature extends Main {
         await this.createBlock("brick-1-1-4");
         await this.createBlock("ramp-1-1-2");
         await this.createBlock("ramp-1-1-4");
-        await this.createBlock("guard");
-        await this.createBlock("guard-corner");
     }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
@@ -2617,7 +2571,6 @@ class Miniature extends Main {
         chunck.computeWorldMatrix(true);
         let block = new Block();
         block.setReference(reference);
-        block.rotation.y = Math.PI;
         this.targets = [block];
         return new Promise(resolve => {
             setTimeout(() => {
@@ -2770,63 +2723,39 @@ class PlayerTest extends Main {
         player.register();
         let inventory = new Inventory(player);
         inventory.initialize();
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Rock));
-        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-        inventory.addItem(InventoryItem.Cube(CubeType.Sand));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall"));
-        inventory.addItem(InventoryItem.Block("wall-hole"));
-        inventory.addItem(InventoryItem.Block("wall-hole"));
-        inventory.addItem(InventoryItem.Block("wall-hole"));
-        inventory.addItem(InventoryItem.Block("wall-hole"));
-        inventory.addItem(InventoryItem.Block("wall-corner-out"));
-        inventory.addItem(InventoryItem.Block("wall-corner-out"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-1"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-2"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-        inventory.addItem(InventoryItem.Block("brick-1-1-4"));
-        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-        inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
-        inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
-        inventory.addItem(InventoryItem.Block("guard"));
-        inventory.addItem(InventoryItem.Block("guard"));
-        inventory.addItem(InventoryItem.Block("guard-corner"));
-        inventory.addItem(InventoryItem.Block("guard-corner"));
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Cube(CubeType.Rock));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Cube(CubeType.Sand));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("wall"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("wall-hole"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("wall-corner-out"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+        }
+        for (let i = 0; i <= Math.random() * 100; i++) {
+            inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+        }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
@@ -2837,6 +2766,47 @@ class PlayerTest extends Main {
 class SkullIsland extends Main {
     async initialize() {
         await super.initializeScene();
+        let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
+        borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
+        borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        let borderXP = BABYLON.MeshBuilder.CreateBox("border-xp", {
+            width: 2,
+            depth: 12 * CHUNCK_SIZE + 2,
+            height: 6
+        });
+        borderXP.position.copyFromFloats(6 * CHUNCK_SIZE + 1, 2, -1);
+        borderXP.material = borderMaterial;
+        let borderXM = BABYLON.MeshBuilder.CreateBox("border-xm", {
+            width: 2,
+            depth: 12 * CHUNCK_SIZE + 2,
+            height: 6
+        });
+        borderXM.position.copyFromFloats(-6 * CHUNCK_SIZE - 1, 2, 1);
+        borderXM.material = borderMaterial;
+        let borderZP = BABYLON.MeshBuilder.CreateBox("border-zp", {
+            width: 12 * CHUNCK_SIZE + 2,
+            depth: 2,
+            height: 6
+        });
+        borderZP.position.copyFromFloats(1, 2, 6 * CHUNCK_SIZE + 1);
+        borderZP.material = borderMaterial;
+        let borderZM = BABYLON.MeshBuilder.CreateBox("border-zm", {
+            width: 12 * CHUNCK_SIZE + 2,
+            depth: 2,
+            height: 6
+        });
+        borderZM.position.copyFromFloats(-1, 2, -6 * CHUNCK_SIZE - 1);
+        borderZM.material = borderMaterial;
+        let water = BABYLON.MeshBuilder.CreateGround("water", {
+            width: 12 * CHUNCK_SIZE,
+            height: 12 * CHUNCK_SIZE
+        }, Main.Scene);
+        water.position.y = 4.5;
+        let waterMaterial = new BABYLON.StandardMaterial("water-material", Main.Scene);
+        waterMaterial.alpha = 0.3;
+        waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
+        waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        water.material = waterMaterial;
         let l = 6;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("terrain");

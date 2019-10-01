@@ -153,65 +153,6 @@ class Main {
 		Main.Skybox.material = skyboxMaterial;
 		*/
 
-		let borderMaterial = new BABYLON.StandardMaterial("border-material", Main.Scene);
-		borderMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 0.2);
-		borderMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-		let borderXP = BABYLON.MeshBuilder.CreateBox(
-			"border-xp",
-			{
-				width: 2,
-				depth: 12 * CHUNCK_SIZE + 2,
-				height: 6
-			}
-		);
-		borderXP.position.copyFromFloats(6 * CHUNCK_SIZE + 1, 2, - 1);
-		borderXP.material = borderMaterial;
-		let borderXM = BABYLON.MeshBuilder.CreateBox(
-			"border-xm",
-			{
-				width: 2,
-				depth: 12 * CHUNCK_SIZE + 2,
-				height: 6
-			}
-		);
-		borderXM.position.copyFromFloats(- 6 * CHUNCK_SIZE - 1, 2, 1);
-		borderXM.material = borderMaterial;
-		let borderZP = BABYLON.MeshBuilder.CreateBox(
-			"border-zp",
-			{
-				width: 12 * CHUNCK_SIZE + 2,
-				depth: 2,
-				height: 6
-			}
-		);
-		borderZP.position.copyFromFloats(1, 2, 6 * CHUNCK_SIZE + 1);
-		borderZP.material = borderMaterial;
-		let borderZM = BABYLON.MeshBuilder.CreateBox(
-			"border-zm",
-			{
-				width: 12 * CHUNCK_SIZE + 2,
-				depth: 2,
-				height: 6
-			}
-		);
-		borderZM.position.copyFromFloats(- 1, 2, - 6 * CHUNCK_SIZE - 1);
-		borderZM.material = borderMaterial;
-
-		let water = BABYLON.MeshBuilder.CreateGround(
-			"water",
-			{
-				width: 12 * CHUNCK_SIZE,
-				height: 12 * CHUNCK_SIZE
-			},
-			Main.Scene
-		);
-		water.position.y = 4.5;
-		let waterMaterial = new BABYLON.StandardMaterial("water-material", Main.Scene);
-		waterMaterial.alpha = 0.3;
-		waterMaterial.diffuseColor = BABYLON.Color3.FromHexString("#2097c9");
-		waterMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-		water.material = waterMaterial;
-
 		Main.ChunckManager = new ChunckManager();
 		new VertexDataLoader(Main.Scene);
 
