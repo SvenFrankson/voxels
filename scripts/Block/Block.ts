@@ -1,6 +1,5 @@
 interface BlockData {
     reference: string;
-    material: BlockMaterial,
     i: number;
     j: number;
     k: number;
@@ -17,6 +16,8 @@ enum BlockMaterial {
 class Block extends BABYLON.Mesh {
 
     public reference: string;
+    public meshName: string;
+    public blockMaterial: BlockMaterial;
     private _chunck: Chunck;
     public get chunck(): Chunck {
         return this._chunck;
@@ -58,9 +59,7 @@ class Block extends BABYLON.Mesh {
         this.rotation.y = Math.PI / 2 * this.r;
     }
 
-    constructor(
-        public blockMaterial: BlockMaterial
-    ) {
+    constructor() {
         super("block");
         this.material = Main.cellShadingMaterial;
     }
@@ -84,8 +83,13 @@ class Block extends BABYLON.Mesh {
     public setReference(reference: string) {
         this.reference = reference;
         this.name = "block-" + this.reference;
+        this.blockMaterial = BlockVertexData.StringToBlockMaterial(this.reference.split("-")[0]);
+        let m = this.reference.split("-");
+        m.splice(0, 1);
+        this.meshName = m.join("-");
+        console.log("MeshName = " + this.meshName);
 
-        BlockVertexData.GetVertexData(this.reference, this.blockMaterial).then(
+        BlockVertexData.GetVertexData(this.meshName, this.blockMaterial).then(
             data => {
                 data.applyToMesh(this);
             }
@@ -98,8 +102,7 @@ class Block extends BABYLON.Mesh {
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference,
-            material: this.blockMaterial
+            reference: this.reference
         };
     }
 
@@ -108,7 +111,6 @@ class Block extends BABYLON.Mesh {
         this.j = data.j;
         this.k = data.k;
         this.r = data.r;
-        this.blockMaterial = data.material;
         this.setReference(data.reference);
     }
 }
