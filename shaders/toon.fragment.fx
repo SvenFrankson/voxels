@@ -29,7 +29,7 @@ void main(void) {
     // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
 
-    vec3 color = vec3(1., 1., 1.);
+    vec3 color = vColor;
 
     if (ndl > ToonThresholds[0])
     {

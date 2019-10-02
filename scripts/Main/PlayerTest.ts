@@ -85,28 +85,28 @@ class PlayerTest extends Main {
 			inventory.addItem(InventoryItem.Cube(CubeType.Sand));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("wall"));
+			inventory.addItem(InventoryItem.Block("bar-1-1-1", BlockMaterial.Wood));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("wall-hole"));
+			inventory.addItem(InventoryItem.Block("bar-1-1-2", BlockMaterial.Wood));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("wall-corner-out"));
+			inventory.addItem(InventoryItem.Block("bar-1-1-4", BlockMaterial.Wood));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+			inventory.addItem(InventoryItem.Block("brick-1-1-1", BlockMaterial.SandStone));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+			inventory.addItem(InventoryItem.Block("brick-1-1-2", BlockMaterial.SandStone));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+			inventory.addItem(InventoryItem.Block("brick-1-1-4", BlockMaterial.SandStone));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+			inventory.addItem(InventoryItem.Block("ramp-1-1-2", BlockMaterial.SandStone));
 		}
 		for (let i = 0; i <= Math.random() * 100; i++) {
-			inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+			inventory.addItem(InventoryItem.Block("ramp-1-1-4", BlockMaterial.SandStone));
 		}
 		inventory.update();
 

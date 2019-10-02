@@ -1,9 +1,17 @@
 interface BlockData {
     reference: string;
+    material: BlockMaterial,
     i: number;
     j: number;
     k: number;
     r: number;
+}
+
+enum BlockMaterial {
+    Stone,
+    Wood,
+    SandStone,
+    Brick
 }
 
 class Block extends BABYLON.Mesh {
@@ -31,7 +39,7 @@ class Block extends BABYLON.Mesh {
     }
     public set j(v: number) {
         this._j = v;
-        this.position.y = this.j + 0.25;
+        this.position.y = this.j + 0.125;
     }
     private _k: number = 0;
     public get k(): number {
@@ -50,7 +58,9 @@ class Block extends BABYLON.Mesh {
         this.rotation.y = Math.PI / 2 * this.r;
     }
 
-    constructor() {
+    constructor(
+        public blockMaterial: BlockMaterial
+    ) {
         super("block");
         this.material = Main.cellShadingMaterial;
     }
@@ -75,7 +85,7 @@ class Block extends BABYLON.Mesh {
         this.reference = reference;
         this.name = "block-" + this.reference;
 
-        BlockVertexData.GetVertexData(this.reference).then(
+        BlockVertexData.GetVertexData(this.reference, this.blockMaterial).then(
             data => {
                 data.applyToMesh(this);
             }
@@ -88,7 +98,8 @@ class Block extends BABYLON.Mesh {
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference
+            reference: this.reference,
+            material: this.blockMaterial
         };
     }
 
@@ -97,6 +108,7 @@ class Block extends BABYLON.Mesh {
         this.j = data.j;
         this.k = data.k;
         this.r = data.r;
+        this.blockMaterial = data.material;
         this.setReference(data.reference);
     }
 }

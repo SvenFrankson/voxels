@@ -36,7 +36,7 @@ class Miniature extends Main {
 		let loop = () => {
 			if (document.pointerLockElement) {
 				setTimeout(
-					() => {
+					async () => {
 						this.runAllScreenShots();
 					},
 					100
@@ -53,14 +53,17 @@ class Miniature extends Main {
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
-        await this.createBlock("wall");
-        await this.createBlock("wall-hole");
-        await this.createBlock("wall-corner-out");
-        await this.createBlock("brick-1-1-1");
-        await this.createBlock("brick-1-1-2");
-        await this.createBlock("brick-1-1-4");
-        await this.createBlock("ramp-1-1-2");
-        await this.createBlock("ramp-1-1-4");
+        await this.createBlock("wall", BlockMaterial.Stone);
+        await this.createBlock("wall-hole", BlockMaterial.Stone);
+        await this.createBlock("wall-corner-out", BlockMaterial.Stone);
+        await this.createBlock("brick-1-1-1", BlockMaterial.SandStone);
+        await this.createBlock("brick-1-1-2", BlockMaterial.SandStone);
+        await this.createBlock("brick-1-1-4", BlockMaterial.SandStone);
+        await this.createBlock("ramp-1-1-2", BlockMaterial.SandStone);
+        await this.createBlock("ramp-1-1-4", BlockMaterial.SandStone);
+        await this.createBlock("bar-1-1-1", BlockMaterial.Wood);
+        await this.createBlock("bar-1-1-2", BlockMaterial.Wood);
+        await this.createBlock("bar-1-1-4", BlockMaterial.Wood);
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {
@@ -100,7 +103,7 @@ class Miniature extends Main {
         )
 	}
 
-	public async createBlock(reference: string): Promise<void> {
+	public async createBlock(reference: string, blockMaterial: BlockMaterial): Promise<void> {
 		let chunck = Main.ChunckManager.createChunck(0, 0, 0);
 
         chunck.makeEmpty();
@@ -109,7 +112,7 @@ class Miniature extends Main {
 
 		chunck.computeWorldMatrix(true);
 		
-		let block = new Block();
+		let block = new Block(blockMaterial);
 		block.setReference(reference);
 		
 		this.targets = [block];

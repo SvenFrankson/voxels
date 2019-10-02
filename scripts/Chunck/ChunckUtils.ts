@@ -22,7 +22,7 @@ class ChunckUtils {
 
         let coordinates = world.clone();
         coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
-        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE)) / 2;
+        coordinates.y = Math.floor(4 * (coordinates.y - J * CHUNCK_SIZE)) / 4;
         coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
         
         return {

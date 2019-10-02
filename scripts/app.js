@@ -221,9 +221,17 @@ class VertexDataLoader {
         return colorizedVertexDatas;
     }
 }
+var BlockMaterial;
+(function (BlockMaterial) {
+    BlockMaterial[BlockMaterial["Stone"] = 0] = "Stone";
+    BlockMaterial[BlockMaterial["Wood"] = 1] = "Wood";
+    BlockMaterial[BlockMaterial["SandStone"] = 2] = "SandStone";
+    BlockMaterial[BlockMaterial["Brick"] = 3] = "Brick";
+})(BlockMaterial || (BlockMaterial = {}));
 class Block extends BABYLON.Mesh {
-    constructor() {
+    constructor(blockMaterial) {
         super("block");
+        this.blockMaterial = blockMaterial;
         this._i = 0;
         this._j = 0;
         this._k = 0;
@@ -249,7 +257,7 @@ class Block extends BABYLON.Mesh {
     }
     set j(v) {
         this._j = v;
-        this.position.y = this.j + 0.25;
+        this.position.y = this.j + 0.125;
     }
     get k() {
         return this._k;
@@ -281,7 +289,7 @@ class Block extends BABYLON.Mesh {
     setReference(reference) {
         this.reference = reference;
         this.name = "block-" + this.reference;
-        BlockVertexData.GetVertexData(this.reference).then(data => {
+        BlockVertexData.GetVertexData(this.reference, this.blockMaterial).then(data => {
             data.applyToMesh(this);
         });
     }
@@ -291,7 +299,8 @@ class Block extends BABYLON.Mesh {
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference
+            reference: this.reference,
+            material: this.blockMaterial
         };
     }
     deserialize(data) {
@@ -299,11 +308,23 @@ class Block extends BABYLON.Mesh {
         this.j = data.j;
         this.k = data.k;
         this.r = data.r;
+        this.blockMaterial = data.material;
         this.setReference(data.reference);
     }
 }
 class BlockVertexData {
-    static async GetVertexData(reference) {
+    static get BlockColors() {
+        if (!BlockVertexData._BlockColors) {
+            BlockVertexData._BlockColors = new Map();
+            BlockVertexData._BlockColors.set(BlockMaterial.Stone, "#8a8a8a");
+            BlockVertexData._BlockColors.set(BlockMaterial.Wood, "#784c05");
+            BlockVertexData._BlockColors.set(BlockMaterial.SandStone, "#c9b449");
+            BlockVertexData._BlockColors.set(BlockMaterial.Brick, "#b02e17");
+        }
+        return BlockVertexData._BlockColors;
+    }
+    static async GetVertexData(reference, material) {
+        let color = BlockVertexData.BlockColors.get(material);
         let fileName = "";
         let meshIndex = 0;
         if (reference === "wall") {
@@ -318,36 +339,40 @@ class BlockVertexData {
             fileName = "wall";
             meshIndex = 2;
         }
-        else if (reference === "brick-1-1-1") {
+        else if (reference === "bar-1-1-1") {
             fileName = "block-basic";
             meshIndex = 0;
         }
-        else if (reference === "brick-1-1-2") {
+        else if (reference === "bar-1-1-2") {
             fileName = "block-basic";
             meshIndex = 1;
         }
-        else if (reference === "brick-1-1-4") {
+        else if (reference === "bar-1-1-4") {
             fileName = "block-basic";
             meshIndex = 2;
         }
-        else if (reference === "ramp-1-1-2") {
+        else if (reference === "brick-1-1-1") {
             fileName = "block-basic";
             meshIndex = 3;
         }
-        else if (reference === "ramp-1-1-4") {
+        else if (reference === "brick-1-1-2") {
             fileName = "block-basic";
             meshIndex = 4;
         }
-        else if (reference === "guard") {
-            fileName = "block-guard";
-            meshIndex = 0;
+        else if (reference === "brick-1-1-4") {
+            fileName = "block-basic";
+            meshIndex = 5;
         }
-        else if (reference === "guard-corner") {
-            fileName = "block-guard";
-            meshIndex = 1;
+        else if (reference === "ramp-1-1-2") {
+            fileName = "block-basic";
+            meshIndex = 6;
+        }
+        else if (reference === "ramp-1-1-4") {
+            fileName = "block-basic";
+            meshIndex = 7;
         }
         return new Promise(resolve => {
-            VertexDataLoader.instance.get(fileName).then(datas => {
+            VertexDataLoader.instance.getColorizedMultiple(fileName, color).then(datas => {
                 resolve(datas[meshIndex]);
             });
         });
@@ -841,7 +866,7 @@ class Chunck extends BABYLON.Mesh {
         }
         if (data.blocks) {
             for (let b = 0; b < data.blocks.length; b++) {
-                let block = new Block();
+                let block = new Block(BlockMaterial.Stone);
                 block.deserialize(data.blocks[b]);
                 this.addBlock(block);
             }
@@ -1298,7 +1323,7 @@ class ChunckUtils {
         let K = Math.floor(world.z / CHUNCK_SIZE);
         let coordinates = world.clone();
         coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
-        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE)) / 2;
+        coordinates.y = Math.floor(4 * (coordinates.y - J * CHUNCK_SIZE)) / 4;
         coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
         return {
             chunck: Main.ChunckManager.getChunck(I, J, K),
@@ -1823,9 +1848,9 @@ class PlayerActionTemplate {
                 });
                 if (pickInfo.hit) {
                     let coordinates = pickInfo.pickedPoint.clone();
-                    coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                    coordinates.addInPlace(pickInfo.getNormal().scale(0.125));
                     coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
-                    coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                    coordinates.y = Math.floor(4 * coordinates.y) / 4 + 0.125;
                     coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
                     if (coordinates) {
                         pickedBlock.position.copyFrom(coordinates);
@@ -1850,7 +1875,7 @@ class PlayerActionTemplate {
                     return m !== pickedBlock;
                 });
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                world.addInPlace(pickInfo.getNormal().scale(0.125));
                 let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
                     coordinates.chunck.addBlock(pickedBlock);
@@ -1866,7 +1891,7 @@ class PlayerActionTemplate {
         };
         return action;
     }
-    static CreateBlockAction(blockReference) {
+    static CreateBlockAction(blockReference, blockMaterial) {
         let action = new PlayerAction();
         let previewMesh;
         let r = 0;
@@ -1885,14 +1910,14 @@ class PlayerActionTemplate {
             });
             if (pickInfo.hit) {
                 let coordinates = pickInfo.pickedPoint.clone();
-                coordinates.addInPlace(pickInfo.getNormal().scale(0.25));
+                coordinates.addInPlace(pickInfo.getNormal().scale(0.125));
                 coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
-                coordinates.y = Math.floor(2 * coordinates.y) / 2 + 0.25;
+                coordinates.y = Math.floor(4 * coordinates.y) / 4 + 0.125;
                 coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
                 if (coordinates) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
-                        BlockVertexData.GetVertexData(blockReference).then(data => {
+                        BlockVertexData.GetVertexData(blockReference, blockMaterial).then(data => {
                             data.applyToMesh(previewMesh);
                         });
                         previewMesh.material = Cube.PreviewMaterials[CubeType.None];
@@ -1915,10 +1940,10 @@ class PlayerActionTemplate {
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal().scale(0.25));
+                world.addInPlace(pickInfo.getNormal().scale(0.125));
                 let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
-                    let block = new Block();
+                    let block = new Block(blockMaterial);
                     block.setReference(blockReference);
                     coordinates.chunck.addBlock(block);
                     block.setCoordinates(coordinates.coordinates);
@@ -1991,11 +2016,11 @@ class InventoryItem {
     constructor() {
         this.count = 1;
     }
-    static Block(reference) {
+    static Block(reference, blockMaterial) {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
         it.name = reference;
-        it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        it.playerAction = PlayerActionTemplate.CreateBlockAction(reference, blockMaterial);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
@@ -2512,7 +2537,7 @@ class Miniature extends Main {
         console.log("Miniature initialized.");
         let loop = () => {
             if (document.pointerLockElement) {
-                setTimeout(() => {
+                setTimeout(async () => {
                     this.runAllScreenShots();
                 }, 100);
             }
@@ -2526,14 +2551,17 @@ class Miniature extends Main {
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
-        await this.createBlock("wall");
-        await this.createBlock("wall-hole");
-        await this.createBlock("wall-corner-out");
-        await this.createBlock("brick-1-1-1");
-        await this.createBlock("brick-1-1-2");
-        await this.createBlock("brick-1-1-4");
-        await this.createBlock("ramp-1-1-2");
-        await this.createBlock("ramp-1-1-4");
+        await this.createBlock("wall", BlockMaterial.Stone);
+        await this.createBlock("wall-hole", BlockMaterial.Stone);
+        await this.createBlock("wall-corner-out", BlockMaterial.Stone);
+        await this.createBlock("brick-1-1-1", BlockMaterial.SandStone);
+        await this.createBlock("brick-1-1-2", BlockMaterial.SandStone);
+        await this.createBlock("brick-1-1-4", BlockMaterial.SandStone);
+        await this.createBlock("ramp-1-1-2", BlockMaterial.SandStone);
+        await this.createBlock("ramp-1-1-4", BlockMaterial.SandStone);
+        await this.createBlock("bar-1-1-1", BlockMaterial.Wood);
+        await this.createBlock("bar-1-1-2", BlockMaterial.Wood);
+        await this.createBlock("bar-1-1-4", BlockMaterial.Wood);
     }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
@@ -2559,13 +2587,13 @@ class Miniature extends Main {
             }, 100);
         });
     }
-    async createBlock(reference) {
+    async createBlock(reference, blockMaterial) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
         chunck.makeEmpty();
         chunck.generateVertices();
         chunck.generateFaces();
         chunck.computeWorldMatrix(true);
-        let block = new Block();
+        let block = new Block(blockMaterial);
         block.setReference(reference);
         this.targets = [block];
         return new Promise(resolve => {
@@ -2735,28 +2763,28 @@ class PlayerTest extends Main {
             inventory.addItem(InventoryItem.Cube(CubeType.Sand));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("wall"));
+            inventory.addItem(InventoryItem.Block("bar-1-1-1", BlockMaterial.Wood));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("wall-hole"));
+            inventory.addItem(InventoryItem.Block("bar-1-1-2", BlockMaterial.Wood));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("wall-corner-out"));
+            inventory.addItem(InventoryItem.Block("bar-1-1-4", BlockMaterial.Wood));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("brick-1-1-1"));
+            inventory.addItem(InventoryItem.Block("brick-1-1-1", BlockMaterial.SandStone));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("brick-1-1-2"));
+            inventory.addItem(InventoryItem.Block("brick-1-1-2", BlockMaterial.SandStone));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("brick-1-1-4"));
+            inventory.addItem(InventoryItem.Block("brick-1-1-4", BlockMaterial.SandStone));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("ramp-1-1-2"));
+            inventory.addItem(InventoryItem.Block("ramp-1-1-2", BlockMaterial.SandStone));
         }
         for (let i = 0; i <= Math.random() * 100; i++) {
-            inventory.addItem(InventoryItem.Block("ramp-1-1-4"));
+            inventory.addItem(InventoryItem.Block("ramp-1-1-4", BlockMaterial.SandStone));
         }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {

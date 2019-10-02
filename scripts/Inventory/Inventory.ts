@@ -13,11 +13,11 @@ class InventoryItem {
     public playerAction: PlayerAction;
     public iconUrl: string;
 
-    public static Block(reference: string): InventoryItem {
+    public static Block(reference: string, blockMaterial: BlockMaterial): InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
         it.name = reference;
-        it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        it.playerAction = PlayerActionTemplate.CreateBlockAction(reference, blockMaterial);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }

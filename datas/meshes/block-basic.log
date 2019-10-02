@@ -60,12 +60,45 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num uvs2           :  0
 		num colors         :  0
 		num indices        :  60
+	processing begun of mesh:  bar-1-1-1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  30
+		num normals        :  30
+		num tangents       :  0
+		num uvs            :  60
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of mesh:  bar-1-1-2
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  30
+		num normals        :  30
+		num tangents       :  0
+		num uvs            :  60
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of mesh:  bar-1-1-4
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  30
+		num normals        :  30
+		num tangents       :  0
+		num uvs            :  60
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
 ========= Writing of JSON file started =========
 	writing mesh:  brick-1-1-1
 	writing mesh:  brick-1-1-2
 	writing mesh:  brick-1-1-4
 	writing mesh:  ramp-1-1-2
 	writing mesh:  ramp-1-1-4
+	writing mesh:  bar-1-1-1
+	writing mesh:  bar-1-1-2
+	writing mesh:  bar-1-1-4
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.1815 secs
+elapsed time:  0 min, 0.244 secs
