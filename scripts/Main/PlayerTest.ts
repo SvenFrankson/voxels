@@ -99,8 +99,10 @@ class PlayerTest extends Main {
 		
 		let walker = new Walker("walker");
 		await walker.instantiate();
-		walker.body.position.copyFromFloats(0, 21, 10);
-		walker.leftFoot.position.copyFromFloats(-2, 18, 7);
-		walker.rightFoot.position.copyFromFloats(2, 18, 7);
+		let dx = -4 + 8 * Math.random();
+		let dz = -8 * Math.random();
+		walker.body.position.copyFromFloats(0 + dx, 18, 8 + dz);
+		walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
+		walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
     }
 }
