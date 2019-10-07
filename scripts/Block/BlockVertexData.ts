@@ -12,6 +12,21 @@ class BlockVertexData {
         return BlockVertexData._BlockColors;
     }
 
+    public static StringToBlockMaterial(s: string): BlockMaterial {
+        if (s === "stone") {
+            return BlockMaterial.Stone;
+        }
+        if (s === "wood") {
+            return BlockMaterial.Wood;
+        }
+        if (s === "sandstone") {
+            return BlockMaterial.SandStone;
+        }
+        if (s === "brick") {
+            return BlockMaterial.Brick;
+        }
+    }
+
     public static async GetVertexData(reference: string, material: BlockMaterial): Promise<BABYLON.VertexData> {
         let color = BlockVertexData.BlockColors.get(material);
         let fileName = "";

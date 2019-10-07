@@ -541,7 +541,7 @@ class Chunck extends BABYLON.Mesh {
         }
         if (data.blocks) {
             for (let b = 0; b < data.blocks.length; b++) {
-                let block = new Block(BlockMaterial.Stone);
+                let block = new Block();
                 block.deserialize(data.blocks[b]);
                 this.addBlock(block);
             }

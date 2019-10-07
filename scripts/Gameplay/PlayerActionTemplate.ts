@@ -106,7 +106,7 @@ class PlayerActionTemplate {
                 );
                 if (pickInfo.hit) {
                     let coordinates = pickInfo.pickedPoint.clone();
-                    coordinates.addInPlace(pickInfo.getNormal().scale(0.125));
+                    coordinates.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
                     coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
                     coordinates.y = Math.floor(4 * coordinates.y) / 4 + 0.125;
                     coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
@@ -138,7 +138,7 @@ class PlayerActionTemplate {
                 );
 
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal().scale(0.125));
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
                 let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
                     coordinates.chunck.addBlock(pickedBlock);
@@ -157,7 +157,7 @@ class PlayerActionTemplate {
         return action;
     }
 
-    public static CreateBlockAction(blockReference: string, blockMaterial: BlockMaterial): PlayerAction {
+    public static CreateBlockAction(blockReference: string): PlayerAction {
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
         let r = 0;
@@ -184,7 +184,7 @@ class PlayerActionTemplate {
             );
             if (pickInfo.hit) {
                 let coordinates = pickInfo.pickedPoint.clone();
-                coordinates.addInPlace(pickInfo.getNormal().scale(0.125));
+                coordinates.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
                 coordinates.x = Math.floor(2 * coordinates.x) / 2 + 0.25;
                 coordinates.y = Math.floor(4 * coordinates.y) / 4 + 0.125;
                 coordinates.z = Math.floor(2 * coordinates.z) / 2 + 0.25;
@@ -192,7 +192,11 @@ class PlayerActionTemplate {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 0.2 });
 
-                        BlockVertexData.GetVertexData(blockReference, blockMaterial).then(
+                        let blockMaterial = BlockVertexData.StringToBlockMaterial(blockReference.split("-")[0]);
+                        let m = blockReference.split("-");
+                        m.splice(0, 1);
+                        let meshName = m.join("-");
+                        BlockVertexData.GetVertexData(meshName, blockMaterial).then(
                             data => {
                                 data.applyToMesh(previewMesh);
                             }
@@ -223,10 +227,10 @@ class PlayerActionTemplate {
             );
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal().scale(0.125));
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
                 let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
                 if (coordinates) {
-                    let block = new Block(blockMaterial);
+                    let block = new Block();
                     block.setReference(blockReference);
                     coordinates.chunck.addBlock(block);
                     block.setCoordinates(coordinates.coordinates);
