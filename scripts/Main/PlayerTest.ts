@@ -62,7 +62,7 @@ class PlayerTest extends Main {
 		}
         
         let player = new Player();
-        player.position.y = 100;
+        player.position.y = 60;
         player.register();
 
 		let inventory = new Inventory(player);
@@ -99,10 +99,17 @@ class PlayerTest extends Main {
 		
 		let walker = new Walker("walker");
 		await walker.instantiate();
-		let dx = -4 + 8 * Math.random();
+		let dx = -16 + 8 * Math.random();
 		let dz = -8 * Math.random();
 		walker.body.position.copyFromFloats(0 + dx, 18, 8 + dz);
 		walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
 		walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
+
+		Main.Scene.onBeforeRenderObservable.add(
+			() => {
+				walker.target.copyFrom(player.position);
+				walker.target.y += 1.7;
+			}
+		)
     }
 }

@@ -1690,18 +1690,20 @@ class Vertex {
 class Walker extends BABYLON.Mesh {
     constructor() {
         super(...arguments);
+        this.target = BABYLON.Vector3.Zero();
+        this.speed = 1;
         this.bodySpeed = BABYLON.Vector3.Zero();
         this.update = () => {
             let forLeft = this.leftFoot.position.subtract(this.leftHipJoin.absolutePosition);
             let lenLeft = forLeft.length();
             forLeft.scaleInPlace(1 / lenLeft);
             forLeft.scaleInPlace(lenLeft - 3);
-            this.bodySpeed.addInPlace(forLeft.scale(0.015 * 15));
+            this.bodySpeed.addInPlace(forLeft.scale(0.015 * 10));
             let forRight = this.rightFoot.position.subtract(this.rightHipJoin.absolutePosition);
             let lenRight = forRight.length();
             forRight.scaleInPlace(1 / lenRight);
             forRight.scaleInPlace(lenRight - 3);
-            this.bodySpeed.addInPlace(forRight.scale(0.015 * 15));
+            this.bodySpeed.addInPlace(forRight.scale(0.015 * 10));
             let center = this.leftFoot.position.add(this.rightFoot.position).scaleInPlace(0.5);
             let forCenter = center.subtract(this.body.position);
             forCenter.y = 0;
@@ -1711,7 +1713,7 @@ class Walker extends BABYLON.Mesh {
             this.bodySpeed.addInPlace(forCenter.scale(0.015 * 10));
             let localZ = this.body.getDirection(BABYLON.Axis.Z);
             this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
-            this.leftKnee.position.subtractInPlace(localZ.scale(2));
+            this.leftKnee.position.subtractInPlace(localZ.scale(4));
             for (let i = 0; i < 5; i++) {
                 let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
                 this.leftKnee.position.copyFrom(this.leftHipJoin.absolutePosition).addInPlace(dHip.scale(2.5));
@@ -1727,7 +1729,7 @@ class Walker extends BABYLON.Mesh {
             this.leftHip.position.scaleInPlace(0.5);
             this.leftHip.lookAt(this.leftKnee.position, 0, Math.PI / 2);
             this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
-            this.rightKnee.position.subtractInPlace(localZ.scale(2));
+            this.rightKnee.position.subtractInPlace(localZ.scale(4));
             for (let i = 0; i < 5; i++) {
                 let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
                 this.rightKnee.position.copyFrom(this.rightHipJoin.absolutePosition).addInPlace(dHip.scale(2.5));
@@ -1744,22 +1746,27 @@ class Walker extends BABYLON.Mesh {
             this.rightHip.lookAt(this.rightKnee.position, 0, Math.PI / 2);
             this.body.position.addInPlace(this.bodySpeed.scale(0.015));
             this.body.position.y = Math.max(this.body.position.y, center.y + 1);
-            this.bodySpeed.scaleInPlace(0.98);
+            this.body.lookAt(this.target);
+            this.bodySpeed.scaleInPlace(0.97);
         };
     }
     async instantiate() {
         let data = await VertexDataLoader.instance.get("walker");
         this.leftFoot = new BABYLON.Mesh("left-foot");
-        data[0].applyToMesh(this.leftFoot);
+        data[1].applyToMesh(this.leftFoot);
+        this.leftFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.rightFoot = new BABYLON.Mesh("right-foot");
-        data[0].applyToMesh(this.rightFoot);
+        data[1].applyToMesh(this.rightFoot);
+        this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.leftFootJoin = BABYLON.MeshBuilder.CreateSphere("left-foot-join", { diameter: 0.3 }, this.getScene());
         this.leftFootJoin.position.copyFromFloats(0, 0.6, -0.4);
         this.leftFootJoin.parent = this.leftFoot;
         this.rightFootJoin = BABYLON.MeshBuilder.CreateSphere("right-foot-join", { diameter: 0.3 }, this.getScene());
         this.rightFootJoin.position.copyFromFloats(0, 0.6, -0.4);
         this.rightFootJoin.parent = this.rightFoot;
-        this.body = BABYLON.MeshBuilder.CreateBox("body", { width: 2, height: 1.5, depth: 3 });
+        this.body = new BABYLON.Mesh("body");
+        data[0].applyToMesh(this.body);
+        this.body.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.leftHipJoin = BABYLON.MeshBuilder.CreateSphere("left-hip-join", { diameter: 0.5 }, this.getScene());
         this.leftHipJoin.position.copyFromFloats(-1, -0.75, 0);
         this.leftHipJoin.parent = this.body;
@@ -1784,13 +1791,18 @@ class Walker extends BABYLON.Mesh {
         }, 5000);
     }
     nextLeftFootPos() {
-        let ray = new BABYLON.Ray(this.leftHipJoin.absolutePosition, (new BABYLON.Vector3(-0.1, -1.5, 1).normalize()));
+        let dir = (new BABYLON.Vector3(-0.2, -1.5, this.speed)).normalize();
+        let ray = new BABYLON.Ray(this.leftHipJoin.absolutePosition, this.body.getDirection(dir));
+        let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Blue());
+        setTimeout(() => {
+            help.dispose();
+        }, 1000);
         let pick = this.getScene().pickWithRay(ray, (m) => {
             return m instanceof Chunck;
         });
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 25) {
-                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 1.5) {
+                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 2.5) {
                     return pick.pickedPoint;
                 }
             }
@@ -1798,13 +1810,18 @@ class Walker extends BABYLON.Mesh {
         return this.leftFoot.position.clone();
     }
     nextRightFootPos() {
-        let ray = new BABYLON.Ray(this.rightHipJoin.absolutePosition, (new BABYLON.Vector3(0.1, -1.5, 1).normalize()));
+        let dir = (new BABYLON.Vector3(0.2, -1.5, this.speed)).normalize();
+        let ray = new BABYLON.Ray(this.rightHipJoin.absolutePosition, this.body.getDirection(dir));
+        let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Red());
+        setTimeout(() => {
+            help.dispose();
+        }, 1000);
         let pick = this.getScene().pickWithRay(ray, (m) => {
             return m instanceof Chunck;
         });
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 25) {
-                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 1.5) {
+                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 2.5) {
                     return pick.pickedPoint;
                 }
             }
@@ -1815,11 +1832,19 @@ class Walker extends BABYLON.Mesh {
         return new Promise(resolve => {
             let pZero = this.leftFoot.position.clone();
             let d = BABYLON.Vector3.Distance(p, pZero);
+            let q = this.body.rotationQuaternion.clone();
+            let qZero = this.leftFoot.rotationQuaternion.clone();
             let i = 1;
+            let duration = d * 20;
+            duration /= 60;
+            duration = Math.sqrt(duration);
+            duration *= 60;
+            duration = Math.ceil(duration + 20);
             let step = () => {
-                this.leftFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / 60) * (i / 60));
-                this.leftFoot.position.y += d * 0.5 * Math.sin((i / 60) * (i / 60) * Math.PI);
-                if (i < 60) {
+                this.leftFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / duration) * (i / duration));
+                this.leftFoot.position.y += d * 0.5 * Math.sin((i / duration) * (i / duration) * Math.PI);
+                this.leftFoot.rotationQuaternion = BABYLON.Quaternion.Slerp(qZero, q, (i / duration) * (i / duration));
+                if (i < duration) {
                     i++;
                     requestAnimationFrame(step);
                 }
@@ -1834,11 +1859,19 @@ class Walker extends BABYLON.Mesh {
         return new Promise(resolve => {
             let pZero = this.rightFoot.position.clone();
             let d = BABYLON.Vector3.Distance(p, pZero);
+            let q = this.body.rotationQuaternion.clone();
+            let qZero = this.rightFoot.rotationQuaternion.clone();
             let i = 1;
+            let duration = d * 20;
+            duration /= 60;
+            duration = Math.sqrt(duration);
+            duration *= 60;
+            duration = Math.ceil(duration + 20);
             let step = () => {
-                this.rightFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / 60) * (i / 60));
-                this.rightFoot.position.y += d * 0.5 * Math.sin((i / 60) * (i / 60) * Math.PI);
-                if (i < 60) {
+                this.rightFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / duration) * (i / duration));
+                this.rightFoot.position.y += d * 0.5 * Math.sin((i / duration) * (i / duration) * Math.PI);
+                this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Slerp(qZero, q, (i / duration) * (i / duration));
+                if (i < duration) {
                     i++;
                     requestAnimationFrame(step);
                 }
@@ -2938,7 +2971,7 @@ class PlayerTest extends Main {
             request.send();
         }
         let player = new Player();
-        player.position.y = 100;
+        player.position.y = 60;
         player.register();
         let inventory = new Inventory(player);
         inventory.initialize();
@@ -2970,11 +3003,15 @@ class PlayerTest extends Main {
         }
         let walker = new Walker("walker");
         await walker.instantiate();
-        let dx = -4 + 8 * Math.random();
+        let dx = -16 + 8 * Math.random();
         let dz = -8 * Math.random();
         walker.body.position.copyFromFloats(0 + dx, 18, 8 + dz);
         walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
         walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
+        Main.Scene.onBeforeRenderObservable.add(() => {
+            walker.target.copyFrom(player.position);
+            walker.target.y += 1.7;
+        });
     }
 }
 class SkullIsland extends Main {

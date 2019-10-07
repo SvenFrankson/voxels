@@ -20,8 +20,18 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num uvs2           :  0
 		num colors         :  0
 		num indices        :  180
+	processing begun of mesh:  Body
+		WARNING: No materials have been assigned: 
+		num positions      :  52
+		num normals        :  52
+		num tangents       :  0
+		num uvs            :  104
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  60
 ========= Writing of JSON file started =========
 	writing mesh:  Foot
+	writing mesh:  Body
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.1337 secs
+elapsed time:  0 min, 0.3412 secs
