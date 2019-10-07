@@ -113,6 +113,12 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
-        }
+		}
+		
+		let walker = new Walker("walker");
+		await walker.instantiate();
+		walker.body.position.copyFromFloats(0, 21, 10);
+		walker.leftFoot.position.copyFromFloats(-2, 18, 7);
+		walker.rightFoot.position.copyFromFloats(2, 18, 7);
     }
 }
