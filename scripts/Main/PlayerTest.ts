@@ -105,11 +105,48 @@ class PlayerTest extends Main {
 		walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
 		walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
 
-		Main.Scene.onBeforeRenderObservable.add(
-			() => {
-				walker.target.copyFrom(player.position);
-				walker.target.y += 1.7;
+		
+		let point: BABYLON.Vector3;
+		while (!point) {
+			let ray = new BABYLON.Ray(
+				new BABYLON.Vector3(- 100 + 200 * Math.random(), 100, - 100 + 200 * Math.random()),
+				new BABYLON.Vector3(0, - 1, 0)
+			);
+			let pick = Main.Scene.pickWithRay(
+				ray,
+				(m) => {
+					return m instanceof Chunck;
+				}
+			);
+			if (pick.hit) {
+				point = pick.pickedPoint;
 			}
+		}
+		walker.target = point;
+		walker.target.y += 2.5;
+		
+		setInterval(
+			() => {
+				let point: BABYLON.Vector3;
+				while (!point) {
+					let ray = new BABYLON.Ray(
+						new BABYLON.Vector3(- 100 + 200 * Math.random(), 100, - 100 + 200 * Math.random()),
+						new BABYLON.Vector3(0, - 1, 0)
+					);
+					let pick = Main.Scene.pickWithRay(
+						ray,
+						(m) => {
+							return m instanceof Chunck;
+						}
+					);
+					if (pick.hit) {
+						point = pick.pickedPoint;
+					}
+				}
+				walker.target = point;
+				walker.target.y += 2.5;
+			},
+			15000
 		)
     }
 }

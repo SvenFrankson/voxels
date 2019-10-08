@@ -1,7 +1,8 @@
 class Walker extends BABYLON.Mesh {
 
     public target: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-    public speed: number = 1;
+    private _currentTarget: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+    public speed: number = 2;
 
     public leftFoot: BABYLON.Mesh;
     public leftLeg: BABYLON.Mesh;
@@ -22,12 +23,14 @@ class Walker extends BABYLON.Mesh {
     public bodySpeed: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
     public async instantiate(): Promise<void> {
-        let data = await VertexDataLoader.instance.get("walker");
+        let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45");
         this.leftFoot = new BABYLON.Mesh("left-foot");
+        this.leftFoot.material = Main.cellShadingMaterial;
         data[1].applyToMesh(this.leftFoot);
         this.leftFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
         this.rightFoot = new BABYLON.Mesh("right-foot");
+        this.rightFoot.material = Main.cellShadingMaterial;
         data[1].applyToMesh(this.rightFoot);
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
@@ -40,6 +43,7 @@ class Walker extends BABYLON.Mesh {
         this.rightFootJoin.parent = this.rightFoot;
 
         this.body = new BABYLON.Mesh("body");
+        this.body.material = Main.cellShadingMaterial;
         data[0].applyToMesh(this.body);
         this.body.rotationQuaternion = BABYLON.Quaternion.Identity();
 
@@ -63,10 +67,19 @@ class Walker extends BABYLON.Mesh {
 
         this.getScene().onBeforeRenderObservable.add(this.update);
 
+        let wait = async (t) => {
+            return new Promise<void>(
+                resolve => {
+                    setTimeout(resolve, t);
+                }
+            )
+        }
         let loop = async () => {
             while (true) {
                 await this.moveLeftFootTo(this.nextLeftFootPos());
+                await wait(500);
                 await this.moveRightFootTo(this.nextRightFootPos());
+                await wait(500);
             }
         }
         setTimeout(
@@ -94,8 +107,8 @@ class Walker extends BABYLON.Mesh {
             }
         )
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 25) {
-                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 2.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 36) {
+                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3.5) {
                     return pick.pickedPoint;
                 }
             }
@@ -120,8 +133,8 @@ class Walker extends BABYLON.Mesh {
             }
         )
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 25) {
-                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 2.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 36) {
+                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3.5) {
                     return pick.pickedPoint;
                 }
             }
@@ -137,11 +150,11 @@ class Walker extends BABYLON.Mesh {
                 let q = this.body.rotationQuaternion.clone();
                 let qZero = this.leftFoot.rotationQuaternion.clone();
                 let i = 1;
-                let duration = d * 20;
-                duration /= 60;
+                let duration = d * 15;
+                duration /= 40;
                 duration = Math.sqrt(duration);
-                duration *= 60;
-                duration = Math.ceil(duration + 20);
+                duration *= 40;
+                duration = Math.ceil(duration + 25);
                 let step = () => {
                     this.leftFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / duration) * (i / duration));
                     this.leftFoot.position.y += d * 0.5 * Math.sin((i / duration) * (i / duration) * Math.PI);
@@ -167,11 +180,11 @@ class Walker extends BABYLON.Mesh {
                 let q = this.body.rotationQuaternion.clone();
                 let qZero = this.rightFoot.rotationQuaternion.clone();
                 let i = 1;
-                let duration = d * 20;
-                duration /= 60;
+                let duration = d * 15;
+                duration /= 40;
                 duration = Math.sqrt(duration);
-                duration *= 60;
-                duration = Math.ceil(duration + 20);
+                duration *= 40;
+                duration = Math.ceil(duration + 25);
                 let step = () => {
                     this.rightFoot.position = BABYLON.Vector3.Lerp(pZero, p, (i / duration) * (i / duration));
                     this.rightFoot.position.y += d * 0.5 * Math.sin((i / duration) * (i / duration) * Math.PI);
@@ -193,14 +206,14 @@ class Walker extends BABYLON.Mesh {
         let forLeft = this.leftFoot.position.subtract(this.leftHipJoin.absolutePosition);
         let lenLeft = forLeft.length();
         forLeft.scaleInPlace(1 / lenLeft);
-        forLeft.scaleInPlace(lenLeft - 3);
-        this.bodySpeed.addInPlace(forLeft.scale(0.015 * 10));
+        forLeft.scaleInPlace(lenLeft - 3.5);
+        this.bodySpeed.addInPlace(forLeft.scale(0.015 * 20));
 
         let forRight = this.rightFoot.position.subtract(this.rightHipJoin.absolutePosition);
         let lenRight = forRight.length();
         forRight.scaleInPlace(1 / lenRight);
-        forRight.scaleInPlace(lenRight - 3);
-        this.bodySpeed.addInPlace(forRight.scale(0.015 * 10));
+        forRight.scaleInPlace(lenRight - 3.5);
+        this.bodySpeed.addInPlace(forRight.scale(0.015 * 20));
 
         let center = this.leftFoot.position.add(this.rightFoot.position).scaleInPlace(0.5);
         let forCenter = center.subtract(this.body.position);
@@ -257,7 +270,9 @@ class Walker extends BABYLON.Mesh {
 
         this.body.position.addInPlace(this.bodySpeed.scale(0.015));
         this.body.position.y = Math.max(this.body.position.y, center.y + 1);
-        this.body.lookAt(this.target);
-        this.bodySpeed.scaleInPlace(0.97);
+        this.body.lookAt(this._currentTarget);
+        this._currentTarget.scaleInPlace(0.998);
+        this._currentTarget.addInPlace(this.target.scale(0.002));
+        this.bodySpeed.scaleInPlace(0.95);
     }
 }
