@@ -1691,9 +1691,12 @@ class Walker extends BABYLON.Mesh {
     constructor() {
         super(...arguments);
         this.target = BABYLON.Vector3.Zero();
-        this._currentTarget = BABYLON.Vector3.Zero();
         this.speed = 2;
         this.bodySpeed = BABYLON.Vector3.Zero();
+        this.yaw = 0;
+        this.yawSpeed = 0;
+        this.pitch = 0;
+        this.roll = 0;
         this.update = () => {
             let forLeft = this.leftFoot.position.subtract(this.leftHipJoin.absolutePosition);
             let lenLeft = forLeft.length();
@@ -1712,9 +1715,10 @@ class Walker extends BABYLON.Mesh {
             forCenter.scaleInPlace(1 / lenCenter);
             forCenter.scaleInPlace(lenCenter);
             this.bodySpeed.addInPlace(forCenter.scale(0.015 * 10));
+            let localX = this.body.getDirection(BABYLON.Axis.X);
             let localZ = this.body.getDirection(BABYLON.Axis.Z);
             this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
-            this.leftKnee.position.subtractInPlace(localZ.scale(4));
+            this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(4));
             for (let i = 0; i < 5; i++) {
                 let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
                 this.leftKnee.position.copyFrom(this.leftHipJoin.absolutePosition).addInPlace(dHip.scale(2.5));
@@ -1730,7 +1734,7 @@ class Walker extends BABYLON.Mesh {
             this.leftHip.position.scaleInPlace(0.5);
             this.leftHip.lookAt(this.leftKnee.position, 0, Math.PI / 2);
             this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
-            this.rightKnee.position.subtractInPlace(localZ.scale(4));
+            this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(4));
             for (let i = 0; i < 5; i++) {
                 let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
                 this.rightKnee.position.copyFrom(this.rightHipJoin.absolutePosition).addInPlace(dHip.scale(2.5));
@@ -1747,9 +1751,20 @@ class Walker extends BABYLON.Mesh {
             this.rightHip.lookAt(this.rightKnee.position, 0, Math.PI / 2);
             this.body.position.addInPlace(this.bodySpeed.scale(0.015));
             this.body.position.y = Math.max(this.body.position.y, center.y + 1);
-            this.body.lookAt(this._currentTarget);
-            this._currentTarget.scaleInPlace(0.998);
-            this._currentTarget.addInPlace(this.target.scale(0.002));
+            let yaw = VMath.AngleFromToAround(BABYLON.Axis.Z, this.target.subtract(this.body.position), BABYLON.Axis.Y);
+            this.yaw = Math2D.LerpFromToCircular(this.yaw, yaw, 0.001);
+            let footZ = this.rightFoot.position.subtract(this.leftFoot.position);
+            footZ = BABYLON.Vector3.Cross(footZ, BABYLON.Axis.Y);
+            let yawFoot = VMath.AngleFromToAround(localZ, footZ, BABYLON.Axis.Y);
+            let lim = Math.PI / 2 * 0.8;
+            if (yawFoot > lim) {
+                this.yaw -= yawFoot - lim;
+            }
+            if (yawFoot < -lim) {
+                this.yaw += yawFoot + lim;
+            }
+            this.roll = Math.PI / 4 * (this.rightFoot.position.y - this.leftFoot.position.y) / 4;
+            BABYLON.Quaternion.RotationYawPitchRollToRef(this.yaw, this.pitch, this.roll, this.body.rotationQuaternion);
             this.bodySpeed.scaleInPlace(0.95);
         };
     }
@@ -1816,10 +1831,12 @@ class Walker extends BABYLON.Mesh {
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 36) {
                 if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3.5) {
+                    this.speed += 0.1;
                     return pick.pickedPoint;
                 }
             }
         }
+        this.speed -= 0.1;
         return this.leftFoot.position.clone();
     }
     nextRightFootPos() {
@@ -1835,16 +1852,18 @@ class Walker extends BABYLON.Mesh {
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 36) {
                 if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3.5) {
+                    this.speed += 0.1;
                     return pick.pickedPoint;
                 }
             }
         }
+        this.speed -= 0.1;
         return this.rightFoot.position.clone();
     }
     async moveLeftFootTo(p) {
         return new Promise(resolve => {
             let pZero = this.leftFoot.position.clone();
-            let d = BABYLON.Vector3.Distance(p, pZero);
+            let d = BABYLON.Vector3.Distance(p, pZero) * 0.8 + 0.6;
             let q = this.body.rotationQuaternion.clone();
             let qZero = this.leftFoot.rotationQuaternion.clone();
             let i = 1;
@@ -1871,7 +1890,7 @@ class Walker extends BABYLON.Mesh {
     async moveRightFootTo(p) {
         return new Promise(resolve => {
             let pZero = this.rightFoot.position.clone();
-            let d = BABYLON.Vector3.Distance(p, pZero);
+            let d = BABYLON.Vector3.Distance(p, pZero) * 0.8 + 0.6;
             let q = this.body.rotationQuaternion.clone();
             let qZero = this.rightFoot.rotationQuaternion.clone();
             let i = 1;
@@ -3300,5 +3319,423 @@ class Intersections3D {
             return m === chunck;
         });
         return new RayIntersection(pickingInfo.pickedPoint, pickingInfo.getNormal());
+    }
+}
+class Math2D {
+    static AreEqualsCircular(a1, a2, epsilon = Math.PI / 60) {
+        while (a1 < 0) {
+            a1 += 2 * Math.PI;
+        }
+        while (a1 >= 2 * Math.PI) {
+            a1 -= 2 * Math.PI;
+        }
+        while (a2 < 0) {
+            a2 += 2 * Math.PI;
+        }
+        while (a2 >= 2 * Math.PI) {
+            a2 -= 2 * Math.PI;
+        }
+        return Math.abs(a1 - a2) < epsilon;
+    }
+    static StepFromToCirular(from, to, step = Math.PI / 60) {
+        while (from < 0) {
+            from += 2 * Math.PI;
+        }
+        while (from >= 2 * Math.PI) {
+            from -= 2 * Math.PI;
+        }
+        while (to < 0) {
+            to += 2 * Math.PI;
+        }
+        while (to >= 2 * Math.PI) {
+            to -= 2 * Math.PI;
+        }
+        if (Math.abs(to - from) <= step) {
+            return to;
+        }
+        if (Math.abs(to - from) >= 2 * Math.PI - step) {
+            return to;
+        }
+        if (to - from >= 0) {
+            if (Math.abs(to - from) <= Math.PI) {
+                return from + step;
+            }
+            return from - step;
+        }
+        if (to - from < 0) {
+            if (Math.abs(to - from) <= Math.PI) {
+                return from - step;
+            }
+            return from + step;
+        }
+    }
+    static LerpFromToCircular(from, to, amount = 0.5) {
+        while (to < from) {
+            to += 2 * Math.PI;
+        }
+        while (to - 2 * Math.PI > from) {
+            to -= 2 * Math.PI;
+        }
+        return from + (to - from) * amount;
+    }
+    static BissectFromTo(from, to, amount = 0.5) {
+        let aFrom = Math2D.AngleFromTo(new BABYLON.Vector2(1, 0), from, true);
+        let aTo = Math2D.AngleFromTo(new BABYLON.Vector2(1, 0), to, true);
+        let angle = Math2D.LerpFromToCircular(aFrom, aTo, amount);
+        return new BABYLON.Vector2(Math.cos(angle), Math.sin(angle));
+    }
+    static Dot(vector1, vector2) {
+        return vector1.x * vector2.x + vector1.y * vector2.y;
+    }
+    static Cross(vector1, vector2) {
+        return vector1.x * vector2.y - vector1.y * vector2.x;
+    }
+    static DistanceSquared(from, to) {
+        return (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y);
+    }
+    static Distance(from, to) {
+        return Math.sqrt(Math2D.DistanceSquared(from, to));
+    }
+    static AngleFromTo(from, to, keepPositive = false) {
+        let dot = Math2D.Dot(from, to) / from.length() / to.length();
+        let angle = Math.acos(dot);
+        let cross = from.x * to.y - from.y * to.x;
+        if (cross === 0) {
+            cross = 1;
+        }
+        angle *= Math.sign(cross);
+        if (keepPositive && angle < 0) {
+            angle += Math.PI * 2;
+        }
+        return angle;
+    }
+    static Rotate(vector, alpha) {
+        let v = vector.clone();
+        Math2D.RotateInPlace(v, alpha);
+        return v;
+    }
+    static RotateInPlace(vector, alpha) {
+        let x = Math.cos(alpha) * vector.x - Math.sin(alpha) * vector.y;
+        let y = Math.cos(alpha) * vector.y + Math.sin(alpha) * vector.x;
+        vector.x = x;
+        vector.y = y;
+    }
+    static get _Tmp0() {
+        if (!Math2D.__Tmp0) {
+            Math2D.__Tmp0 = new BABYLON.Vector2(1, 0);
+        }
+        return Math2D.__Tmp0;
+    }
+    static get _Tmp1() {
+        if (!Math2D.__Tmp1) {
+            Math2D.__Tmp1 = new BABYLON.Vector2(1, 0);
+        }
+        return Math2D.__Tmp1;
+    }
+    static get _Tmp2() {
+        if (!Math2D.__Tmp2) {
+            Math2D.__Tmp2 = new BABYLON.Vector2(1, 0);
+        }
+        return Math2D.__Tmp2;
+    }
+    static get _Tmp3() {
+        if (!Math2D.__Tmp3) {
+            Math2D.__Tmp3 = new BABYLON.Vector2(1, 0);
+        }
+        return Math2D.__Tmp3;
+    }
+    static PointSegmentABDistanceSquared(point, segA, segB) {
+        Math2D._Tmp0.copyFrom(segB).subtractInPlace(segA).normalize();
+        Math2D._Tmp1.copyFrom(point).subtractInPlace(segA);
+        let projectionDistance = Math2D.Dot(Math2D._Tmp1, Math2D._Tmp0);
+        if (projectionDistance < 0) {
+            return Math2D.DistanceSquared(point, segA);
+        }
+        if (projectionDistance * projectionDistance > Math2D.DistanceSquared(segB, segA)) {
+            return Math2D.DistanceSquared(point, segB);
+        }
+        Math2D._Tmp0.scaleInPlace(projectionDistance);
+        return Math2D.Dot(Math2D._Tmp1, Math2D._Tmp1) - Math2D.Dot(Math2D._Tmp0, Math2D._Tmp0);
+    }
+    static PointSegmentAxAyBxByDistanceSquared(point, segAx, segAy, segBx, segBy) {
+        Math2D._Tmp2.x = segAx;
+        Math2D._Tmp2.y = segAy;
+        Math2D._Tmp3.x = segBx;
+        Math2D._Tmp3.y = segBy;
+        return Math2D.PointSegmentABDistanceSquared(point, Math2D._Tmp2, Math2D._Tmp3);
+    }
+    static PointSegmentABUDistanceSquared(point, segA, segB, u) {
+        Math2D._Tmp1.copyFrom(point).subtractInPlace(segA);
+        let projectionDistance = Math2D.Dot(Math2D._Tmp1, u);
+        if (projectionDistance < 0) {
+            return Math2D.DistanceSquared(point, segA);
+        }
+        if (projectionDistance * projectionDistance > Math2D.DistanceSquared(segB, segA)) {
+            return Math2D.DistanceSquared(point, segB);
+        }
+        Math2D._Tmp0.copyFrom(u).scaleInPlace(projectionDistance);
+        return Math2D.Dot(Math2D._Tmp1, Math2D._Tmp1) - Math2D.Dot(Math2D._Tmp0, Math2D._Tmp0);
+    }
+    static IsPointInSegment(point, segA, segB) {
+        if ((point.x - segA.x) * (segB.x - segA.x) + (point.y - segA.y) * (segB.y - segA.y) < 0) {
+            return false;
+        }
+        if ((point.x - segB.x) * (segA.x - segB.x) + (point.y - segB.y) * (segA.y - segB.y) < 0) {
+            return false;
+        }
+        return true;
+    }
+    static IsPointInRay(point, rayOrigin, rayDirection) {
+        if ((point.x - rayOrigin.x) * rayDirection.x + (point.y - rayOrigin.y) * rayDirection.y < 0) {
+            return false;
+        }
+        return true;
+    }
+    static IsPointInRegion(point, region) {
+        let count = 0;
+        let randomDir = Math.random() * Math.PI * 2;
+        Math2D._Tmp0.x = Math.cos(randomDir);
+        Math2D._Tmp0.y = Math.sin(randomDir);
+        for (let i = 0; i < region.length; i++) {
+            Math2D._Tmp1.x = region[i][0];
+            Math2D._Tmp1.y = region[i][1];
+            Math2D._Tmp2.x = region[(i + 1) % region.length][0];
+            Math2D._Tmp2.y = region[(i + 1) % region.length][1];
+            if (Math2D.RaySegmentIntersection(point, Math2D._Tmp0, Math2D._Tmp1, Math2D._Tmp2)) {
+                count++;
+            }
+        }
+        return count % 2 === 1;
+    }
+    static IsPointInPath(point, path) {
+        let count = 0;
+        let randomDir = Math.random() * Math.PI * 2;
+        Math2D._Tmp0.x = Math.cos(randomDir);
+        Math2D._Tmp0.y = Math.sin(randomDir);
+        for (let i = 0; i < path.length; i++) {
+            if (Math2D.RaySegmentIntersection(point, Math2D._Tmp0, path[i], path[(i + 1) % path.length])) {
+                count++;
+            }
+        }
+        return count % 2 === 1;
+    }
+    static SegmentShapeIntersection(segA, segB, shape) {
+        let intersections = [];
+        for (let i = 0; i < shape.length; i++) {
+            let shapeA = shape[i];
+            let shapeB = shape[(i + 1) % shape.length];
+            let intersection = Math2D.SegmentSegmentIntersection(segA, segB, shapeA, shapeB);
+            if (intersection) {
+                intersections.push(intersection);
+            }
+        }
+        return intersections;
+    }
+    static FattenShrinkPointShape(shape, distance) {
+        let newShape = [];
+        let edgesDirs = [];
+        for (let i = 0; i < shape.length; i++) {
+            let p = shape[i];
+            let pNext = shape[(i + 1) % shape.length];
+            edgesDirs[i] = pNext.subtract(p).normalize();
+        }
+        for (let i = 0; i < shape.length; i++) {
+            let p = shape[i];
+            let edgeDir = edgesDirs[i];
+            let edgeDirPrev = edgesDirs[(i - 1 + shape.length) % shape.length];
+            let bissection = Math2D.BissectFromTo(edgeDirPrev.scale(-1), edgeDir, 0.5);
+            newShape[i] = p.add(bissection.scaleInPlace(distance));
+        }
+        return newShape;
+    }
+    static FattenShrinkEdgeShape(shape, distance) {
+        let newShape = [];
+        let edgesNormals = [];
+        let edgesDirs = [];
+        for (let i = 0; i < shape.length; i++) {
+            let p = shape[i];
+            let pNext = shape[(i + 1) % shape.length];
+            edgesDirs[i] = pNext.subtract(p).normalize();
+            edgesNormals[i] = Math2D.Rotate(edgesDirs[i], -Math.PI / 2).scaleInPlace(distance);
+        }
+        for (let i = 0; i < shape.length; i++) {
+            let p = shape[i];
+            let pNext = shape[(i + 1) % shape.length];
+            let edgeDir = edgesDirs[i];
+            let edgeDirNext = edgesDirs[(i + 1) % shape.length];
+            p = p.add(edgesNormals[i]);
+            pNext = pNext.add(edgesNormals[(i + 1) % shape.length]);
+            if (Math2D.Cross(edgeDir, edgeDirNext) === 0) {
+                newShape[i] = p.add(pNext).scaleInPlace(0.5);
+                console.warn("Oups 1");
+            }
+            else {
+                let newP = Math2D.LineLineIntersection(p, edgeDir, pNext, edgeDirNext);
+                if (newP) {
+                    newShape[i] = newP;
+                }
+                else {
+                    newShape[i] = p;
+                    console.warn("Oups 2");
+                }
+            }
+        }
+        return newShape;
+    }
+    static RayRayIntersection(ray1Origin, ray1Direction, ray2Origin, ray2Direction) {
+        let x1 = ray1Origin.x;
+        let y1 = ray1Origin.y;
+        let x2 = x1 + ray1Direction.x;
+        let y2 = y1 + ray1Direction.y;
+        let x3 = ray2Origin.x;
+        let y3 = ray2Origin.y;
+        let x4 = x3 + ray2Direction.x;
+        let y4 = y3 + ray2Direction.y;
+        let det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (det !== 0) {
+            let x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+            let y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+            let intersection = new BABYLON.Vector2(x / det, y / det);
+            if (Math2D.IsPointInRay(intersection, ray1Origin, ray1Direction)) {
+                if (Math2D.IsPointInRay(intersection, ray2Origin, ray2Direction)) {
+                    return intersection;
+                }
+            }
+        }
+        return undefined;
+    }
+    static LineLineIntersection(line1Origin, line1Direction, line2Origin, line2Direction) {
+        let x1 = line1Origin.x;
+        let y1 = line1Origin.y;
+        let x2 = x1 + line1Direction.x;
+        let y2 = y1 + line1Direction.y;
+        let x3 = line2Origin.x;
+        let y3 = line2Origin.y;
+        let x4 = x3 + line2Direction.x;
+        let y4 = y3 + line2Direction.y;
+        let det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (det !== 0) {
+            let x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+            let y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+            return new BABYLON.Vector2(x / det, y / det);
+        }
+        return undefined;
+    }
+    static RaySegmentIntersection(rayOrigin, rayDirection, segA, segB) {
+        let x1 = rayOrigin.x;
+        let y1 = rayOrigin.y;
+        let x2 = x1 + rayDirection.x;
+        let y2 = y1 + rayDirection.y;
+        let x3 = segA.x;
+        let y3 = segA.y;
+        let x4 = segB.x;
+        let y4 = segB.y;
+        let det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (det !== 0) {
+            let x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+            let y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+            let intersection = new BABYLON.Vector2(x / det, y / det);
+            if (Math2D.IsPointInRay(intersection, rayOrigin, rayDirection)) {
+                if (Math2D.IsPointInSegment(intersection, segA, segB)) {
+                    return intersection;
+                }
+            }
+        }
+        return undefined;
+    }
+    static SegmentSegmentIntersection(seg1A, seg1B, seg2A, seg2B) {
+        let x1 = seg1A.x;
+        let y1 = seg1A.y;
+        let x2 = seg1B.x;
+        let y2 = seg1B.y;
+        let x3 = seg2A.x;
+        let y3 = seg2A.y;
+        let x4 = seg2B.x;
+        let y4 = seg2B.y;
+        let det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (det !== 0) {
+            let x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+            let y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+            let intersection = new BABYLON.Vector2(x / det, y / det);
+            if (Math2D.IsPointInSegment(intersection, seg1A, seg1B)) {
+                if (Math2D.IsPointInSegment(intersection, seg2A, seg2B)) {
+                    return intersection;
+                }
+            }
+        }
+        return undefined;
+    }
+    static PointRegionDistanceSquared(point, region) {
+        let minimalSquaredDistance = Infinity;
+        for (let i = 0; i < region.length; i++) {
+            Math2D._Tmp1.x = region[i][0];
+            Math2D._Tmp1.y = region[i][1];
+            Math2D._Tmp2.x = region[(i + 1) % region.length][0];
+            Math2D._Tmp2.y = region[(i + 1) % region.length][1];
+            let distSquared = Math2D.PointSegmentAxAyBxByDistanceSquared(point, region[i][0], region[i][1], region[(i + 1) % region.length][0], region[(i + 1) % region.length][1]);
+            minimalSquaredDistance = Math.min(minimalSquaredDistance, distSquared);
+        }
+        return minimalSquaredDistance;
+    }
+}
+class VMath {
+    // Method adapted from gre's work (https://github.com/gre/bezier-easing). Thanks !
+    static easeOutElastic(t, b = 0, c = 1, d = 1) {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) {
+            return b;
+        }
+        if ((t /= d) == 1) {
+            return b + c;
+        }
+        if (!p) {
+            p = d * .3;
+        }
+        if (a < Math.abs(c)) {
+            a = c;
+            s = p / 4;
+        }
+        else {
+            s = p / (2 * Math.PI) * Math.asin(c / a);
+        }
+        return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+    }
+    static ProjectPerpendicularAt(v, at) {
+        let p = BABYLON.Vector3.Zero();
+        let k = (v.x * at.x + v.y * at.y + v.z * at.z);
+        k = k / (at.x * at.x + at.y * at.y + at.z * at.z);
+        p.copyFrom(v);
+        p.subtractInPlace(at.multiplyByFloats(k, k, k));
+        return p;
+    }
+    static Angle(from, to) {
+        let pFrom = BABYLON.Vector3.Normalize(from);
+        let pTo = BABYLON.Vector3.Normalize(to);
+        let angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        return angle;
+    }
+    static AngleFromToAround(from, to, around) {
+        let pFrom = VMath.ProjectPerpendicularAt(from, around).normalize();
+        let pTo = VMath.ProjectPerpendicularAt(to, around).normalize();
+        let angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        if (BABYLON.Vector3.Dot(BABYLON.Vector3.Cross(pFrom, pTo), around) < 0) {
+            angle = -angle;
+        }
+        return angle;
+    }
+    static CatmullRomPath(path) {
+        let interpolatedPoints = [];
+        for (let i = 0; i < path.length; i++) {
+            let p0 = path[(i - 1 + path.length) % path.length];
+            let p1 = path[i];
+            let p2 = path[(i + 1) % path.length];
+            let p3 = path[(i + 2) % path.length];
+            interpolatedPoints.push(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, 0.5));
+        }
+        for (let i = 0; i < interpolatedPoints.length; i++) {
+            path.splice(2 * i + 1, 0, interpolatedPoints[i]);
+        }
     }
 }

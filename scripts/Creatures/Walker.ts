@@ -1,7 +1,6 @@
 class Walker extends BABYLON.Mesh {
 
     public target: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-    private _currentTarget: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     public speed: number = 2;
 
     public leftFoot: BABYLON.Mesh;
@@ -21,6 +20,10 @@ class Walker extends BABYLON.Mesh {
     public body: BABYLON.Mesh;
 
     public bodySpeed: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+    public yaw: number = 0;
+    public yawSpeed: number = 0;
+    public pitch: number = 0;
+    public roll: number = 0;
 
     public async instantiate(): Promise<void> {
         let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45");
@@ -109,10 +112,12 @@ class Walker extends BABYLON.Mesh {
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 36) {
                 if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3.5) {
+                    this.speed += 0.1;
                     return pick.pickedPoint;
                 }
             }
         }
+        this.speed -= 0.1;
         return this.leftFoot.position.clone();
     }
 
@@ -135,10 +140,12 @@ class Walker extends BABYLON.Mesh {
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 36) {
                 if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3.5) {
+                    this.speed += 0.1;
                     return pick.pickedPoint;
                 }
             }
         }
+        this.speed -= 0.1;
         return this.rightFoot.position.clone();
     }
 
@@ -146,7 +153,7 @@ class Walker extends BABYLON.Mesh {
         return new Promise<void>(
             resolve => {
                 let pZero = this.leftFoot.position.clone();
-                let d = BABYLON.Vector3.Distance(p, pZero);
+                let d = BABYLON.Vector3.Distance(p, pZero) * 0.8 + 0.6;
                 let q = this.body.rotationQuaternion.clone();
                 let qZero = this.leftFoot.rotationQuaternion.clone();
                 let i = 1;
@@ -176,7 +183,7 @@ class Walker extends BABYLON.Mesh {
         return new Promise<void>(
             resolve => {
                 let pZero = this.rightFoot.position.clone();
-                let d = BABYLON.Vector3.Distance(p, pZero);
+                let d = BABYLON.Vector3.Distance(p, pZero) * 0.8 + 0.6;
                 let q = this.body.rotationQuaternion.clone();
                 let qZero = this.rightFoot.rotationQuaternion.clone();
                 let i = 1;
@@ -224,10 +231,11 @@ class Walker extends BABYLON.Mesh {
 
         this.bodySpeed.addInPlace(forCenter.scale(0.015 * 10));
 
+        let localX = this.body.getDirection(BABYLON.Axis.X);
         let localZ = this.body.getDirection(BABYLON.Axis.Z);
 
         this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.leftKnee.position.subtractInPlace(localZ.scale(4));
+        this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(4));
 
         for (let i = 0; i < 5; i++) {
             let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
@@ -248,7 +256,7 @@ class Walker extends BABYLON.Mesh {
         this.leftHip.lookAt(this.leftKnee.position, 0, Math.PI / 2);
 
         this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.rightKnee.position.subtractInPlace(localZ.scale(4));
+        this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(4));
 
         for (let i = 0; i < 5; i++) {
             let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
@@ -270,9 +278,26 @@ class Walker extends BABYLON.Mesh {
 
         this.body.position.addInPlace(this.bodySpeed.scale(0.015));
         this.body.position.y = Math.max(this.body.position.y, center.y + 1);
-        this.body.lookAt(this._currentTarget);
-        this._currentTarget.scaleInPlace(0.998);
-        this._currentTarget.addInPlace(this.target.scale(0.002));
+        
+        let yaw = VMath.AngleFromToAround(BABYLON.Axis.Z, this.target.subtract(this.body.position), BABYLON.Axis.Y);
+        this.yaw = Math2D.LerpFromToCircular(this.yaw, yaw, 0.001);
+
+        let footZ = this.rightFoot.position.subtract(this.leftFoot.position);
+        footZ = BABYLON.Vector3.Cross(footZ, BABYLON.Axis.Y);
+
+        let yawFoot = VMath.AngleFromToAround(localZ, footZ, BABYLON.Axis.Y);
+        let lim = Math.PI / 2 * 0.8;
+        if (yawFoot > lim) {
+            this.yaw -= yawFoot - lim;
+        }
+        if (yawFoot < - lim) {
+            this.yaw += yawFoot + lim;
+        }
+
+        this.roll = Math.PI / 4 * (this.rightFoot.position.y - this.leftFoot.position.y) / 4;
+
+        BABYLON.Quaternion.RotationYawPitchRollToRef(this.yaw, this.pitch, this.roll, this.body.rotationQuaternion);
+
         this.bodySpeed.scaleInPlace(0.95);
     }
 }
