@@ -235,7 +235,7 @@ class Walker extends BABYLON.Mesh {
         let localZ = this.body.getDirection(BABYLON.Axis.Z);
 
         this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(4));
+        this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(2));
 
         for (let i = 0; i < 5; i++) {
             let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
@@ -256,7 +256,7 @@ class Walker extends BABYLON.Mesh {
         this.leftHip.lookAt(this.leftKnee.position, 0, Math.PI / 2);
 
         this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(4));
+        this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(2));
 
         for (let i = 0; i < 5; i++) {
             let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
