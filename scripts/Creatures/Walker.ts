@@ -26,7 +26,7 @@ class Walker extends BABYLON.Mesh {
     public roll: number = 0;
 
     public async instantiate(): Promise<void> {
-        let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45");
+        let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45", "#243a40");
         this.leftFoot = new BABYLON.Mesh("left-foot");
         this.leftFoot.material = Main.cellShadingMaterial;
         data[1].applyToMesh(this.leftFoot);
@@ -37,11 +37,11 @@ class Walker extends BABYLON.Mesh {
         data[1].applyToMesh(this.rightFoot);
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
-        this.leftFootJoin = BABYLON.MeshBuilder.CreateSphere("left-foot-join", { diameter: 0.3 }, this.getScene());
+        this.leftFootJoin = new BABYLON.Mesh("left-foot-join", this.getScene());
         this.leftFootJoin.position.copyFromFloats(0, 0.6, -0.4);
         this.leftFootJoin.parent = this.leftFoot;
 
-        this.rightFootJoin = BABYLON.MeshBuilder.CreateSphere("right-foot-join", { diameter: 0.3 }, this.getScene());
+        this.rightFootJoin = new BABYLON.Mesh("right-foot-join", this.getScene());
         this.rightFootJoin.position.copyFromFloats(0, 0.6, -0.4);
         this.rightFootJoin.parent = this.rightFoot;
 
@@ -50,23 +50,31 @@ class Walker extends BABYLON.Mesh {
         data[0].applyToMesh(this.body);
         this.body.rotationQuaternion = BABYLON.Quaternion.Identity();
 
-        this.leftHipJoin = BABYLON.MeshBuilder.CreateSphere("left-hip-join", { diameter: 0.5 }, this.getScene());
+        this.leftHipJoin = new BABYLON.Mesh("left-hip-join", this.getScene());
         this.leftHipJoin.position.copyFromFloats(-1, -0.75, 0);
         this.leftHipJoin.parent = this.body;
 
-        this.rightHipJoin = BABYLON.MeshBuilder.CreateSphere("right-hip-join", { diameter: 0.5 }, this.getScene());
+        this.rightHipJoin = new BABYLON.Mesh("right-hip-join", this.getScene());
         this.rightHipJoin.position.copyFromFloats(1, -0.75, 0);
         this.rightHipJoin.parent = this.body;
 
-        this.leftLeg = BABYLON.MeshBuilder.CreateBox("left-leg", { width: 0.2, height: 2.5, depth: 0.2 });
-        this.leftHip = BABYLON.MeshBuilder.CreateBox("left-leg", { width: 0.2, height: 2.5, depth: 0.2 });
+        this.leftLeg = new BABYLON.Mesh("left-leg", this.getScene());
+        this.leftLeg.material = Main.cellShadingMaterial;
+        data[3].applyToMesh(this.leftLeg);
+        this.leftHip = new BABYLON.Mesh("left-leg", this.getScene());
+        this.leftHip.material = Main.cellShadingMaterial;
+        data[2].applyToMesh(this.leftHip);
 
-        this.leftKnee = BABYLON.MeshBuilder.CreateSphere("left-knee", { diameter: 0.3 }, this.getScene());
+        this.leftKnee = new BABYLON.Mesh("left-knee", this.getScene());
 
-        this.rightLeg = BABYLON.MeshBuilder.CreateBox("right-leg", { width: 0.2, height: 2.5, depth: 0.2 });
-        this.rightHip = BABYLON.MeshBuilder.CreateBox("right-leg", { width: 0.2, height: 2.5, depth: 0.2 });
+        this.rightLeg = new BABYLON.Mesh("right-leg", this.getScene());
+        this.rightLeg.material = Main.cellShadingMaterial;
+        data[3].applyToMesh(this.rightLeg);
+        this.rightHip = new BABYLON.Mesh("right-leg", this.getScene());
+        this.rightHip.material = Main.cellShadingMaterial;
+        data[2].applyToMesh(this.rightHip);
 
-        this.rightKnee = BABYLON.MeshBuilder.CreateSphere("right-knee", { diameter: 0.3 }, this.getScene());
+        this.rightKnee = new BABYLON.Mesh("right-knee", this.getScene());
 
         this.getScene().onBeforeRenderObservable.add(this.update);
 
@@ -248,12 +256,12 @@ class Walker extends BABYLON.Mesh {
         this.leftLeg.position.copyFrom(this.leftFootJoin.absolutePosition);
         this.leftLeg.position.addInPlace(this.leftKnee.position);
         this.leftLeg.position.scaleInPlace(0.5);
-        this.leftLeg.lookAt(this.leftKnee.position, 0, Math.PI / 2);
+        this.leftLeg.lookAt(this.leftKnee.position);
 
         this.leftHip.position.copyFrom(this.leftHipJoin.absolutePosition);
         this.leftHip.position.addInPlace(this.leftKnee.position);
         this.leftHip.position.scaleInPlace(0.5);
-        this.leftHip.lookAt(this.leftKnee.position, 0, Math.PI / 2);
+        this.leftHip.lookAt(this.leftKnee.position);
 
         this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
         this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(2));
@@ -269,12 +277,12 @@ class Walker extends BABYLON.Mesh {
         this.rightLeg.position.copyFrom(this.rightFootJoin.absolutePosition);
         this.rightLeg.position.addInPlace(this.rightKnee.position);
         this.rightLeg.position.scaleInPlace(0.5);
-        this.rightLeg.lookAt(this.rightKnee.position, 0, Math.PI / 2);
+        this.rightLeg.lookAt(this.rightKnee.position);
 
         this.rightHip.position.copyFrom(this.rightHipJoin.absolutePosition);
         this.rightHip.position.addInPlace(this.rightKnee.position);
         this.rightHip.position.scaleInPlace(0.5);
-        this.rightHip.lookAt(this.rightKnee.position, 0, Math.PI / 2);
+        this.rightHip.lookAt(this.rightKnee.position);
 
         this.body.position.addInPlace(this.bodySpeed.scale(0.015));
         this.body.position.y = Math.max(this.body.position.y, center.y + 1);

@@ -13,13 +13,13 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  Foot
 		processing begun of material:  Material
-		num positions      :  150
-		num normals        :  150
+		num positions      :  645
+		num normals        :  645
 		num tangents       :  0
-		num uvs            :  300
+		num uvs            :  1290
 		num uvs2           :  0
-		num colors         :  0
-		num indices        :  180
+		num colors         :  2580
+		num indices        :  648
 	processing begun of mesh:  ZFang
 		WARNING: No materials have been assigned: 
 		num positions      :  277
@@ -31,17 +31,47 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num indices        :  288
 	processing begun of mesh:  Body
 		WARNING: No materials have been assigned: 
-		num positions      :  778
-		num normals        :  778
+		num positions      :  747
+		num normals        :  747
 		num tangents       :  0
-		num uvs            :  1556
+		num uvs            :  1494
 		num uvs2           :  0
-		num colors         :  3112
-		num indices        :  2442
+		num colors         :  2988
+		num indices        :  2364
+	processing begun of mesh:  Leg
+		WARNING: No materials have been assigned: 
+		num positions      :  69
+		num normals        :  69
+		num tangents       :  0
+		num uvs            :  138
+		num uvs2           :  0
+		num colors         :  276
+		num indices        :  84
+	processing begun of mesh:  Hip
+		WARNING: No materials have been assigned: 
+		num positions      :  384
+		num normals        :  384
+		num tangents       :  0
+		num uvs            :  768
+		num uvs2           :  0
+		num colors         :  1536
+		num indices        :  384
+	processing begun of mesh:  ZBox
+		WARNING: No materials have been assigned: 
+		num positions      :  29
+		num normals        :  29
+		num tangents       :  0
+		num uvs            :  58
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
 ========= Writing of JSON file started =========
 	writing mesh:  Foot
 	writing mesh:  ZFang
 	writing mesh:  Body
+	writing mesh:  Leg
+	writing mesh:  Hip
+	writing mesh:  ZBox
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.2292 secs
+elapsed time:  0 min, 0.1295 secs
