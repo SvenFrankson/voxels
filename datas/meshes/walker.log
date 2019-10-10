@@ -13,12 +13,12 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  Foot
 		processing begun of material:  Material
-		num positions      :  645
-		num normals        :  645
+		num positions      :  266
+		num normals        :  266
 		num tangents       :  0
-		num uvs            :  1290
+		num uvs            :  532
 		num uvs2           :  0
-		num colors         :  2580
+		num colors         :  1064
 		num indices        :  648
 	processing begun of mesh:  ZFang
 		WARNING: No materials have been assigned: 
@@ -40,21 +40,21 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num indices        :  2364
 	processing begun of mesh:  Leg
 		WARNING: No materials have been assigned: 
-		num positions      :  69
-		num normals        :  69
+		num positions      :  52
+		num normals        :  52
 		num tangents       :  0
-		num uvs            :  138
+		num uvs            :  104
 		num uvs2           :  0
-		num colors         :  276
+		num colors         :  208
 		num indices        :  84
 	processing begun of mesh:  Hip
 		WARNING: No materials have been assigned: 
-		num positions      :  384
-		num normals        :  384
+		num positions      :  140
+		num normals        :  140
 		num tangents       :  0
-		num uvs            :  768
+		num uvs            :  280
 		num uvs2           :  0
-		num colors         :  1536
+		num colors         :  560
 		num indices        :  384
 	processing begun of mesh:  ZBox
 		WARNING: No materials have been assigned: 
@@ -74,4 +74,4 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 	writing mesh:  ZBox
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.1295 secs
+elapsed time:  0 min, 0.2892 secs
