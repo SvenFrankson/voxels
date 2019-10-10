@@ -10,7 +10,7 @@ class PlayerTest extends Main {
     public async initialize(): Promise<void> {
         await super.initializeScene();
         //Main.ChunckEditor.saveSceneName = "player-test";
-        let l = 2;
+        let l = 4;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("player-test");
 		if (savedTerrainString) {
@@ -30,6 +30,26 @@ class PlayerTest extends Main {
 			loopOut();
 		}
 		else {
+			let t0 = performance.now();
+			Main.ChunckManager.generateHeightFunction(
+				l,
+				(i, j) => {
+					return Math.cos(i / 3 + j / 5) * 2 + Math.sin(i / 7 - j / 11) * 2 + Math.cos(i / 13 + j / 15) * 2;
+				}
+			);
+			Main.ChunckManager.foreachChunck(
+				chunck => {
+					manyChuncks.push(chunck);
+				}
+			);
+			let loopOut = async () => {
+                console.log(manyChuncks.length);
+				await Main.ChunckManager.generateManyChuncks(manyChuncks);
+				let t1 = performance.now();
+				console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
+			}
+			loopOut();
+			/*
 			let t0 = performance.now();
 			var request = new XMLHttpRequest();
 			request.open('GET', './datas/scenes/island.json', true);
@@ -59,6 +79,7 @@ class PlayerTest extends Main {
 			};
 
 			request.send();
+			*/
 		}
         
         let player = new Player();
@@ -74,6 +95,13 @@ class PlayerTest extends Main {
 		inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
 		inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
 		inventory.addItem(inventoryEditBlock);
+
+		let inventoryCreateMountain = new InventoryItem();
+		inventoryCreateMountain.name = "CreateMountain";
+		inventoryCreateMountain.section = InventorySection.Action;
+		inventoryCreateMountain.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryCreateMountain.playerAction = PlayerActionTemplate.CreateMountainAction();
+		inventory.addItem(inventoryCreateMountain);
 
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
@@ -101,9 +129,9 @@ class PlayerTest extends Main {
 		await walker.instantiate();
 		let dx = -16 + 8 * Math.random();
 		let dz = -8 * Math.random();
-		walker.body.position.copyFromFloats(0 + dx, 18, 8 + dz);
-		walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
-		walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
+		walker.body.position.copyFromFloats(0 + dx, 12, 8 + dz);
+		walker.leftFoot.position.copyFromFloats(-2 + dx, 8, 7 + dz);
+		walker.rightFoot.position.copyFromFloats(2 + dx, 8, 7 + dz);
 
 		
 		let point: BABYLON.Vector3;

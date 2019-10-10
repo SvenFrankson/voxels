@@ -1184,6 +1184,17 @@ class ChunckManager {
             }
         }
     }
+    generateHeightFunction(d, heightFunction) {
+        this.generateAroundZero(d);
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let h = heightFunction(i, k);
+                for (let j = -d * CHUNCK_SIZE; j <= h; j++) {
+                    this.setCube(i, j, k, CubeType.Dirt);
+                }
+            }
+        }
+    }
     createChunck(i, j, k) {
         let mapMapChuncks = this.chuncks.get(i);
         if (!mapMapChuncks) {
@@ -1691,7 +1702,7 @@ class Walker extends BABYLON.Mesh {
     constructor() {
         super(...arguments);
         this.target = BABYLON.Vector3.Zero();
-        this.speed = 2;
+        this.speed = 1;
         this.bodySpeed = BABYLON.Vector3.Zero();
         this.yaw = 0;
         this.yawSpeed = 0;
@@ -1779,10 +1790,10 @@ class Walker extends BABYLON.Mesh {
         data[1].applyToMesh(this.rightFoot);
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.leftFootJoin = new BABYLON.Mesh("left-foot-join", this.getScene());
-        this.leftFootJoin.position.copyFromFloats(0, 0.5, -0.5);
+        this.leftFootJoin.position.copyFromFloats(0, 0.12, -0.3);
         this.leftFootJoin.parent = this.leftFoot;
         this.rightFootJoin = new BABYLON.Mesh("right-foot-join", this.getScene());
-        this.rightFootJoin.position.copyFromFloats(0, 0.5, -0.5);
+        this.rightFootJoin.position.copyFromFloats(0, 0.12, -0.3);
         this.rightFootJoin.parent = this.rightFoot;
         this.body = new BABYLON.Mesh("body");
         this.body.material = Main.cellShadingMaterial;
@@ -1817,9 +1828,9 @@ class Walker extends BABYLON.Mesh {
         let loop = async () => {
             while (true) {
                 await this.moveLeftFootTo(this.nextLeftFootPos());
-                await wait(500);
+                await wait(200);
                 await this.moveRightFootTo(this.nextRightFootPos());
-                await wait(500);
+                await wait(200);
             }
         };
         setTimeout(() => {
@@ -1827,7 +1838,7 @@ class Walker extends BABYLON.Mesh {
         }, 5000);
     }
     nextLeftFootPos() {
-        let dir = (new BABYLON.Vector3(-0.2, -1.5, this.speed)).normalize();
+        let dir = (new BABYLON.Vector3(-0.2, -2, this.speed)).normalize();
         let ray = new BABYLON.Ray(this.leftHipJoin.absolutePosition, this.body.getDirection(dir));
         let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Blue());
         setTimeout(() => {
@@ -1837,9 +1848,10 @@ class Walker extends BABYLON.Mesh {
             return m instanceof Chunck;
         });
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 36) {
-                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 49) {
+                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3) {
                     this.speed += 0.1;
+                    this.speed = Math.min(2, this.speed);
                     return pick.pickedPoint;
                 }
             }
@@ -1848,7 +1860,7 @@ class Walker extends BABYLON.Mesh {
         return this.leftFoot.position.clone();
     }
     nextRightFootPos() {
-        let dir = (new BABYLON.Vector3(0.2, -1.5, this.speed)).normalize();
+        let dir = (new BABYLON.Vector3(0.2, -2, this.speed)).normalize();
         let ray = new BABYLON.Ray(this.rightHipJoin.absolutePosition, this.body.getDirection(dir));
         let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Red());
         setTimeout(() => {
@@ -1858,9 +1870,10 @@ class Walker extends BABYLON.Mesh {
             return m instanceof Chunck;
         });
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 36) {
-                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 49) {
+                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3) {
                     this.speed += 0.1;
+                    this.speed = Math.min(2, this.speed);
                     return pick.pickedPoint;
                 }
             }
@@ -2230,6 +2243,32 @@ class PlayerActionTemplate {
             if (previewMesh) {
                 previewMesh.dispose();
                 previewMesh = undefined;
+            }
+        };
+        return action;
+    }
+    static CreateMountainAction() {
+        let action = new PlayerAction();
+        action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
+            if (coordinates) {
+                let r = 4;
+                let I = coordinates.coordinates.x + coordinates.chunck.i * CHUNCK_SIZE;
+                let J = coordinates.coordinates.y + coordinates.chunck.j * CHUNCK_SIZE;
+                let K = coordinates.coordinates.z + coordinates.chunck.k * CHUNCK_SIZE;
+                for (let i = -4; i <= 4; i++) {
+                    for (let k = -4; k <= 4; k++) {
+                        let d = Math.sqrt(i * i + k * k);
+                        let h = Math.random() * 6 * (1 - d / r);
+                        for (let j = -2; j < h; j++) {
+                            Main.ChunckManager.setCube(I + i, J + j, K + k, CubeType.Rock, 0, false);
+                        }
+                    }
+                }
+                Main.ChunckManager.redrawZone(I - 5, J - 3, K - 5, I + 5, J + 7, K + 5);
             }
         };
         return action;
@@ -2966,7 +3005,7 @@ class PlayerTest extends Main {
     async initialize() {
         await super.initializeScene();
         //Main.ChunckEditor.saveSceneName = "player-test";
-        let l = 2;
+        let l = 4;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("player-test");
         if (savedTerrainString) {
@@ -2985,30 +3024,50 @@ class PlayerTest extends Main {
         }
         else {
             let t0 = performance.now();
+            Main.ChunckManager.generateHeightFunction(l, (i, j) => {
+                return Math.cos(i / 3 + j / 5) * 2 + Math.sin(i / 7 - j / 11) * 2 + Math.cos(i / 13 + j / 15) * 2;
+            });
+            Main.ChunckManager.foreachChunck(chunck => {
+                manyChuncks.push(chunck);
+            });
+            let loopOut = async () => {
+                console.log(manyChuncks.length);
+                await Main.ChunckManager.generateManyChuncks(manyChuncks);
+                let t1 = performance.now();
+                console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
+            };
+            loopOut();
+            /*
+            let t0 = performance.now();
             var request = new XMLHttpRequest();
             request.open('GET', './datas/scenes/island.json', true);
+
             request.onload = () => {
                 if (request.status >= 200 && request.status < 400) {
-                    let defaultTerrain = JSON.parse(request.responseText);
+                    let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
                     Main.ChunckManager.deserialize(defaultTerrain);
-                    Main.ChunckManager.foreachChunck(chunck => {
-                        manyChuncks.push(chunck);
-                    });
+                    Main.ChunckManager.foreachChunck(
+                        chunck => {
+                            manyChuncks.push(chunck);
+                        }
+                    );
                     let loopOut = async () => {
                         await Main.ChunckManager.generateManyChuncks(manyChuncks);
                         let t1 = performance.now();
                         console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
-                    };
+                    }
                     loopOut();
-                }
-                else {
-                    alert("Scene file not found. My bad. Sven.");
+                } else {
+                    alert("Scene file not found. My bad. Sven.")
                 }
             };
+
             request.onerror = () => {
-                alert("Unknown error. My bad. Sven.");
+                alert("Unknown error. My bad. Sven.")
             };
+
             request.send();
+            */
         }
         let player = new Player();
         player.position.y = 60;
@@ -3021,6 +3080,12 @@ class PlayerTest extends Main {
         inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
         inventory.addItem(inventoryEditBlock);
+        let inventoryCreateMountain = new InventoryItem();
+        inventoryCreateMountain.name = "CreateMountain";
+        inventoryCreateMountain.section = InventorySection.Action;
+        inventoryCreateMountain.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryCreateMountain.playerAction = PlayerActionTemplate.CreateMountainAction();
+        inventory.addItem(inventoryCreateMountain);
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
         }
@@ -3045,9 +3110,9 @@ class PlayerTest extends Main {
         await walker.instantiate();
         let dx = -16 + 8 * Math.random();
         let dz = -8 * Math.random();
-        walker.body.position.copyFromFloats(0 + dx, 18, 8 + dz);
-        walker.leftFoot.position.copyFromFloats(-2 + dx, 15, 7 + dz);
-        walker.rightFoot.position.copyFromFloats(2 + dx, 15, 7 + dz);
+        walker.body.position.copyFromFloats(0 + dx, 12, 8 + dz);
+        walker.leftFoot.position.copyFromFloats(-2 + dx, 8, 7 + dz);
+        walker.rightFoot.position.copyFromFloats(2 + dx, 8, 7 + dz);
         let point;
         while (!point) {
             let ray = new BABYLON.Ray(new BABYLON.Vector3(-100 + 200 * Math.random(), 100, -100 + 200 * Math.random()), new BABYLON.Vector3(0, -1, 0));

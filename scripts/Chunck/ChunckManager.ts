@@ -178,6 +178,18 @@ class ChunckManager {
         }
     }
 
+    public generateHeightFunction(d: number, heightFunction: (x: number, y: number) => number): void {
+        this.generateAroundZero(d);
+        for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let h = heightFunction(i, k);
+                for (let j = - d * CHUNCK_SIZE; j <= h; j++) {
+                    this.setCube(i, j, k, CubeType.Dirt);
+                }
+            }
+        }
+    }
+
     public createChunck(i: number, j: number, k: number): Chunck {
         let mapMapChuncks = this.chuncks.get(i);
         if (!mapMapChuncks) {

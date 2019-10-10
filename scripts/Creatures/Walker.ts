@@ -1,7 +1,7 @@
 class Walker extends BABYLON.Mesh {
 
     public target: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-    public speed: number = 2;
+    public speed: number = 1;
 
     public leftFoot: BABYLON.Mesh;
     public leftLeg: BABYLON.Mesh;
@@ -38,11 +38,11 @@ class Walker extends BABYLON.Mesh {
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
         this.leftFootJoin = new BABYLON.Mesh("left-foot-join", this.getScene());
-        this.leftFootJoin.position.copyFromFloats(0, 0.5, -0.5);
+        this.leftFootJoin.position.copyFromFloats(0, 0.12, -0.3);
         this.leftFootJoin.parent = this.leftFoot;
 
         this.rightFootJoin = new BABYLON.Mesh("right-foot-join", this.getScene());
-        this.rightFootJoin.position.copyFromFloats(0, 0.5, -0.5);
+        this.rightFootJoin.position.copyFromFloats(0, 0.12, -0.3);
         this.rightFootJoin.parent = this.rightFoot;
 
         this.body = new BABYLON.Mesh("body");
@@ -88,9 +88,9 @@ class Walker extends BABYLON.Mesh {
         let loop = async () => {
             while (true) {
                 await this.moveLeftFootTo(this.nextLeftFootPos());
-                await wait(500);
+                await wait(200);
                 await this.moveRightFootTo(this.nextRightFootPos());
-                await wait(500);
+                await wait(200);
             }
         }
         setTimeout(
@@ -102,7 +102,7 @@ class Walker extends BABYLON.Mesh {
     }
 
     public nextLeftFootPos(): BABYLON.Vector3 {
-        let dir = (new BABYLON.Vector3(- 0.2, - 1.5, this.speed)).normalize();
+        let dir = (new BABYLON.Vector3(- 0.2, - 2, this.speed)).normalize();
         let ray = new BABYLON.Ray(this.leftHipJoin.absolutePosition, this.body.getDirection(dir));
         let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Blue());
         setTimeout(
@@ -118,9 +118,10 @@ class Walker extends BABYLON.Mesh {
             }
         )
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 36) {
-                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 49) {
+                if (Math.abs(pick.pickedPoint.y - this.leftFoot.position.y) < 3) {
                     this.speed += 0.1;
+                    this.speed = Math.min(2, this.speed);
                     return pick.pickedPoint;
                 }
             }
@@ -130,7 +131,7 @@ class Walker extends BABYLON.Mesh {
     }
 
     public nextRightFootPos(): BABYLON.Vector3 {
-        let dir = (new BABYLON.Vector3(0.2, - 1.5, this.speed)).normalize();
+        let dir = (new BABYLON.Vector3(0.2, - 2, this.speed)).normalize();
         let ray = new BABYLON.Ray(this.rightHipJoin.absolutePosition, this.body.getDirection(dir));
         let help = BABYLON.RayHelper.CreateAndShow(ray, this.getScene(), BABYLON.Color3.Red());
         setTimeout(
@@ -146,9 +147,10 @@ class Walker extends BABYLON.Mesh {
             }
         )
         if (pick.hit) {
-            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 36) {
-                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3.5) {
+            if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 49) {
+                if (Math.abs(pick.pickedPoint.y - this.rightFoot.position.y) < 3) {
                     this.speed += 0.1;
+                    this.speed = Math.min(2, this.speed);
                     return pick.pickedPoint;
                 }
             }
