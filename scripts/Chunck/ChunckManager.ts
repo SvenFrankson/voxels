@@ -13,9 +13,47 @@ interface TerrainData {
 class ChunckManager {
 
     public chuncks: Map<number, Map<number, Map<number, Chunck>>> = new Map<number, Map<number, Map<number, Chunck>>>();
+    public updateBuffer: Chunck[] = [];
 
     constructor() {
+        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
+    }
 
+    public updateChunck = () => {
+        if (this.updateBuffer.length > 0) {
+            let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
+            let camPos = Main.Camera.position;
+            for (let i = 0; i < sortSteps; i++) {
+                let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
+                let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
+                let i1 = Math.min(r1, r2);
+                let i2 = Math.max(r1, r2);
+                let c1 = this.updateBuffer[i1];
+                let c2 = this.updateBuffer[i2];
+                if (c1 && c2 && c1 !== c2) {
+                    let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
+                    let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
+                    if (d2 > d1) {
+                        this.updateBuffer[i1] = c2;
+                        this.updateBuffer[i2] = c1;
+                    }
+                }
+            }
+            let done = false;
+            while (!done) {
+                let chunck = this.updateBuffer.pop();
+                if (chunck) {
+                    if (!chunck.isEmpty) {
+                        chunck.generateVertices();
+                        chunck.generateFaces();
+                        done = true;
+                    }
+                }
+                else {
+                    done = true;
+                }
+            }
+        }
     }
 
     public async generateManyChuncks(chuncks: Chunck[]): Promise<void> {

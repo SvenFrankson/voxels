@@ -249,7 +249,7 @@ class PlayerActionTemplate {
         return action;
     }
 
-    public static CreateMountainAction(): PlayerAction {
+    public static CreateMountainAction(r: number, h: number, roughness: number): PlayerAction {
         let action = new PlayerAction();
 
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
@@ -260,15 +260,14 @@ class PlayerActionTemplate {
 
             let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
             if (coordinates) {
-                let r = 4;
                 let I = coordinates.coordinates.x + coordinates.chunck.i * CHUNCK_SIZE;
                 let J = coordinates.coordinates.y + coordinates.chunck.j * CHUNCK_SIZE;
                 let K = coordinates.coordinates.z + coordinates.chunck.k * CHUNCK_SIZE;
-                for (let i = - 4; i <= 4; i++) {
-                    for (let k = - 4; k <= 4; k++) {
+                for (let i = - r; i <= r; i++) {
+                    for (let k = - r; k <= r; k++) {
                         let d = Math.sqrt(i * i + k * k);
-                        let h = Math.random() * 6 * (1 - d / r);
-                        for (let j = - 2; j < h; j++) {
+                        let localH = (Math.random() * h * roughness + h * (1 - roughness)) * (1 - d / r);
+                        for (let j = - 1; j < localH; j++) {
                             Main.ChunckManager.setCube(I + i, J + j, K + k, CubeType.Rock, 0, false);
                         }
                     }

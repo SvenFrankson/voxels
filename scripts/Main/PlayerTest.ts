@@ -11,7 +11,6 @@ class PlayerTest extends Main {
         await super.initializeScene();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
-		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("player-test");
 		if (savedTerrainString) {
 			let t0 = performance.now();
@@ -19,15 +18,10 @@ class PlayerTest extends Main {
 			Main.ChunckManager.deserialize(savedTerrain);
 			Main.ChunckManager.foreachChunck(
 				chunck => {
-					manyChuncks.push(chunck);
+					Main.ChunckManager.updateBuffer.push(chunck);
 				}
 			);
-			let loopOut = async () => {
-				await Main.ChunckManager.generateManyChuncks(manyChuncks);
-				let t1 = performance.now();
-				console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
-			}
-			loopOut();
+			console.log("Scene loaded from local storage");
 		}
 		else {
 			let t0 = performance.now();
@@ -47,16 +41,10 @@ class PlayerTest extends Main {
 			);
 			Main.ChunckManager.foreachChunck(
 				chunck => {
-					manyChuncks.push(chunck);
+					Main.ChunckManager.updateBuffer.push(chunck);
 				}
 			);
-			let loopOut = async () => {
-                console.log(manyChuncks.length);
-				await Main.ChunckManager.generateManyChuncks(manyChuncks);
-				let t1 = performance.now();
-				console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
-			}
-			loopOut();
+			console.log("Scene generated");
 			/*
 			let t0 = performance.now();
 			var request = new XMLHttpRequest();
@@ -104,12 +92,26 @@ class PlayerTest extends Main {
 		inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
 		inventory.addItem(inventoryEditBlock);
 
-		let inventoryCreateMountain = new InventoryItem();
-		inventoryCreateMountain.name = "CreateMountain";
-		inventoryCreateMountain.section = InventorySection.Action;
-		inventoryCreateMountain.iconUrl = "./datas/textures/miniatures/move-arrow.png";
-		inventoryCreateMountain.playerAction = PlayerActionTemplate.CreateMountainAction();
-		inventory.addItem(inventoryCreateMountain);
+		let inventoryCreateMountainSmall = new InventoryItem();
+		inventoryCreateMountainSmall.name = "CreateMountainSmall";
+		inventoryCreateMountainSmall.section = InventorySection.Action;
+		inventoryCreateMountainSmall.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryCreateMountainSmall.playerAction = PlayerActionTemplate.CreateMountainAction(3, 3, 0.6);
+		inventory.addItem(inventoryCreateMountainSmall);
+
+		let inventoryCreateMountainTall = new InventoryItem();
+		inventoryCreateMountainTall.name = "CreateMountainTall";
+		inventoryCreateMountainTall.section = InventorySection.Action;
+		inventoryCreateMountainTall.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryCreateMountainTall.playerAction = PlayerActionTemplate.CreateMountainAction(2, 7, 0.9);
+		inventory.addItem(inventoryCreateMountainTall);
+
+		let inventoryCreateMountainLarge = new InventoryItem();
+		inventoryCreateMountainLarge.name = "CreateMountainLarge";
+		inventoryCreateMountainLarge.section = InventorySection.Action;
+		inventoryCreateMountainLarge.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
+		inventory.addItem(inventoryCreateMountainLarge);
 
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));

@@ -54,6 +54,9 @@ class Chunck extends BABYLON.Mesh {
         public k: number
     ) {
         super("chunck_" + i + "_" + j + "_" + k);
+        this.position.x = CHUNCK_SIZE * this.i;
+        this.position.y = CHUNCK_SIZE * this.j;
+        this.position.z = CHUNCK_SIZE * this.k;
     }
 
     public fatCube(): void {
@@ -462,9 +465,6 @@ class Chunck extends BABYLON.Mesh {
         }
         data.normals = normals;
 
-        this.position.x = CHUNCK_SIZE * this.i;
-        this.position.y = CHUNCK_SIZE * this.j;
-        this.position.z = CHUNCK_SIZE * this.k;
         data.applyToMesh(this);
 
         this.material = Main.terrainCellShadingMaterial;

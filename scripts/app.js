@@ -433,6 +433,9 @@ class Chunck extends BABYLON.Mesh {
         this.vertices = [];
         this.cubes = [];
         this.blocks = [];
+        this.position.x = CHUNCK_SIZE * this.i;
+        this.position.y = CHUNCK_SIZE * this.j;
+        this.position.z = CHUNCK_SIZE * this.k;
     }
     getCube(i, j, k) {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
@@ -827,9 +830,6 @@ class Chunck extends BABYLON.Mesh {
             normals.push(...this.vertices[i].normalSum.asArray());
         }
         data.normals = normals;
-        this.position.x = CHUNCK_SIZE * this.i;
-        this.position.y = CHUNCK_SIZE * this.j;
-        this.position.z = CHUNCK_SIZE * this.k;
         data.applyToMesh(this);
         this.material = Main.terrainCellShadingMaterial;
     }
@@ -1051,6 +1051,44 @@ class ChunckEditor {
 class ChunckManager {
     constructor() {
         this.chuncks = new Map();
+        this.updateBuffer = [];
+        this.updateChunck = () => {
+            if (this.updateBuffer.length > 0) {
+                let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
+                let camPos = Main.Camera.position;
+                for (let i = 0; i < sortSteps; i++) {
+                    let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let i1 = Math.min(r1, r2);
+                    let i2 = Math.max(r1, r2);
+                    let c1 = this.updateBuffer[i1];
+                    let c2 = this.updateBuffer[i2];
+                    if (c1 && c2 && c1 !== c2) {
+                        let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
+                        let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
+                        if (d2 > d1) {
+                            this.updateBuffer[i1] = c2;
+                            this.updateBuffer[i2] = c1;
+                        }
+                    }
+                }
+                let done = false;
+                while (!done) {
+                    let chunck = this.updateBuffer.pop();
+                    if (chunck) {
+                        if (!chunck.isEmpty) {
+                            chunck.generateVertices();
+                            chunck.generateFaces();
+                            done = true;
+                        }
+                    }
+                    else {
+                        done = true;
+                    }
+                }
+            }
+        };
+        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
     }
     async generateManyChuncks(chuncks) {
         return new Promise(resolve => {
@@ -2252,7 +2290,7 @@ class PlayerActionTemplate {
         };
         return action;
     }
-    static CreateMountainAction() {
+    static CreateMountainAction(r, h, roughness) {
         let action = new PlayerAction();
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         action.onClick = () => {
@@ -2260,15 +2298,14 @@ class PlayerActionTemplate {
             let y = Main.Engine.getRenderHeight() * 0.5;
             let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
             if (coordinates) {
-                let r = 4;
                 let I = coordinates.coordinates.x + coordinates.chunck.i * CHUNCK_SIZE;
                 let J = coordinates.coordinates.y + coordinates.chunck.j * CHUNCK_SIZE;
                 let K = coordinates.coordinates.z + coordinates.chunck.k * CHUNCK_SIZE;
-                for (let i = -4; i <= 4; i++) {
-                    for (let k = -4; k <= 4; k++) {
+                for (let i = -r; i <= r; i++) {
+                    for (let k = -r; k <= r; k++) {
                         let d = Math.sqrt(i * i + k * k);
-                        let h = Math.random() * 6 * (1 - d / r);
-                        for (let j = -2; j < h; j++) {
+                        let localH = (Math.random() * h * roughness + h * (1 - roughness)) * (1 - d / r);
+                        for (let j = -1; j < localH; j++) {
                             Main.ChunckManager.setCube(I + i, J + j, K + k, CubeType.Rock, 0, false);
                         }
                     }
@@ -3011,21 +3048,15 @@ class PlayerTest extends Main {
         await super.initializeScene();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
-        let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("player-test");
         if (savedTerrainString) {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);
             Main.ChunckManager.deserialize(savedTerrain);
             Main.ChunckManager.foreachChunck(chunck => {
-                manyChuncks.push(chunck);
+                Main.ChunckManager.updateBuffer.push(chunck);
             });
-            let loopOut = async () => {
-                await Main.ChunckManager.generateManyChuncks(manyChuncks);
-                let t1 = performance.now();
-                console.log("Scene loaded from local storage in " + (t1 - t0).toFixed(1) + " ms");
-            };
-            loopOut();
+            console.log("Scene loaded from local storage");
         }
         else {
             let t0 = performance.now();
@@ -3040,15 +3071,9 @@ class PlayerTest extends Main {
                 return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 0.5 + Math.random();
             });
             Main.ChunckManager.foreachChunck(chunck => {
-                manyChuncks.push(chunck);
+                Main.ChunckManager.updateBuffer.push(chunck);
             });
-            let loopOut = async () => {
-                console.log(manyChuncks.length);
-                await Main.ChunckManager.generateManyChuncks(manyChuncks);
-                let t1 = performance.now();
-                console.log("Scene generated in " + (t1 - t0).toFixed(1) + " ms");
-            };
-            loopOut();
+            console.log("Scene generated");
             /*
             let t0 = performance.now();
             var request = new XMLHttpRequest();
@@ -3092,12 +3117,24 @@ class PlayerTest extends Main {
         inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
         inventory.addItem(inventoryEditBlock);
-        let inventoryCreateMountain = new InventoryItem();
-        inventoryCreateMountain.name = "CreateMountain";
-        inventoryCreateMountain.section = InventorySection.Action;
-        inventoryCreateMountain.iconUrl = "./datas/textures/miniatures/move-arrow.png";
-        inventoryCreateMountain.playerAction = PlayerActionTemplate.CreateMountainAction();
-        inventory.addItem(inventoryCreateMountain);
+        let inventoryCreateMountainSmall = new InventoryItem();
+        inventoryCreateMountainSmall.name = "CreateMountainSmall";
+        inventoryCreateMountainSmall.section = InventorySection.Action;
+        inventoryCreateMountainSmall.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryCreateMountainSmall.playerAction = PlayerActionTemplate.CreateMountainAction(3, 3, 0.6);
+        inventory.addItem(inventoryCreateMountainSmall);
+        let inventoryCreateMountainTall = new InventoryItem();
+        inventoryCreateMountainTall.name = "CreateMountainTall";
+        inventoryCreateMountainTall.section = InventorySection.Action;
+        inventoryCreateMountainTall.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryCreateMountainTall.playerAction = PlayerActionTemplate.CreateMountainAction(2, 7, 0.9);
+        inventory.addItem(inventoryCreateMountainTall);
+        let inventoryCreateMountainLarge = new InventoryItem();
+        inventoryCreateMountainLarge.name = "CreateMountainLarge";
+        inventoryCreateMountainLarge.section = InventorySection.Action;
+        inventoryCreateMountainLarge.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
+        inventory.addItem(inventoryCreateMountainLarge);
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
         }
