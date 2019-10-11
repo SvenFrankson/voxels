@@ -10,7 +10,7 @@ class PlayerTest extends Main {
     public async initialize(): Promise<void> {
         await super.initializeScene();
         //Main.ChunckEditor.saveSceneName = "player-test";
-        let l = 4;
+        let l = 5;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("player-test");
 		if (savedTerrainString) {
@@ -31,10 +31,18 @@ class PlayerTest extends Main {
 		}
 		else {
 			let t0 = performance.now();
+			let f = [];
+			for (let i = 0; i < 6; i++) {
+				f[i] = Math.random() * i + 2;
+				if (Math.random() < 0.5) {
+					f[i] *= - 1;
+				}
+			}
+			
 			Main.ChunckManager.generateHeightFunction(
 				l,
 				(i, j) => {
-					return Math.cos(i / 3 + j / 5) * 2 + Math.sin(i / 7 - j / 11) * 2 + Math.cos(i / 13 + j / 15) * 2;
+					return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 0.5 + Math.random();
 				}
 			);
 			Main.ChunckManager.foreachChunck(
@@ -125,40 +133,15 @@ class PlayerTest extends Main {
             Main.Camera.position.y = 1.25;
 		}
 		
-		let walker = new Walker("walker");
-		await walker.instantiate();
-		let dx = -16 + 8 * Math.random();
-		let dz = -8 * Math.random();
-		walker.body.position.copyFromFloats(0 + dx, 12, 8 + dz);
-		walker.leftFoot.position.copyFromFloats(-2 + dx, 8, 7 + dz);
-		walker.rightFoot.position.copyFromFloats(2 + dx, 8, 7 + dz);
-
-		
-		let point: BABYLON.Vector3;
-		while (!point) {
-			let ray = new BABYLON.Ray(
-				new BABYLON.Vector3(- 100 + 200 * Math.random(), 100, - 100 + 200 * Math.random()),
-				new BABYLON.Vector3(0, - 1, 0)
-			);
-			let pick = Main.Scene.pickWithRay(
-				ray,
-				(m) => {
-					return m instanceof Chunck;
-				}
-			);
-			if (pick.hit) {
-				point = pick.pickedPoint;
-			}
-		}
-		walker.target = point;
-		walker.target.y += 2.5;
-		
-		setInterval(
-			() => {
+		setTimeout(
+			async () => {
+				let walker = new Walker("walker");
+				await walker.instantiate();
+				
 				let point: BABYLON.Vector3;
 				while (!point) {
 					let ray = new BABYLON.Ray(
-						new BABYLON.Vector3(- 100 + 200 * Math.random(), 100, - 100 + 200 * Math.random()),
+						new BABYLON.Vector3(- 50 + 100 * Math.random(), 100, - 50 + 100 * Math.random()),
 						new BABYLON.Vector3(0, - 1, 0)
 					);
 					let pick = Main.Scene.pickWithRay(
@@ -171,10 +154,56 @@ class PlayerTest extends Main {
 						point = pick.pickedPoint;
 					}
 				}
-				walker.target = point;
+				walker.target = BABYLON.Vector3.Zero();
 				walker.target.y += 2.5;
+				
+				walker.body.position.copyFrom(point);
+				walker.body.position.y += 4;
+				walker.body.position.addInPlaceFromFloats(
+					Math.random(),
+					Math.random(),
+					Math.random()
+				)
+				walker.leftFoot.position.copyFrom(point);
+				walker.leftFoot.position.x -= 2;
+				walker.leftFoot.position.addInPlaceFromFloats(
+					Math.random(),
+					Math.random(),
+					Math.random()
+				)
+				walker.rightFoot.position.copyFrom(point);
+				walker.rightFoot.position.x += 2;
+				walker.rightFoot.position.addInPlaceFromFloats(
+					Math.random(),
+					Math.random(),
+					Math.random()
+				)
+				
+				setInterval(
+					() => {
+						let point: BABYLON.Vector3;
+						while (!point) {
+							let ray = new BABYLON.Ray(
+								new BABYLON.Vector3(- 50 + 100 * Math.random(), 100, - 50 + 100 * Math.random()),
+								new BABYLON.Vector3(0, - 1, 0)
+							);
+							let pick = Main.Scene.pickWithRay(
+								ray,
+								(m) => {
+									return m instanceof Chunck;
+								}
+							);
+							if (pick.hit) {
+								point = pick.pickedPoint;
+							}
+						}
+						walker.target = point;
+						walker.target.y += 2.5;
+					},
+					15000
+				)
 			},
-			15000
+			12000
 		)
     }
 }

@@ -76,8 +76,6 @@ class Walker extends BABYLON.Mesh {
 
         this.rightKnee = new BABYLON.Mesh("right-knee", this.getScene());
 
-        this.getScene().onBeforeRenderObservable.add(this.update);
-
         let wait = async (t) => {
             return new Promise<void>(
                 resolve => {
@@ -95,6 +93,8 @@ class Walker extends BABYLON.Mesh {
         }
         setTimeout(
             () => {
+                this.getScene().onBeforeRenderObservable.add(this.update);
+                this.update();
                 loop();
             },
             5000

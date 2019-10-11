@@ -182,8 +182,12 @@ class ChunckManager {
         this.generateAroundZero(d);
         for (let i = - d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
             for (let k = - d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let h = heightFunction(i, k);
-                for (let j = - d * CHUNCK_SIZE; j <= h; j++) {
+                let h = Math.floor(heightFunction(i, k));
+                let hDirt = Math.floor(Math.random() * 3 + 0.5);
+                for (let j = - d * CHUNCK_SIZE; j <= h - hDirt; j++) {
+                    this.setCube(i, j, k, CubeType.Rock);
+                }
+                for (let j = h - hDirt + 1; j <= h; j++) {
                     this.setCube(i, j, k, CubeType.Dirt);
                 }
             }
