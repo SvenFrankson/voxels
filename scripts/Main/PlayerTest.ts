@@ -92,6 +92,13 @@ class PlayerTest extends Main {
 		inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
 		inventory.addItem(inventoryEditBlock);
 
+		let inventoryCreateTree = new InventoryItem();
+		inventoryCreateTree.name = "CreateTree";
+		inventoryCreateTree.section = InventorySection.Action;
+		inventoryCreateTree.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+		inventoryCreateTree.playerAction = PlayerActionTemplate.CreateTreeAction();
+		inventory.addItem(inventoryCreateTree);
+
 		let inventoryCreateMountainSmall = new InventoryItem();
 		inventoryCreateMountainSmall.name = "CreateMountainSmall";
 		inventoryCreateMountainSmall.section = InventorySection.Action;
@@ -134,7 +141,7 @@ class PlayerTest extends Main {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
 		}
-		
+		return;
 		setTimeout(
 			async () => {
 				let walker = new Walker("walker");

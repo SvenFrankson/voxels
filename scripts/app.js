@@ -2315,6 +2315,23 @@ class PlayerActionTemplate {
         };
         return action;
     }
+    static CreateTreeAction() {
+        let action = new PlayerAction();
+        action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(x, y, (m) => {
+                return m instanceof Chunck;
+            });
+            if (pickInfo.hit) {
+                let tree = new Tree();
+                tree.generate(pickInfo.pickedPoint);
+                tree.createMesh();
+            }
+        };
+        return action;
+    }
 }
 class PlayerAction {
 }
@@ -3117,6 +3134,12 @@ class PlayerTest extends Main {
         inventoryEditBlock.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
         inventory.addItem(inventoryEditBlock);
+        let inventoryCreateTree = new InventoryItem();
+        inventoryCreateTree.name = "CreateTree";
+        inventoryCreateTree.section = InventorySection.Action;
+        inventoryCreateTree.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+        inventoryCreateTree.playerAction = PlayerActionTemplate.CreateTreeAction();
+        inventory.addItem(inventoryCreateTree);
         let inventoryCreateMountainSmall = new InventoryItem();
         inventoryCreateMountainSmall.name = "CreateMountainSmall";
         inventoryCreateMountainSmall.section = InventorySection.Action;
@@ -3155,6 +3178,7 @@ class PlayerTest extends Main {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
         }
+        return;
         setTimeout(async () => {
             let walker = new Walker("walker");
             await walker.instantiate();
@@ -3865,5 +3889,93 @@ class VMath {
         for (let i = 0; i < interpolatedPoints.length; i++) {
             path.splice(2 * i + 1, 0, interpolatedPoints[i]);
         }
+    }
+}
+class Branch {
+    constructor(position, parent, tree) {
+        this.position = position;
+        this.parent = parent;
+        this.tree = tree;
+        this.isTrunk = true;
+        this.children = [];
+        if (this.parent) {
+            this.direction = this.position.subtract(this.parent.position).normalize();
+            this.n = this.parent.n - 1;
+            this.isTrunk = this.parent.isTrunk;
+            if (this.parent.children.length > 0) {
+                this.isTrunk = false;
+            }
+            this.parent.children.push(this);
+        }
+        else {
+            this.direction = new BABYLON.Vector3(0, 1, 0);
+            this.n = this.tree.size;
+        }
+    }
+    generate() {
+        if (this.n > 0) {
+            let p = this.direction.clone();
+            p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+            p.normalize().scaleInPlace(this.isTrunk ? this.tree.length : this.tree.branchLength);
+            new Branch(this.position.add(p), this, this.tree);
+            if (this.isTrunk) {
+                if (Math.random() < this.tree.branchness(this.n)) {
+                    let r = new BABYLON.Vector3(Math.random(), Math.random(), Math.random());
+                    let p = BABYLON.Vector3.Cross(this.direction, r);
+                    p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                    p.normalize().scaleInPlace(this.tree.branchLength);
+                    let b = new Branch(this.position.add(p), this, this.tree);
+                    b.n = this.tree.branchSize - 1 + Math.round((Math.random() - 0.5) * 2 * this.tree.branchSizeRandomize);
+                }
+            }
+        }
+        this.children.forEach(c => {
+            c.generate();
+        });
+    }
+    createMesh() {
+        if (this.parent) {
+            let p1 = this.parent.position;
+            let p2 = this.position;
+            let mesh = BABYLON.MeshBuilder.CreateTube("t", {
+                path: [p1, p2],
+                radius: 0.15
+            }, Main.Scene);
+            if (this.isTrunk) {
+                let m = new BABYLON.StandardMaterial("tMat", Main.Scene);
+                m.diffuseColor.copyFromFloats(0.9, 0.1, 0.1);
+                m.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+                mesh.material = m;
+            }
+            else {
+                let m = new BABYLON.StandardMaterial("tMat", Main.Scene);
+                m.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
+                m.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+                mesh.material = m;
+            }
+        }
+        this.children.forEach(c => {
+            c.createMesh();
+        });
+    }
+}
+class Tree {
+    constructor() {
+        this.size = 10;
+        this.length = 1.5;
+        this.branchSize = 3;
+        this.branchSizeRandomize = 1;
+        this.branchLength = 1;
+        this.branchness = () => { return 0.5; };
+        this.branchness = (l) => {
+            return (this.size - l) / this.size;
+        };
+    }
+    generate(p) {
+        this.root = new Branch(p, undefined, this);
+        this.root.generate();
+    }
+    createMesh() {
+        this.root.createMesh();
     }
 }
