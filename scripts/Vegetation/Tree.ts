@@ -22,24 +22,58 @@ class Branch {
         }
         else {
             this.direction = new BABYLON.Vector3(0, 1, 0);
-            this.n = this.tree.size;
+            this.n = this.tree.trunkSize;
         }
     }
 
     public generate(): void {
         if (this.n > 0) {
             let p = this.direction.clone();
-            p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-            p.normalize().scaleInPlace(this.isTrunk ? this.tree.length : this.tree.branchLength);
-            new Branch(this.position.add(p), this, this.tree);
+            p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).scaleInPlace(2);
             if (this.isTrunk) {
-                if (Math.random() < this.tree.branchness(this.n)) {
-                    let r = new BABYLON.Vector3(Math.random(), Math.random(), Math.random());
-                    let p = BABYLON.Vector3.Cross(this.direction, r);
-                    p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-                    p.normalize().scaleInPlace(this.tree.branchLength);
-                    let b = new Branch(this.position.add(p), this, this.tree);
-                    b.n = this.tree.branchSize - 1 + Math.round((Math.random() - 0.5) * 2 * this.tree.branchSizeRandomize);
+                p.y += this.tree.trunkDY;
+            }
+            else {
+                p.y += this.tree.branchDY;
+            }
+            p.normalize().scaleInPlace(this.isTrunk ? this.tree.trunkLength : this.tree.branchLength);
+            new Branch(this.position.add(p), this, this.tree);
+            let done = false;
+            let branchness = 0;
+            if (this.isTrunk) {
+                branchness = this.tree.trunkBranchness(this.n);
+            }
+            else {
+                branchness = this.tree.branchBranchness(this.n);
+            }
+            while (!done) {
+                if (Math.random() < branchness) {
+                    branchness *= 0.8;
+                    let branchPosFound = false;
+                    let attempts = 0;
+                    while (!branchPosFound && attempts++ < 10) {
+                        let r = new BABYLON.Vector3(Math.random(), Math.random(), Math.random());
+                        let p = BABYLON.Vector3.Cross(this.direction, r);
+                        p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                        p.normalize().scaleInPlace(this.tree.branchLength);
+                        p.addInPlace(this.position);
+                        branchPosFound = true;
+                        for (let i = 1; i < this.children.length; i++) {
+                            let distFromOtherBranch = BABYLON.Vector3.DistanceSquared(this.children[i].position, p);
+                            if (distFromOtherBranch < this.tree.branchLength * 1.5) {
+                                branchPosFound = false;
+                            }
+                        }
+                        if (branchPosFound) {
+                            let b = new Branch(p, this, this.tree);
+                            if (this.isTrunk) {
+                                b.n = this.tree.branchSize - 1 + Math.round((Math.random() - 0.5) * 2 * this.tree.branchSizeRandomize);
+                            }
+                        }
+                    }
+                }
+                else {
+                    done = true;
                 }
             }
         }
@@ -85,18 +119,25 @@ class Branch {
 
 class Tree {
 
-    public size: number = 10;
-    public length: number = 1.5;
-    public branchSize: number = 3;
-    public branchSizeRandomize: number = 1;
+    public trunkSize: number = 10;
+    public trunkLength: number = 1.5;
+    public trunkDY: number = 0.5;
+    public trunkBranchness: (l: number) => number = () => { return 0.5; };
+
+    public branchSize: number = 4;
+    public branchSizeRandomize: number = 2;
     public branchLength: number = 1;
-    public branchness: (l: number) => number = () => { return 0.5; };
+    public branchDY: number = 0.2;
+    public branchBranchness: (l: number) => number = () => { return 0.5; };
 
     public root: Branch;
 
     constructor() {
-        this.branchness = (l) => {
-            return (this.size - l) / this.size;
+        this.trunkBranchness = (l) => {
+            return (this.trunkSize - l - 1) / this.trunkSize;
+        }
+        this.branchBranchness = (l) => {
+            return (l - 1) / this.branchSize;
         }
     }
 
