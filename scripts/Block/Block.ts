@@ -10,7 +10,8 @@ enum BlockMaterial {
     Stone,
     Wood,
     SandStone,
-    Brick
+    Brick,
+    Plastic
 }
 
 class Block extends BABYLON.Mesh {

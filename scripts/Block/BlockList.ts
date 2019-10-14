@@ -16,5 +16,9 @@ class BlockList {
         "sandstone-ramp-1-1-4",
         "brick-ramp-1-1-2",
         "brick-ramp-1-1-4",
+        "plastic-light-wall",
+        "plastic-light-wall-corner",
+        "plastic-light-wall-door",
+        "plastic-light-wall-window",
     ]
 }

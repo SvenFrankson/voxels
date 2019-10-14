@@ -37,7 +37,7 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						this.runAllScreenShots();
+						this.runAllScreenShots()
 					},
 					100
 				);

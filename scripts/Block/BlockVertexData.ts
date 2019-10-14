@@ -8,6 +8,7 @@ class BlockVertexData {
             BlockVertexData._BlockColors.set(BlockMaterial.Wood, "#784c05");
             BlockVertexData._BlockColors.set(BlockMaterial.SandStone, "#c9b449");
             BlockVertexData._BlockColors.set(BlockMaterial.Brick, "#b02e17");
+            BlockVertexData._BlockColors.set(BlockMaterial.Plastic, "#cad8db");
         }
         return BlockVertexData._BlockColors;
     }
@@ -25,6 +26,9 @@ class BlockVertexData {
         if (s === "brick") {
             return BlockMaterial.Brick;
         }
+        if (s === "plastic") {
+            return BlockMaterial.Plastic;
+        }
     }
 
     public static async GetVertexData(reference: string, material: BlockMaterial): Promise<BABYLON.VertexData> {
@@ -32,17 +36,21 @@ class BlockVertexData {
         let fileName = "";
         let meshIndex = 0;
 
-        if (reference === "wall") {
-            fileName = "wall";
+        if (reference === "light-wall") {
+            fileName = "light-wall";
             meshIndex = 0;
         }
-        else if (reference === "wall-corner-out") {
-            fileName = "wall";
+        else if (reference === "light-wall-corner") {
+            fileName = "light-wall";
             meshIndex = 1;
         }
-        else if (reference === "wall-hole") {
-            fileName = "wall";
+        else if (reference === "light-wall-door") {
+            fileName = "light-wall";
             meshIndex = 2;
+        }
+        else if (reference === "light-wall-window") {
+            fileName = "light-wall";
+            meshIndex = 3;
         }
         else if (reference === "bar-1-1-1") {
             fileName = "block-basic";

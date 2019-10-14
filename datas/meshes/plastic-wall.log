@@ -1,0 +1,60 @@
+Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		texture directory   :  C:\Users\svent\Documents\SvenFrankson\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  plastic-wall
+		processing begun of material:  Material
+		num positions      :  90
+		num normals        :  90
+		num tangents       :  0
+		num uvs            :  180
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  204
+	processing begun of mesh:  plastic-wall-corner
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  120
+		num normals        :  120
+		num tangents       :  0
+		num uvs            :  240
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  384
+	processing begun of mesh:  plastic-wall-door
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  139
+		num normals        :  139
+		num tangents       :  0
+		num uvs            :  278
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  330
+	processing begun of mesh:  plastic-wall-window
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  138
+		num normals        :  138
+		num tangents       :  0
+		num uvs            :  276
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  276
+========= Writing of JSON file started =========
+	writing mesh:  plastic-wall
+	writing mesh:  plastic-wall-corner
+	writing mesh:  plastic-wall-door
+	writing mesh:  plastic-wall-window
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.1699 secs
