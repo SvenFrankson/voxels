@@ -285,4 +285,30 @@ class PlayerActionTemplate {
         
         return action;
     }
+
+    public static CreateTreeAction(): PlayerAction {
+        let action = new PlayerAction();
+
+        action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
+
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m instanceof Chunck;
+                }
+            );
+            if (pickInfo.hit) {
+                let tree = new Tree();
+                tree.generate(pickInfo.pickedPoint);
+                tree.createMesh();
+            }
+        }
+        
+        return action;
+    }
 }
