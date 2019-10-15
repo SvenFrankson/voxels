@@ -138,7 +138,7 @@ class Main {
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
 
 		// Skybox seed : 1vt3h8rxhb28
-		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
+		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 3000.0 }, Main.Scene);
 		Main.Skybox.layerMask = 1;
 		Main.Skybox.infiniteDistance = true;
 		let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
