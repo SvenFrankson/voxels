@@ -1,6 +1,17 @@
+class BranchMesh {
+
+    public branches: Branch[] = [];
+    public radius: number;
+
+    constructor() {
+
+    }
+}
+
 class Branch {
 
     public n: number;
+    public d: number = 0;
     public direction: BABYLON.Vector3;
     public radius: number;
     public isTrunk = true;
@@ -14,6 +25,7 @@ class Branch {
         if (this.parent) {
             this.direction = this.position.subtract(this.parent.position).normalize();
             this.n = this.parent.n - 1;
+            this.d = this.parent.d + 1;
             this.isTrunk = this.parent.isTrunk;
             if (this.parent.children.length > 0) {
                 this.isTrunk = false;
@@ -115,6 +127,20 @@ class Branch {
             }
         )
     }
+
+    public addChildrenToBranchMeshes(currentBranchMesh: BranchMesh, branchMeshes: BranchMesh[]): void {
+        if (this.children[0]) {
+            currentBranchMesh.branches.push(this.children[0]);
+            this.children[0].addChildrenToBranchMeshes(currentBranchMesh, branchMeshes);
+        }
+        for (let i = 1; i < this.children.length; i++) {
+            let newBranchMesh = new BranchMesh();
+            branchMeshes.push(newBranchMesh);
+            newBranchMesh.radius = currentBranchMesh.radius * 0.7;
+            newBranchMesh.branches.push(this, this.children[i]);
+            this.children[i].addChildrenToBranchMeshes(newBranchMesh, branchMeshes);
+        }
+    }
 }
 
 class Tree {
@@ -134,10 +160,10 @@ class Tree {
 
     constructor() {
         this.trunkBranchness = (l) => {
-            return (this.trunkSize - l - 1) / this.trunkSize;
+            return (this.trunkSize - l) / this.trunkSize - 0.1;
         }
         this.branchBranchness = (l) => {
-            return (l - 1) / this.branchSize;
+            return (l - 2) / this.branchSize;
         }
     }
 
@@ -147,6 +173,34 @@ class Tree {
     }
 
     public createMesh(): void {
-        this.root.createMesh();
+        let brancheMeshes: BranchMesh[] = [];
+        let rootBranchMesh: BranchMesh = new BranchMesh();
+        rootBranchMesh.radius = 0.5;
+        brancheMeshes.push(rootBranchMesh);
+        rootBranchMesh.branches.push(this.root);
+        this.root.addChildrenToBranchMeshes(rootBranchMesh, brancheMeshes);
+
+        for (let i = 0; i < brancheMeshes.length; i++) {
+            let branchMesh = brancheMeshes[i];
+            let points: BABYLON.Vector3[] = [];
+            branchMesh.branches.forEach(
+                branch => {
+                    points.push(branch.position);
+                }
+            );
+            let l = points.length;
+            BABYLON.MeshBuilder.CreateTube(
+                "branch",
+                {
+                    path: points,
+                    radiusFunction: (i, d) => {
+                        let indexFromRoot = branchMesh.branches[i].d;
+                        let factor = Math.pow(0.9, indexFromRoot);
+                        return factor * 0.5;
+                    }
+                },
+                Main.Scene
+            )
+        }
     }
 }
