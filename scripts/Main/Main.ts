@@ -113,7 +113,7 @@ class Main {
 				float threshold = 0.4 + max((depth - 20.) / 30., 0.);
 				
 				gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-				if (sobel_depth < thresholdDepth) {
+				if (sobel_depth < thresholdDepth || depth > 1000.) {
 					if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 						gl_FragColor = n[4];
 					}
@@ -138,7 +138,6 @@ class Main {
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
 
 		// Skybox seed : 1vt3h8rxhb28
-		/*
 		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
 		Main.Skybox.layerMask = 1;
 		Main.Skybox.infiniteDistance = true;
@@ -151,7 +150,6 @@ class Main {
 		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		Main.Skybox.material = skyboxMaterial;
-		*/
 
 		Main.ChunckManager = new ChunckManager();
 		new VertexDataLoader(Main.Scene);

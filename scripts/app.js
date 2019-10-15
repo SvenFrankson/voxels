@@ -2637,7 +2637,7 @@ class Main {
 				float threshold = 0.4 + max((depth - 20.) / 30., 0.);
 				
 				gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-				if (sobel_depth < thresholdDepth) {
+				if (sobel_depth < thresholdDepth || depth > 1000.) {
 					if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 						gl_FragColor = n[4];
 					}
@@ -2657,20 +2657,15 @@ class Main {
         noPostProcessCamera.layerMask = 0x10000000;
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
         // Skybox seed : 1vt3h8rxhb28
-        /*
         Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
         Main.Skybox.layerMask = 1;
         Main.Skybox.infiniteDistance = true;
-        let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
+        let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.emissiveTexture = new BABYLON.Texture(
-            "./datas/textures/sky.png",
-            Main.Scene
-        );
+        skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/textures/sky.png", Main.Scene);
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         Main.Skybox.material = skyboxMaterial;
-        */
         Main.ChunckManager = new ChunckManager();
         new VertexDataLoader(Main.Scene);
         Main.MenuManager = new MenuManager();
@@ -3153,6 +3148,7 @@ class PlayerTest extends Main {
         inventoryCreateTree.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryCreateTree.playerAction = PlayerActionTemplate.CreateTreeAction();
         inventory.addItem(inventoryCreateTree);
+        player.playerActionManager.linkAction(inventoryCreateTree.playerAction, 1);
         let inventoryCreateMountainSmall = new InventoryItem();
         inventoryCreateMountainSmall.name = "CreateMountainSmall";
         inventoryCreateMountainSmall.section = InventorySection.Action;
@@ -3915,101 +3911,70 @@ class Branch {
         this.parent = parent;
         this.tree = tree;
         this.d = 0;
-        this.isTrunk = true;
+        this.generation = 0;
         this.children = [];
         if (this.parent) {
             this.direction = this.position.subtract(this.parent.position).normalize();
-            this.n = this.parent.n - 1;
             this.d = this.parent.d + 1;
-            this.isTrunk = this.parent.isTrunk;
-            if (this.parent.children.length > 0) {
-                this.isTrunk = false;
-            }
+            this.generation = this.parent.generation;
             this.parent.children.push(this);
         }
         else {
             this.direction = new BABYLON.Vector3(0, 1, 0);
-            this.n = this.tree.trunkSize;
         }
     }
     generate() {
-        if (this.n > 0) {
-            let p = this.direction.clone();
-            p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).scaleInPlace(2);
-            if (this.isTrunk) {
-                p.y += this.tree.trunkDY;
-            }
-            else {
-                p.y += this.tree.branchDY;
-            }
-            p.normalize().scaleInPlace(this.isTrunk ? this.tree.trunkLength : this.tree.branchLength);
-            new Branch(this.position.add(p), this, this.tree);
-            let done = false;
-            let branchness = 0;
-            if (this.isTrunk) {
-                branchness = this.tree.trunkBranchness(this.n);
-            }
-            else {
-                branchness = this.tree.branchBranchness(this.n);
-            }
-            while (!done) {
-                if (Math.random() < branchness) {
-                    branchness *= 0.8;
-                    let branchPosFound = false;
-                    let attempts = 0;
-                    while (!branchPosFound && attempts++ < 10) {
-                        let r = new BABYLON.Vector3(Math.random(), Math.random(), Math.random());
-                        let p = BABYLON.Vector3.Cross(this.direction, r);
-                        p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-                        p.normalize().scaleInPlace(this.tree.branchLength);
-                        p.addInPlace(this.position);
-                        branchPosFound = true;
-                        for (let i = 1; i < this.children.length; i++) {
-                            let distFromOtherBranch = BABYLON.Vector3.DistanceSquared(this.children[i].position, p);
-                            if (distFromOtherBranch < this.tree.branchLength * 1.5) {
-                                branchPosFound = false;
-                            }
-                        }
-                        if (branchPosFound) {
-                            let b = new Branch(p, this, this.tree);
-                            if (this.isTrunk) {
-                                b.n = this.tree.branchSize - 1 + Math.round((Math.random() - 0.5) * 2 * this.tree.branchSizeRandomize);
-                            }
+        if (this.d >= this.tree.size) {
+            return;
+        }
+        let p = this.direction.clone();
+        p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).scaleInPlace(2);
+        if (this.generation === 0) {
+            p.y += this.tree.trunkDY;
+        }
+        else {
+            p.y += this.tree.branchDY;
+        }
+        p.normalize().scaleInPlace(this.generation === 0 ? this.tree.trunkLength : this.tree.branchLength);
+        new Branch(this.position.add(p), this, this.tree);
+        let done = false;
+        let branchness = 0;
+        if (this.generation === 0) {
+            branchness = this.tree.trunkBranchness(this.d);
+        }
+        else {
+            branchness = this.tree.branchBranchness(this.d);
+        }
+        while (!done) {
+            if (Math.random() < branchness) {
+                branchness *= 0.5;
+                let branchPosFound = false;
+                let attempts = 0;
+                while (!branchPosFound && attempts++ < 10) {
+                    let r = new BABYLON.Vector3(Math.random(), Math.random(), Math.random());
+                    let p = BABYLON.Vector3.Cross(this.direction, r);
+                    p.addInPlaceFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                    p.normalize().scaleInPlace(this.tree.branchLength);
+                    p.addInPlace(this.position);
+                    branchPosFound = true;
+                    for (let i = 1; i < this.children.length; i++) {
+                        let distFromOtherBranch = BABYLON.Vector3.DistanceSquared(this.children[i].position, p);
+                        if (distFromOtherBranch < this.tree.branchLength * 1.5) {
+                            branchPosFound = false;
                         }
                     }
+                    if (branchPosFound) {
+                        let b = new Branch(p, this, this.tree);
+                        b.generation++;
+                    }
                 }
-                else {
-                    done = true;
-                }
+            }
+            else {
+                done = true;
             }
         }
         this.children.forEach(c => {
             c.generate();
-        });
-    }
-    createMesh() {
-        if (this.parent) {
-            let p1 = this.parent.position;
-            let p2 = this.position;
-            let mesh = BABYLON.MeshBuilder.CreateTube("t", {
-                path: [p1, p2],
-                radius: 0.15
-            }, Main.Scene);
-            if (this.isTrunk) {
-                let m = new BABYLON.StandardMaterial("tMat", Main.Scene);
-                m.diffuseColor.copyFromFloats(0.9, 0.1, 0.1);
-                m.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-                mesh.material = m;
-            }
-            else {
-                let m = new BABYLON.StandardMaterial("tMat", Main.Scene);
-                m.diffuseColor.copyFromFloats(0.1, 0.1, 0.9);
-                m.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-                mesh.material = m;
-            }
-        }
-        this.children.forEach(c => {
-            c.createMesh();
         });
     }
     addChildrenToBranchMeshes(currentBranchMesh, branchMeshes) {
@@ -4028,20 +3993,19 @@ class Branch {
 }
 class Tree {
     constructor() {
-        this.trunkSize = 10;
+        this.size = 10;
         this.trunkLength = 1.5;
         this.trunkDY = 0.5;
         this.trunkBranchness = () => { return 0.5; };
-        this.branchSize = 4;
         this.branchSizeRandomize = 2;
         this.branchLength = 1;
         this.branchDY = 0.2;
         this.branchBranchness = () => { return 0.5; };
         this.trunkBranchness = (l) => {
-            return (this.trunkSize - l) / this.trunkSize - 0.1;
+            return (l - 2) / this.size + 0.1;
         };
         this.branchBranchness = (l) => {
-            return (l - 2) / this.branchSize;
+            return (l - 1) / this.size + 0.05;
         };
     }
     generate(p) {
@@ -4057,19 +4021,31 @@ class Tree {
         this.root.addChildrenToBranchMeshes(rootBranchMesh, brancheMeshes);
         for (let i = 0; i < brancheMeshes.length; i++) {
             let branchMesh = brancheMeshes[i];
+            let generation = branchMesh.branches[branchMesh.branches.length - 1].generation;
             let points = [];
             branchMesh.branches.forEach(branch => {
                 points.push(branch.position);
             });
             let l = points.length;
-            BABYLON.MeshBuilder.CreateTube("branch", {
+            let mesh = BABYLON.MeshBuilder.CreateTube("branch", {
                 path: points,
-                radiusFunction: (i, d) => {
-                    let indexFromRoot = branchMesh.branches[i].d;
-                    let factor = Math.pow(0.9, indexFromRoot);
-                    return factor * 0.5;
-                }
+                radiusFunction: (i) => {
+                    let branch = branchMesh.branches[i];
+                    let genFactor = Math.pow(1.5, generation);
+                    let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
+                    return factor * 0.5 / genFactor;
+                },
+                cap: 2,
+                updatable: true
             }, Main.Scene);
+            let data = BABYLON.VertexData.ExtractFromMesh(mesh);
+            let colors = [];
+            for (let v = 0; v < data.positions.length / 3; v++) {
+                colors.push(168 / 255, 113 / 255, 50 / 255, 1);
+            }
+            data.colors = colors;
+            data.applyToMesh(mesh);
+            mesh.material = Main.cellShadingMaterial;
         }
     }
 }

@@ -98,6 +98,7 @@ class PlayerTest extends Main {
 		inventoryCreateTree.iconUrl = "./datas/textures/miniatures/move-arrow.png";
 		inventoryCreateTree.playerAction = PlayerActionTemplate.CreateTreeAction();
 		inventory.addItem(inventoryCreateTree);
+		player.playerActionManager.linkAction(inventoryCreateTree.playerAction, 1);
 
 		let inventoryCreateMountainSmall = new InventoryItem();
 		inventoryCreateMountainSmall.name = "CreateMountainSmall";
