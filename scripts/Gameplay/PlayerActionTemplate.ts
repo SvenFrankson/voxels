@@ -303,9 +303,17 @@ class PlayerActionTemplate {
                 }
             );
             if (pickInfo.hit) {
-                let tree = new Tree();
+                let tree = new Tree(Math.floor(Math.random() * 49 + 1));
                 tree.generate(pickInfo.pickedPoint);
-                tree.createMesh();
+                let t = 0;
+                let growthLoop = () => {
+                    t += 0.01;
+                    tree.createMesh(Math.min(t, 1));
+                    if (t < 1) {
+                        requestAnimationFrame(growthLoop);
+                    }
+                }
+                growthLoop();
             }
         }
         
