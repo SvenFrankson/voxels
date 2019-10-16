@@ -162,7 +162,6 @@ class Tree {
                         leaf.material = Main.cellShadingMaterial;
                     }
                     if (branch.children.length === 0) {
-                        let leafRot = new BABYLON.Vector3(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
                         let leaf = new BABYLON.Mesh("leaf");
                         leaveDatas[Math.floor(Math.random() * 5)].applyToMesh(leaf);
                         leaf.position = branch.position;
