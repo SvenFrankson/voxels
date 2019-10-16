@@ -108,7 +108,7 @@ class Tree {
 
     public size: number = 10;
 
-    public trunkLength: number = 1.5;
+    public trunkLength: number = 1.2;
     public trunkDY: number = 0.5;
     public trunkBranchness: (l: number) => number = () => { return 0.5; };
 
@@ -121,10 +121,10 @@ class Tree {
 
     constructor() {
         this.trunkBranchness = (l) => {
-            return (l - 2) / this.size + 0.1;
+            return 3 * l / this.size - 1;
         }
         this.branchBranchness = (l) => {
-            return (l - 1) / this.size + 0.05;
+            return 2 * l / this.size - 1;
         }
     }
 
@@ -133,13 +133,15 @@ class Tree {
         this.root.generate();
     }
 
-    public createMesh(): void {
+    public async createMesh(): Promise<void> {
         let brancheMeshes: BranchMesh[] = [];
         let rootBranchMesh: BranchMesh = new BranchMesh();
         rootBranchMesh.radius = 0.5;
         brancheMeshes.push(rootBranchMesh);
         rootBranchMesh.branches.push(this.root);
         this.root.addChildrenToBranchMeshes(rootBranchMesh, brancheMeshes);
+
+        let leaveDatas = await VertexDataLoader.instance.getColorizedMultiple("leaves", "#b4eb34");
 
         for (let i = 0; i < brancheMeshes.length; i++) {
             let branchMesh = brancheMeshes[i];
@@ -148,6 +150,27 @@ class Tree {
             branchMesh.branches.forEach(
                 branch => {
                     points.push(branch.position);
+                    if (branch.children.length === 0) {
+                        let d = Math.random();
+                        let leafPos = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, d);
+                        let leafRot = new BABYLON.Vector3(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
+                        let leaf = new BABYLON.Mesh("leaf");
+                        leaveDatas[Math.floor(Math.random() * 5)].applyToMesh(leaf);
+                        leaf.position = leafPos;
+                        leaf.rotation = leafRot;
+                        leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation)));
+                        leaf.material = Main.cellShadingMaterial;
+                    }
+                    if (branch.children.length === 0) {
+                        let leafRot = new BABYLON.Vector3(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
+                        let leaf = new BABYLON.Mesh("leaf");
+                        leaveDatas[Math.floor(Math.random() * 5)].applyToMesh(leaf);
+                        leaf.position = branch.position;
+                        leaf.computeWorldMatrix(true);
+                        leaf.lookAt(leaf.position.add(branch.direction));
+                        leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation)));
+                        leaf.material = Main.cellShadingMaterial;
+                    }
                 }
             );
             let l = points.length;
@@ -157,7 +180,7 @@ class Tree {
                     path: points,
                     radiusFunction: (i) => {
                         let branch = branchMesh.branches[i];
-                        let genFactor = Math.pow(1.5, generation);
+                        let genFactor = Math.pow(1.3, generation);
                         let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
                         return factor * 0.5 / genFactor;
                     },

@@ -2657,7 +2657,7 @@ class Main {
         noPostProcessCamera.layerMask = 0x10000000;
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
         // Skybox seed : 1vt3h8rxhb28
-        Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 4000.0 }, Main.Scene);
+        Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 3000.0 }, Main.Scene);
         Main.Skybox.layerMask = 1;
         Main.Skybox.infiniteDistance = true;
         let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
@@ -3994,7 +3994,7 @@ class Branch {
 class Tree {
     constructor() {
         this.size = 10;
-        this.trunkLength = 1.5;
+        this.trunkLength = 1.2;
         this.trunkDY = 0.5;
         this.trunkBranchness = () => { return 0.5; };
         this.branchSizeRandomize = 2;
@@ -4002,36 +4002,58 @@ class Tree {
         this.branchDY = 0.2;
         this.branchBranchness = () => { return 0.5; };
         this.trunkBranchness = (l) => {
-            return (l - 2) / this.size + 0.1;
+            return 3 * l / this.size - 1;
         };
         this.branchBranchness = (l) => {
-            return (l - 1) / this.size + 0.05;
+            return 2 * l / this.size - 1;
         };
     }
     generate(p) {
         this.root = new Branch(p, undefined, this);
         this.root.generate();
     }
-    createMesh() {
+    async createMesh() {
         let brancheMeshes = [];
         let rootBranchMesh = new BranchMesh();
         rootBranchMesh.radius = 0.5;
         brancheMeshes.push(rootBranchMesh);
         rootBranchMesh.branches.push(this.root);
         this.root.addChildrenToBranchMeshes(rootBranchMesh, brancheMeshes);
+        let leaveDatas = await VertexDataLoader.instance.getColorizedMultiple("leaves", "#b4eb34");
         for (let i = 0; i < brancheMeshes.length; i++) {
             let branchMesh = brancheMeshes[i];
             let generation = branchMesh.branches[branchMesh.branches.length - 1].generation;
             let points = [];
             branchMesh.branches.forEach(branch => {
                 points.push(branch.position);
+                if (branch.children.length === 0) {
+                    let d = Math.random();
+                    let leafPos = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, d);
+                    let leafRot = new BABYLON.Vector3(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
+                    let leaf = new BABYLON.Mesh("leaf");
+                    leaveDatas[Math.floor(Math.random() * 5)].applyToMesh(leaf);
+                    leaf.position = leafPos;
+                    leaf.rotation = leafRot;
+                    leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation)));
+                    leaf.material = Main.cellShadingMaterial;
+                }
+                if (branch.children.length === 0) {
+                    let leafRot = new BABYLON.Vector3(Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random(), Math.PI * 2 * Math.random());
+                    let leaf = new BABYLON.Mesh("leaf");
+                    leaveDatas[Math.floor(Math.random() * 5)].applyToMesh(leaf);
+                    leaf.position = branch.position;
+                    leaf.computeWorldMatrix(true);
+                    leaf.lookAt(leaf.position.add(branch.direction));
+                    leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation)));
+                    leaf.material = Main.cellShadingMaterial;
+                }
             });
             let l = points.length;
             let mesh = BABYLON.MeshBuilder.CreateTube("branch", {
                 path: points,
                 radiusFunction: (i) => {
                     let branch = branchMesh.branches[i];
-                    let genFactor = Math.pow(1.5, generation);
+                    let genFactor = Math.pow(1.3, generation);
                     let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
                     return factor * 0.5 / genFactor;
                 },
