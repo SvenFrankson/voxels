@@ -308,10 +308,13 @@ class PlayerActionTemplate {
                 let t = 0;
                 let growthLoop = () => {
                     t += 0.01;
-                    tree.createMesh(Math.min(t, 1));
-                    if (t < 1) {
-                        requestAnimationFrame(growthLoop);
-                    }
+                    tree.createMesh(Math.min(t, 1)).then(
+                        () => {
+                            if (t < 1) {
+                                requestAnimationFrame(growthLoop);
+                            }
+                        }
+                    )
                 }
                 growthLoop();
             }
