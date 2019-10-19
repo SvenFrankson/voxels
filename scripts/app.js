@@ -3914,6 +3914,14 @@ class BranchMesh {
         this.branches = [];
     }
 }
+class Leaf {
+    constructor(d, quaternion, scaling, index) {
+        this.d = d;
+        this.quaternion = quaternion;
+        this.scaling = scaling;
+        this.index = index;
+    }
+}
 class Branch {
     constructor(position, parent, tree) {
         this.position = position;
@@ -3922,6 +3930,7 @@ class Branch {
         this.d = 0;
         this.generation = 0;
         this.children = [];
+        this.leaves = [];
         if (this.parent) {
             this.direction = this.position.subtract(this.parent.position).normalize();
             this.d = this.parent.d + 1;
@@ -3933,63 +3942,76 @@ class Branch {
         }
     }
     generate() {
-        if (this.d >= this.tree.size) {
-            return;
-        }
-        let branchness = 0;
-        if (this.generation === 0) {
-            branchness = this.tree.trunkBranchness(this.d);
-        }
-        else {
-            branchness = this.tree.branchBranchness(this.d);
-        }
-        if (this.generation === 0 || this.tree.randomizer.random() < branchness) {
-            if (this.generation > 0) {
-                branchness *= 0.7;
-            }
-            let p = this.direction.clone();
-            p.addInPlaceFromFloats(this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5).scaleInPlace(2);
+        if (this.d < this.tree.size) {
+            let branchness = 0;
             if (this.generation === 0) {
-                p.y += this.tree.trunkDY;
+                branchness = this.tree.trunkBranchness(this.d);
             }
             else {
-                p.y += this.tree.branchDY;
+                branchness = this.tree.branchBranchness(this.d);
             }
-            p.normalize().scaleInPlace(this.generation === 0 ? this.tree.trunkLength : this.tree.branchLength);
-            new Branch(this.position.add(p), this, this.tree);
-        }
-        let done = false;
-        while (!done) {
-            if (this.tree.randomizer.random() < branchness) {
-                branchness *= 0.7;
-                let branchPosFound = false;
-                let attempts = 0;
-                while (!branchPosFound && attempts++ < 10) {
-                    let r = new BABYLON.Vector3(this.tree.randomizer.random(), this.tree.randomizer.random(), this.tree.randomizer.random());
-                    let p = BABYLON.Vector3.Cross(this.direction, r);
-                    p.addInPlaceFromFloats(this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5);
-                    p.normalize().scaleInPlace(this.tree.branchLength);
-                    p.addInPlace(this.position);
-                    branchPosFound = true;
-                    for (let i = 1; i < this.children.length; i++) {
-                        let distFromOtherBranch = BABYLON.Vector3.DistanceSquared(this.children[i].position, p);
-                        if (distFromOtherBranch < this.tree.branchLength * 1.5) {
-                            branchPosFound = false;
+            if (this.generation === 0 || this.tree.randomizer.random() < branchness) {
+                if (this.generation > 0) {
+                    branchness *= 0.7;
+                }
+                let p = this.direction.clone();
+                p.addInPlaceFromFloats(this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5).scaleInPlace(2);
+                if (this.generation === 0) {
+                    p.y += this.tree.trunkDY;
+                }
+                else {
+                    p.y += this.tree.branchDY;
+                }
+                p.normalize().scaleInPlace(this.generation === 0 ? this.tree.trunkLength : this.tree.branchLength);
+                new Branch(this.position.add(p), this, this.tree);
+            }
+            let done = false;
+            while (!done) {
+                if (this.tree.randomizer.random() < branchness) {
+                    branchness *= 0.7;
+                    let branchPosFound = false;
+                    let attempts = 0;
+                    while (!branchPosFound && attempts++ < 10) {
+                        let r = new BABYLON.Vector3(this.tree.randomizer.random(), this.tree.randomizer.random(), this.tree.randomizer.random());
+                        let p = BABYLON.Vector3.Cross(this.direction, r);
+                        p.addInPlaceFromFloats(this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5, this.tree.randomizer.random() - 0.5);
+                        p.normalize().scaleInPlace(this.tree.branchLength);
+                        p.addInPlace(this.position);
+                        branchPosFound = true;
+                        for (let i = 1; i < this.children.length; i++) {
+                            let distFromOtherBranch = BABYLON.Vector3.DistanceSquared(this.children[i].position, p);
+                            if (distFromOtherBranch < this.tree.branchLength * 1.5) {
+                                branchPosFound = false;
+                            }
+                        }
+                        if (branchPosFound) {
+                            let b = new Branch(p, this, this.tree);
+                            b.generation++;
                         }
                     }
-                    if (branchPosFound) {
-                        let b = new Branch(p, this, this.tree);
-                        b.generation++;
-                    }
+                }
+                else {
+                    done = true;
                 }
             }
-            else {
-                done = true;
+            this.children.forEach(c => {
+                c.generate();
+            });
+        }
+        if (this.parent) {
+            if (this.children.length === 0) {
+                let d = this.tree.randomizer.random();
+                let index = Math.floor(this.tree.randomizer.random() * 5);
+                let leafRot = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(this.tree.randomizer.random(), this.tree.randomizer.random(), this.tree.randomizer.random()), Math.PI * 2 * this.tree.randomizer.random());
+                this.leaves.push(new Leaf(d, leafRot, 1 / (Math.sqrt(this.generation + 1)), index));
+                index = Math.floor(this.tree.randomizer.random() * 5);
+                let zAxis = this.direction;
+                let xAxis = BABYLON.Vector3.Cross(BABYLON.Axis.Y, zAxis);
+                let yAxis = BABYLON.Vector3.Cross(zAxis, xAxis);
+                leafRot = BABYLON.Quaternion.RotationQuaternionFromAxis(xAxis, yAxis, zAxis);
+                this.leaves.push(new Leaf(1, leafRot, 1 / (Math.sqrt(this.generation + 1)), index));
             }
         }
-        this.children.forEach(c => {
-            c.generate();
-        });
     }
     addChildrenToBranchMeshes(currentBranchMesh, branchMeshes) {
         if (this.children[0]) {
@@ -4045,7 +4067,7 @@ class Tree extends BABYLON.Mesh {
             return 3 * l / this.size - 1;
         };
         this.branchBranchness = (l) => {
-            return 3 * l / this.size - 1;
+            return 4 * l / this.size - 2;
         };
     }
     generate(p) {
@@ -4072,41 +4094,26 @@ class Tree extends BABYLON.Mesh {
             branchMesh.branches.forEach(branch => {
                 if (branch.d <= dLim) {
                     points.push(branch.position);
+                    branch.leaves.forEach(leaf => {
+                        let leafMesh = new BABYLON.Mesh("leaf");
+                        leafMesh.position = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, leaf.d);
+                        leafMesh.rotationQuaternion = leaf.quaternion;
+                        leafMesh.scaling.scaleInPlace(leaf.scaling);
+                        leaveDatas[leaf.index].applyToMesh(leafMesh);
+                        meshes.push(leafMesh);
+                    });
                 }
                 else if (branch.d === dLim + 1 && branch.parent) {
                     let p = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, dt);
                     points.push(p);
-                }
-                if (branch.parent) {
-                    let d = this.randomizer.random();
-                    let data = leaveDatas[Math.floor(this.randomizer.random() * 5)];
-                    let leafPos = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, d);
-                    let leafRot = new BABYLON.Vector3(Math.PI * 2 * this.randomizer.random(), Math.PI * 2 * this.randomizer.random(), Math.PI * 2 * this.randomizer.random());
-                    if (branch.children.length === 0 && branch.d <= dLim + 1) {
-                        let leaf = new BABYLON.Mesh("leaf");
-                        data.applyToMesh(leaf);
-                        leaf.position = leafPos;
-                        leaf.rotation = leafRot;
-                        leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation + 1)));
-                        if (branch.d === dLim + 1) {
-                            leaf.scaling.scaleInPlace(dt);
-                        }
-                        leaf.computeWorldMatrix(true);
-                        meshes.push(leaf);
-                    }
-                    data = leaveDatas[Math.floor(this.randomizer.random() * 5)];
-                    if (branch.children.length === 0 && branch.d <= dLim + 1) {
-                        let leaf = new BABYLON.Mesh("leaf");
-                        data.applyToMesh(leaf);
-                        leaf.position = branch.position;
-                        leaf.lookAt(leaf.position.add(branch.direction));
-                        leaf.scaling.scaleInPlace(1 / (Math.sqrt(branch.generation + 1)));
-                        if (branch.d === dLim + 1) {
-                            leaf.scaling.scaleInPlace(dt);
-                        }
-                        leaf.computeWorldMatrix(true);
-                        meshes.push(leaf);
-                    }
+                    branch.leaves.forEach(leaf => {
+                        let leafMesh = new BABYLON.Mesh("leaf");
+                        leafMesh.position = BABYLON.Vector3.Lerp(branch.parent.position, branch.position, leaf.d * dt);
+                        leafMesh.rotationQuaternion = leaf.quaternion;
+                        leafMesh.scaling.scaleInPlace(leaf.scaling * dt);
+                        leaveDatas[leaf.index].applyToMesh(leafMesh);
+                        meshes.push(leafMesh);
+                    });
                 }
             });
             if (points.length >= 2) {
