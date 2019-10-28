@@ -268,29 +268,19 @@ class Tree extends BABYLON.Mesh {
                 }
             );
             if (points.length >= 2) {
-                let mesh = BABYLON.MeshBuilder.CreateTube(
-                    "branch",
-                    {
-                        path: points,
-                        radiusFunction: (i) => {
-                            let branch = branchMesh.branches[i];
-                            let genFactor = Math.pow(1.3, generation);
-                            let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
-                            return factor * 0.5 / genFactor * t;
-                        },
-                        cap: 2,
-                        updatable: true
+                let vertexData = TreeMeshBuilder.CreateTubeVertexData(
+                    points,
+                    (index: number) => {
+                        let branch = branchMesh.branches[index];
+                        let genFactor = Math.pow(1.3, generation);
+                        let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
+                        return factor * 0.5 / genFactor * t;
                     },
-                    Main.Scene
+                    new BABYLON.Color4(168 / 255, 113 / 255, 50 / 255, 1)
                 );
+                let mesh = new BABYLON.Mesh("branch");
+                vertexData.applyToMesh(mesh);
                 meshes.push(mesh);
-                let data = BABYLON.VertexData.ExtractFromMesh(mesh);
-                let colors = [];
-                for (let v = 0; v < data.positions.length / 3; v++) {
-                    colors.push(168 / 255, 113 / 255, 50 / 255, 1);
-                }
-                data.colors = colors;
-                data.applyToMesh(mesh);
             }
         }
         if (meshes.length > 0) {
