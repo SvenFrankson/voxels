@@ -18,6 +18,20 @@ class TreeMeshBuilder {
         let colors: number[] = [];
         let uvs: number[] = [];
 
+        let curve = BABYLON.Curve3.CreateCatmullRomSpline(points, 2);
+        console.log("Points " + points.length);
+        points = curve.getPoints();
+        console.log("CatmullPoints " + points.length);
+
+        let decimalRadiusFunction = (i: number) => {
+            if (i % 2 === 0) {
+                return radiusFunction(i);
+            }
+            else {
+                return radiusFunction(Math.floor(i)) * 0.5 + radiusFunction(Math.ceil(i)) * 0.5;
+            }
+        }
+
         for (let i = 0; i < 6; i++) {
             circle[i] = new BABYLON.Vector3(
                 Math.cos(i * Math.PI / 3),
@@ -46,7 +60,7 @@ class TreeMeshBuilder {
             lastAxisZ.copyFrom(axisZ);
 
             let q = BABYLON.Quaternion.RotationQuaternionFromAxis(axisX, axisY, axisZ);
-            let s = radiusFunction(i);
+            let s = decimalRadiusFunction(i / 2);
 
             let m = BABYLON.Matrix.Compose(new BABYLON.Vector3(s, s, s), q, p);
 

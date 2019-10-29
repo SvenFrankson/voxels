@@ -64,6 +64,11 @@ class Branch {
                     p.y += this.tree.trunkDY;
                 }
                 else {
+                    let dr = this.position.clone();
+                    dr.y = 0;
+                    dr.normalize();
+                    dr.scaleInPlace(this.tree.branchDR);
+                    p.addInPlace(dr);
                     p.y += this.tree.branchDY;
                 }
                 p.normalize().scaleInPlace(this.generation === 0 ? this.tree.trunkLength : this.tree.branchLength);
@@ -195,6 +200,7 @@ class Tree extends BABYLON.Mesh {
 
     public branchSizeRandomize: number = 2;
     public branchLength: number = 1;
+    public branchDR: number = 1;
     public branchDY: number = 1;
     public branchBranchness: (l: number) => number = () => { return 0.5; };
 
@@ -204,10 +210,10 @@ class Tree extends BABYLON.Mesh {
         super("tree");
         this.randomizer = new Randomizer(seed);
         this.trunkBranchness = (l) => {
-            return 3 * l / this.size - 1;
+            return 3.5 * l / this.size - 1;
         }
         this.branchBranchness = (l) => {
-            return 4 * l / this.size - 2;
+            return 3.5 * l / this.size - 2;
         }
     }
 

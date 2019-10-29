@@ -3960,6 +3960,11 @@ class Branch {
                     p.y += this.tree.trunkDY;
                 }
                 else {
+                    let dr = this.position.clone();
+                    dr.y = 0;
+                    dr.normalize();
+                    dr.scaleInPlace(this.tree.branchDR);
+                    p.addInPlace(dr);
                     p.y += this.tree.branchDY;
                 }
                 p.normalize().scaleInPlace(this.generation === 0 ? this.tree.trunkLength : this.tree.branchLength);
@@ -4060,14 +4065,15 @@ class Tree extends BABYLON.Mesh {
         this.trunkBranchness = () => { return 0.5; };
         this.branchSizeRandomize = 2;
         this.branchLength = 1;
+        this.branchDR = 1;
         this.branchDY = 1;
         this.branchBranchness = () => { return 0.5; };
         this.randomizer = new Randomizer(seed);
         this.trunkBranchness = (l) => {
-            return 3 * l / this.size - 1;
+            return 3.5 * l / this.size - 1;
         };
         this.branchBranchness = (l) => {
-            return 4 * l / this.size - 2;
+            return 3.5 * l / this.size - 2;
         };
     }
     generate(p) {
@@ -4150,6 +4156,18 @@ class TreeMeshBuilder {
         let normals = [];
         let colors = [];
         let uvs = [];
+        let curve = BABYLON.Curve3.CreateCatmullRomSpline(points, 2);
+        console.log("Points " + points.length);
+        points = curve.getPoints();
+        console.log("CatmullPoints " + points.length);
+        let decimalRadiusFunction = (i) => {
+            if (i % 2 === 0) {
+                return radiusFunction(i);
+            }
+            else {
+                return radiusFunction(Math.floor(i)) * 0.5 + radiusFunction(Math.ceil(i)) * 0.5;
+            }
+        };
         for (let i = 0; i < 6; i++) {
             circle[i] = new BABYLON.Vector3(Math.cos(i * Math.PI / 3), 0, Math.sin(i * Math.PI / 3));
         }
@@ -4172,7 +4190,7 @@ class TreeMeshBuilder {
             BABYLON.Vector3.CrossToRef(axisX, axisY, axisZ);
             lastAxisZ.copyFrom(axisZ);
             let q = BABYLON.Quaternion.RotationQuaternionFromAxis(axisX, axisY, axisZ);
-            let s = radiusFunction(i);
+            let s = decimalRadiusFunction(i / 2);
             let m = BABYLON.Matrix.Compose(new BABYLON.Vector3(s, s, s), q, p);
             for (let j = 0; j < 6; j++) {
                 let v0 = circle[j];
