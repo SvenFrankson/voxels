@@ -92,6 +92,7 @@ class PlayerTest extends Main {
 		inventoryEditBlock.playerAction = PlayerActionTemplate.EditBlockAction();
 		inventory.addItem(inventoryEditBlock);
 
+		/*
 		let inventoryCreateTree = new InventoryItem();
 		inventoryCreateTree.name = "CreateTree";
 		inventoryCreateTree.section = InventorySection.Action;
@@ -99,6 +100,7 @@ class PlayerTest extends Main {
 		inventoryCreateTree.playerAction = PlayerActionTemplate.CreateTreeAction();
 		inventory.addItem(inventoryCreateTree);
 		player.playerActionManager.linkAction(inventoryCreateTree.playerAction, 1);
+		*/
 
 		let inventoryCreateMountainSmall = new InventoryItem();
 		inventoryCreateMountainSmall.name = "CreateMountainSmall";
