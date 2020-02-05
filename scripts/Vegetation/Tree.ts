@@ -49,10 +49,10 @@ class Branch {
         if (this.d < this.tree.size) {
             let branchness = 0;
             if (this.generation === 0) {
-                branchness = this.tree.trunkBranchness(this.d);
+                branchness = this.tree.trunkBranchness(this.d, this.generation);
             }
             else {
-                branchness = this.tree.branchBranchness(this.d);
+                branchness = this.tree.branchBranchness(this.d, this.generation);
             }
             if (this.generation === 0 || this.tree.randomizer.random() < branchness) {
                 if (this.generation > 0) {
@@ -196,24 +196,29 @@ class Tree extends BABYLON.Mesh {
 
     public trunkLength: number = 1.2;
     public trunkDY: number = 0.5;
-    public trunkBranchness: (l: number) => number = () => { return 0.5; };
+    public trunkBranchness: (l: number, gen: number) => number = () => { return 0.5; };
 
     public branchSizeRandomize: number = 2;
     public branchLength: number = 1;
     public branchDR: number = 1;
     public branchDY: number = 1;
-    public branchBranchness: (l: number) => number = () => { return 0.5; };
+    public branchBranchness: (l: number, gen: number) => number = () => { return 0.5; };
 
     public root: Branch;
 
     constructor(seed: number = 42) {
         super("tree");
         this.randomizer = new Randomizer(seed);
-        this.trunkBranchness = (l) => {
-            return 3.5 * l / this.size - 1;
+        this.trunkBranchness = (l, gen) => {
+            return 2.5 * l / this.size - 0.5;
         }
-        this.branchBranchness = (l) => {
-            return 3.5 * l / this.size - 2;
+        this.branchBranchness = (l, gen) => {
+            if (gen === 1) {
+                return 1;
+            }
+            else {
+                return 0.2;
+            }
         }
     }
 
@@ -274,13 +279,15 @@ class Tree extends BABYLON.Mesh {
                 }
             );
             if (points.length >= 2) {
+                let genFactor = Math.pow(1.3, generation);
+                let branch = branchMesh.branches[0];
+                let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
+                let rStart = 0.5 / genFactor * factor;
+                let rEnd = 0.1 / genFactor;
                 let vertexData = TreeMeshBuilder.CreateTubeVertexData(
                     points,
-                    (index: number) => {
-                        let branch = branchMesh.branches[index];
-                        let genFactor = Math.pow(1.3, generation);
-                        let factor = (1 - branch.d / this.size) * 0.8 + 0.2;
-                        return factor * 0.5 / genFactor * t;
+                    (d: number) => {
+                        return rStart * (1 - d) + rEnd * d;
                     },
                     new BABYLON.Color4(168 / 255, 113 / 255, 50 / 255, 1)
                 );
