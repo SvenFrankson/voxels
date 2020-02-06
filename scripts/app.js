@@ -426,6 +426,38 @@ class BlockVertexData {
         });
     }
 }
+class BrickVertexData {
+    static AddKnob(x, y, z, positions, indices, normals) {
+        let l = positions.length / 3;
+        for (let i = 0; i < BrickVertexData._KnobPositions.length / 3; i++) {
+            let kx = BrickVertexData._KnobPositions[3 * i];
+            let ky = BrickVertexData._KnobPositions[3 * i + 1];
+            let kz = BrickVertexData._KnobPositions[3 * i + 2];
+            positions.push(kx + x, ky + y, kz + z);
+        }
+        for (let i = 0; i < BrickVertexData._KnobNormals.length / 3; i++) {
+            let knx = BrickVertexData._KnobNormals[3 * i];
+            let kny = BrickVertexData._KnobNormals[3 * i + 1];
+            let knz = BrickVertexData._KnobNormals[3 * i + 2];
+            normals.push(knx + x, kny + y, knz + z);
+        }
+        for (let i = 0; i < BrickVertexData._KnobIndices.length; i++) {
+            let kn = BrickVertexData._KnobIndices[i];
+            indices.push(kn + l);
+        }
+    }
+}
+BrickVertexData._KnobPositions = [0, 0.17, 0.24, 0.12, 0, 0.2078, 0, 0, 0.24, 0.12, 0.17, 0.2078, 0.2078, 0, 0.12, 0.2078, 0.17, 0.12, 0.24, 0, 0, 0.24, 0.17, 0, 0.2078, 0, -0.12, 0.2078, 0.17, -0.12, 0.12, 0, -0.2078, 0.12, 0.17, -0.2078, 0, 0, -0.24, 0, 0.17, -0.24, -0.12, 0, -0.2078, -0.12, 0.17, -0.2078, -0.2078, 0, -0.12,
+    -0.2078, 0.17, -0.12, -0.24, 0, 0, -0.24, 0.17, 0, -0.2078, 0, 0.12, 0, 0.17, 0.24, -0.12, 0.17, 0.2078, 0, 0.17, 0, -0.2078, 0.17, 0.12, -0.12, 0, 0.2078, -0.12, 0.17, 0.2078, 0, 0, 0.24, -0.12, 0, 0.2078, 0.2078, 0.17, -0.12, 0.24, 0.17, 0, 0, 0.17, 0, 0.12, 0.17, 0.2078, 0, 0.17, 0.24,
+    0, 0.17, 0, 0.2078, 0.17, 0.12, 0, 0.17, 0, -0.2078, 0.17, 0.12, 0, 0.17, 0, 0, 0.17, 0, -0.24, 0.17, 0, 0, 0.17, 0, -0.2078, 0.17, -0.12, 0, 0.17, 0, -0.12, 0.17, -0.2078, 0, 0.17, 0, 0, 0.17, -0.24, 0, 0.17, 0, 0.12, 0.17, -0.2078, 0, 0.17, 0, 0, 0.17, 0,
+    -0.12, 0.17, 0.2078, 0, 0.17, 0.24];
+BrickVertexData._KnobNormals = [0.259, 0, 0.966, 0.5, 0, 0.866, 0.259, 0, 0.966, 0.5, 0, 0.866, 0.866, 0, 0.5, 0.866, 0, 0.5, 1, 0, 0, 1, 0, 0, 0.866, 0, -0.5, 0.866, 0, -0.5, 0.5, 0, -0.866, 0.5, 0, -0.866, 0, 0, -1, 0, 0, -1, -0.5, 0, -0.866, -0.5, 0, -0.866, -0.866, 0, -0.5,
+    -0.866, 0, -0.5, -1, 0, 0, -1, 0, 0, -0.866, 0, 0.5, 0, 1, 0, 0, 1, 0, 0, 1, 0, -0.866, 0, 0.5, -0.707, 0, 0.707, -0.259, 0, 0.966, -0.259, 0, 0.966, -0.259, 0, 0.966, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+    -0.707, 0, 0.707, -0.259, 0, 0.966];
+BrickVertexData._KnobIndices = [0, 1, 2, 3, 4, 1, 5, 6, 4, 7, 8, 6, 9, 10, 8, 11, 12, 10, 13, 14, 12, 15, 16, 14, 17, 18, 16, 19, 20, 18, 21, 22, 23, 24, 25, 20, 26, 27, 28, 29, 30, 31, 32, 33, 34, 30, 35, 36, 22, 37,
+    38, 35, 32, 39, 37, 40, 41, 40, 42, 43, 42, 44, 45, 44, 46, 47, 46, 48, 49, 48, 29, 50, 0, 3, 1, 3, 5, 4, 5, 7, 6, 7, 9, 8, 9, 11, 10, 11, 13, 12, 13, 15, 14, 15, 17, 16, 17, 19, 18, 19,
+    24, 20, 24, 51, 25, 26, 52, 27];
 var CHUNCK_SIZE = 8;
 class Face {
     constructor(vertices, cubeType, draw = true) {
@@ -2724,6 +2756,9 @@ window.addEventListener("load", async () => {
                 else if (splitParam[1] === "miniature") {
                     main = new Miniature("render-canvas");
                 }
+                else if (splitParam[1] === "tile_test") {
+                    main = new TileTest("render-canvas");
+                }
             }
         }
     }
@@ -3357,6 +3392,20 @@ class SkullIsland extends Main {
         Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
     }
 }
+/// <reference path="./Main.ts"/>
+class TileTest extends Main {
+    initializeCamera() {
+        let camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 10, -20), Main.Scene);
+        camera.attachControl(Main.Canvas);
+        Main.Camera = camera;
+    }
+    async initialize() {
+        await super.initializeScene();
+        let tile = new Tile(0, 0);
+        tile.makeRandom();
+        tile.updateTerrainMesh();
+    }
+}
 class SeaMaterial extends BABYLON.ShaderMaterial {
     constructor(name, scene) {
         super(name, scene, {
@@ -3920,6 +3969,136 @@ class VMath {
         for (let i = 0; i < interpolatedPoints.length; i++) {
             path.splice(2 * i + 1, 0, interpolatedPoints[i]);
         }
+    }
+}
+var TILE_SIZE = 9;
+var DX = 0.7;
+var DY = 0.3;
+class Tile extends BABYLON.Mesh {
+    constructor(i, j) {
+        super("tile_" + i + "_" + j);
+        this.i = i;
+        this.j = j;
+        this.position.x = TILE_SIZE * this.i;
+        this.position.y = TILE_SIZE * this.j;
+    }
+    makeEmpty() {
+        this.heights = [];
+        for (let i = 0; i < TILE_SIZE; i++) {
+            this.heights[i] = [];
+            for (let j = 0; j < TILE_SIZE; j++) {
+                this.heights[i][j] = 0;
+            }
+        }
+    }
+    makeRandom() {
+        this.heights = [];
+        for (let i = 0; i < TILE_SIZE; i++) {
+            this.heights[i] = [];
+            for (let j = 0; j < TILE_SIZE; j++) {
+                this.heights[i][j] = Math.floor(Math.random() * 2);
+            }
+        }
+    }
+    updateTerrainMesh() {
+        let data = new BABYLON.VertexData();
+        let positions = [];
+        let colors = [];
+        let indices = [];
+        for (let j = 0; j < TILE_SIZE; j++) {
+            for (let i = 0; i < TILE_SIZE; i++) {
+                let y = this.heights[i][j] * DY * 3;
+                let x00 = 2 * i * DX;
+                if (i > 0) {
+                    x00 -= DX * 0.5;
+                }
+                let z00 = 2 * j * DX;
+                if (j > 0) {
+                    z00 -= DX * 0.5;
+                }
+                positions.push(x00, y, z00);
+                let x10 = 2 * i * DX;
+                if (i < TILE_SIZE - 1) {
+                    x10 += DX * 0.5;
+                }
+                let z10 = 2 * j * DX;
+                if (j > 0) {
+                    z10 -= DX * 0.5;
+                }
+                positions.push(x10, y, z10);
+                let x11 = 2 * i * DX;
+                if (i < TILE_SIZE - 1) {
+                    x11 += DX * 0.5;
+                }
+                let z11 = 2 * j * DX;
+                if (j < TILE_SIZE - 1) {
+                    z11 += DX * 0.5;
+                }
+                positions.push(x11, y, z11);
+                let x01 = 2 * i * DX;
+                if (i > 0) {
+                    x01 -= DX * 0.5;
+                }
+                let z01 = 2 * j * DX;
+                if (j < TILE_SIZE - 1) {
+                    z01 += DX * 0.5;
+                }
+                positions.push(x01, y, z01);
+                let n = 4 * (i + j * TILE_SIZE);
+                let nJ = n + 4 * TILE_SIZE;
+                indices.push(n, n + 1, n + 2);
+                indices.push(n, n + 2, n + 3);
+                if (i < TILE_SIZE - 1) {
+                    indices.push(n + 1, n + 4, n + 7);
+                    indices.push(n + 1, n + 7, n + 2);
+                }
+                if (j < TILE_SIZE - 1) {
+                    indices.push(n + 3, n + 2, nJ + 1);
+                    indices.push(n + 3, nJ + 1, nJ);
+                }
+                if (i < TILE_SIZE - 1 && j < TILE_SIZE - 1) {
+                    indices.push(n + 2, n + 7, nJ + 4);
+                    indices.push(n + 2, nJ + 4, nJ + 1);
+                }
+            }
+        }
+        data.positions = positions;
+        //data.colors = colors;
+        data.indices = indices;
+        let normals = [];
+        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+        data.normals = normals;
+        for (let j = 0; j < TILE_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_SIZE - 1; i++) {
+                let h00 = this.heights[i][j];
+                let h10 = this.heights[i + 1][j];
+                let h11 = this.heights[i + 1][j + 1];
+                let h01 = this.heights[i][j + 1];
+                BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                if (h00 === h10) {
+                    BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                }
+                if (h00 === h01) {
+                    BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    if (h00 === h10 && h00 === h11) {
+                        BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    }
+                }
+            }
+        }
+        data.applyToMesh(this);
+    }
+    serialize() {
+        return {
+            i: this.i,
+            j: this.j,
+            heights: this.heights
+        };
+    }
+    deserialize(data) {
+        this.i = data.i;
+        this.j = data.j;
+        this.heights = data.heights;
     }
 }
 class BranchMesh {

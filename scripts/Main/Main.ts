@@ -195,6 +195,9 @@ window.addEventListener("load", async () => {
 				else if (splitParam[1] === "miniature") {
 					main = new Miniature("render-canvas");
 				}
+				else if (splitParam[1] === "tile_test") {
+					main = new TileTest("render-canvas");
+				}
 			}
 		}
 	}
