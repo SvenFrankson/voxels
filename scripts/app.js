@@ -3401,9 +3401,12 @@ class TileTest extends Main {
     }
     async initialize() {
         await super.initializeScene();
-        let tile = new Tile(0, 0);
-        tile.makeRandom();
-        tile.updateTerrainMeshLod0();
+        let tileManager = new TileManager();
+        for (let I = -6; I <= 6; I++) {
+            for (let J = -6; J <= 6; J++) {
+                await tileManager.updateTile(I, J);
+            }
+        }
     }
 }
 class SeaMaterial extends BABYLON.ShaderMaterial {
@@ -4068,7 +4071,8 @@ TerrainTile.LoadedRefs = [
     "0102", "0022", "0122", "0002", "0222", "0221", "0212", "0121", "0211", "0112", "0012", "0021", "0202"
 ];
 TerrainTile._VertexDatas = new Map();
-var TILE_SIZE = 9;
+var TILE_VERTEX_SIZE = 9;
+var TILE_SIZE = 8;
 var DX = 0.8;
 var DY = 0.32;
 class Tile extends BABYLON.Mesh {
@@ -4076,23 +4080,23 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.i = i;
         this.j = j;
-        this.position.x = TILE_SIZE * this.i;
-        this.position.y = TILE_SIZE * this.j;
+        this.position.x = TILE_SIZE * this.i * DX * 2;
+        this.position.z = TILE_SIZE * this.j * DX * 2;
     }
     makeEmpty() {
         this.heights = [];
-        for (let i = 0; i < TILE_SIZE; i++) {
+        for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
             this.heights[i] = [];
-            for (let j = 0; j < TILE_SIZE; j++) {
+            for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = 0;
             }
         }
     }
     makeRandom() {
         this.heights = [];
-        for (let i = 0; i < TILE_SIZE; i++) {
+        for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
             this.heights[i] = [];
-            for (let j = 0; j < TILE_SIZE; j++) {
+            for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = Math.floor(Math.random() * 3);
             }
         }
@@ -4103,8 +4107,8 @@ class Tile extends BABYLON.Mesh {
         let colors = [];
         let indices = [];
         let normals = [];
-        for (let j = 0; j < TILE_SIZE - 1; j++) {
-            for (let i = 0; i < TILE_SIZE - 1; i++) {
+        for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
                 let h1 = this.heights[i][j];
                 let h2 = this.heights[i][j + 1];
                 let h3 = this.heights[i + 1][j + 1];
@@ -4137,12 +4141,14 @@ class Tile extends BABYLON.Mesh {
         //data.colors = colors;
         data.indices = indices;
         data.normals = normals;
+        /*
         for (let j = 0; j < TILE_SIZE - 1; j++) {
             for (let i = 0; i < TILE_SIZE - 1; i++) {
                 let h00 = this.heights[i][j];
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
                 let h01 = this.heights[i][j + 1];
+
                 BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
                 if (h00 === h10) {
                     BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
@@ -4155,6 +4161,7 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+        */
         data.applyToMesh(this);
     }
     updateTerrainMeshLod1() {
@@ -4162,8 +4169,8 @@ class Tile extends BABYLON.Mesh {
         let positions = [];
         let colors = [];
         let indices = [];
-        for (let j = 0; j < TILE_SIZE; j++) {
-            for (let i = 0; i < TILE_SIZE; i++) {
+        for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
+            for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
                 let y = this.heights[i][j] * DY * 3;
                 let x00 = 2 * i * DX;
                 if (i > 0) {
@@ -4175,7 +4182,7 @@ class Tile extends BABYLON.Mesh {
                 }
                 positions.push(x00, y, z00);
                 let x10 = 2 * i * DX;
-                if (i < TILE_SIZE - 1) {
+                if (i < TILE_VERTEX_SIZE - 1) {
                     x10 += DX * 0.5;
                 }
                 let z10 = 2 * j * DX;
@@ -4184,11 +4191,11 @@ class Tile extends BABYLON.Mesh {
                 }
                 positions.push(x10, y, z10);
                 let x11 = 2 * i * DX;
-                if (i < TILE_SIZE - 1) {
+                if (i < TILE_VERTEX_SIZE - 1) {
                     x11 += DX * 0.5;
                 }
                 let z11 = 2 * j * DX;
-                if (j < TILE_SIZE - 1) {
+                if (j < TILE_VERTEX_SIZE - 1) {
                     z11 += DX * 0.5;
                 }
                 positions.push(x11, y, z11);
@@ -4197,23 +4204,23 @@ class Tile extends BABYLON.Mesh {
                     x01 -= DX * 0.5;
                 }
                 let z01 = 2 * j * DX;
-                if (j < TILE_SIZE - 1) {
+                if (j < TILE_VERTEX_SIZE - 1) {
                     z01 += DX * 0.5;
                 }
                 positions.push(x01, y, z01);
-                let n = 4 * (i + j * TILE_SIZE);
-                let nJ = n + 4 * TILE_SIZE;
+                let n = 4 * (i + j * TILE_VERTEX_SIZE);
+                let nJ = n + 4 * TILE_VERTEX_SIZE;
                 indices.push(n, n + 1, n + 2);
                 indices.push(n, n + 2, n + 3);
-                if (i < TILE_SIZE - 1) {
+                if (i < TILE_VERTEX_SIZE - 1) {
                     indices.push(n + 1, n + 4, n + 7);
                     indices.push(n + 1, n + 7, n + 2);
                 }
-                if (j < TILE_SIZE - 1) {
+                if (j < TILE_VERTEX_SIZE - 1) {
                     indices.push(n + 3, n + 2, nJ + 1);
                     indices.push(n + 3, nJ + 1, nJ);
                 }
-                if (i < TILE_SIZE - 1 && j < TILE_SIZE - 1) {
+                if (i < TILE_VERTEX_SIZE - 1 && j < TILE_VERTEX_SIZE - 1) {
                     indices.push(n + 2, n + 7, nJ + 4);
                     indices.push(n + 2, nJ + 4, nJ + 1);
                 }
@@ -4225,8 +4232,8 @@ class Tile extends BABYLON.Mesh {
         let normals = [];
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
         data.normals = normals;
-        for (let j = 0; j < TILE_SIZE - 1; j++) {
-            for (let i = 0; i < TILE_SIZE - 1; i++) {
+        for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
                 let h00 = this.heights[i][j];
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
@@ -4258,6 +4265,209 @@ class Tile extends BABYLON.Mesh {
         this.heights = data.heights;
     }
 }
+class TileManager {
+    constructor() {
+        this.tiles = new Map();
+    }
+    _createTile(iTile, jTile) {
+        let tile = new Tile(iTile, jTile);
+        tile.makeEmpty();
+        let IData = Math.floor(iTile * TILE_SIZE / DATA_SIZE);
+        let JData = Math.floor(jTile * TILE_SIZE / DATA_SIZE);
+        let data = WorldDataGenerator.GetData(IData, JData);
+        let iOffsetData = iTile * TILE_SIZE - IData * DATA_SIZE;
+        let jOffsetData = jTile * TILE_SIZE - JData * DATA_SIZE;
+        let dataOverX;
+        let dataOverY;
+        let dataOverXY;
+        for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
+            for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
+                if (i + iOffsetData >= DATA_SIZE) {
+                    if (j + jOffsetData >= DATA_SIZE) {
+                        if (!dataOverXY) {
+                            dataOverXY = WorldDataGenerator.GetData(IData + 1, JData + 1);
+                            tile.heights[i][j] = dataOverXY[0][0];
+                        }
+                    }
+                    else {
+                        if (!dataOverX) {
+                            dataOverX = WorldDataGenerator.GetData(IData + 1, JData);
+                        }
+                        tile.heights[i][j] = dataOverX[0][j + jOffsetData];
+                    }
+                }
+                else if (j + jOffsetData >= DATA_SIZE) {
+                    if (!dataOverY) {
+                        dataOverY = WorldDataGenerator.GetData(IData, JData + 1);
+                    }
+                    tile.heights[i][j] = dataOverY[i + iOffsetData][0];
+                }
+                else {
+                    tile.heights[i][j] = data[i + iOffsetData][j + jOffsetData];
+                }
+            }
+        }
+        return tile;
+    }
+    async updateTile(i, j) {
+        let tileRef = i + "_" + j;
+        let tile = this.tiles.get(tileRef);
+        if (!tile) {
+            tile = this._createTile(i, j);
+            this.tiles.set(tileRef, tile);
+        }
+        await tile.updateTerrainMeshLod0();
+    }
+}
+var DATA_SIZE = 128;
+class WorldDataGenerator {
+    static _GetRawData(IRaw, JRaw) {
+        let rawTile = WorldDataGenerator._RawDatas.get(IRaw.toFixed(0) + "_" + JRaw.toFixed(0));
+        if (rawTile) {
+            return rawTile;
+        }
+        rawTile = WorldDataGenerator.GenerateRawTileFor(IRaw, JRaw);
+        WorldDataGenerator._RawDatas.set(IRaw.toFixed(0) + "_" + JRaw.toFixed(0), rawTile);
+        return rawTile;
+    }
+    static GetData(I, J) {
+        let tile = WorldDataGenerator._Datas.get(I.toFixed(0) + "_" + J.toFixed(0));
+        if (tile) {
+            return tile;
+        }
+        let s = DATA_SIZE;
+        let s2 = s / 2;
+        let rawI = 2 * I;
+        let rawJ = 2 * J;
+        let rawTile = WorldDataGenerator._GetRawData(rawI, rawJ);
+        let rawTileMM = WorldDataGenerator._GetRawData(rawI - 1, rawJ - 1);
+        let rawTilePM = WorldDataGenerator._GetRawData(rawI + 1, rawJ - 1);
+        let rawTilePP = WorldDataGenerator._GetRawData(rawI + 1, rawJ + 1);
+        let rawTileMP = WorldDataGenerator._GetRawData(rawI - 1, rawJ + 1);
+        tile = [];
+        for (let i = 0; i < s; i++) {
+            tile[i] = [];
+        }
+        for (let i = 0; i < s / 2; i++) {
+            for (let j = 0; j < s / 2; j++) {
+                let pMM = Math.min(i / s2, j / s2);
+                tile[i][j] = rawTile[i][j] * pMM + rawTileMM[i + s2][j + s2] * (1 - pMM);
+                let pPM = Math.min((s2 - i) / s2, j / s2);
+                tile[s2 + i][j] = rawTile[s2 + i][j] * pPM + rawTilePM[i][j + s2] * (1 - pPM);
+                let pPP = Math.min((s2 - i) / s2, (s2 - j) / s2);
+                tile[s2 + i][s2 + j] = rawTile[s2 + i][s2 + j] * pPP + rawTilePP[i][j] * (1 - pPP);
+                let pMP = Math.min(i / s2, (s2 - j) / s2);
+                tile[i][s2 + j] = rawTile[i][s2 + j] * pMP + rawTileMP[s2 + i][j] * (1 - pMP);
+            }
+        }
+        for (let i = 0; i < s; i++) {
+            for (let j = 0; j < s; j++) {
+                tile[i][j] = Math.round(tile[i][j]);
+            }
+        }
+        let done = false;
+        while (!done) {
+            done = true;
+            for (let i = 0; i < DATA_SIZE - 1; i++) {
+                for (let j = 0; j < DATA_SIZE - 1; j++) {
+                    let h1 = tile[i][j];
+                    let h2 = tile[i][j + 1];
+                    let h3 = tile[i + 1][j + 1];
+                    let h4 = tile[i + 1][j];
+                    let max = Math.max(h1, h2, h3, h4);
+                    let min = Math.min(h1, h2, h3, h4);
+                    if (max - min > 2) {
+                        tile[i][j] = Math.floor(h1 * 0.4 + h2 * 0.2 + h3 * 0.2 + h4 * 0.2);
+                        tile[i][j + 1] = Math.floor(h1 * 0.2 + h2 * 0.4 + h3 * 0.2 + h4 * 0.2);
+                        tile[i + 1][j + 1] = Math.floor(h1 * 0.2 + h2 * 0.2 + h3 * 0.4 + h4 * 0.2);
+                        tile[i + 1][j] = Math.floor(h1 * 0.2 + h2 * 0.2 + h3 * 0.2 + h4 * 0.4);
+                        done = false;
+                    }
+                }
+            }
+        }
+        WorldDataGenerator._Datas.set(I.toFixed(0) + "_" + J.toFixed(0), tile);
+        return tile;
+    }
+    static GenerateRawTileFor(I, J) {
+        let output = [];
+        for (let i = 0; i < DATA_SIZE; i++) {
+            output[i] = [];
+            for (let j = 0; j < DATA_SIZE; j++) {
+                output[i][j] = 10;
+            }
+        }
+        for (let n = 0; n < 10; n++) {
+            let x = Math.floor(Math.random() * DATA_SIZE);
+            let y = Math.floor(Math.random() * DATA_SIZE);
+            let h = Math.random() * 10 - 5;
+            for (let i = Math.max(x - 32, 0); i < x + 32 && i < DATA_SIZE; i++) {
+                for (let j = Math.max(y - 32, 0); j < y + 32 && j < DATA_SIZE; j++) {
+                    output[i][j] += h;
+                }
+            }
+        }
+        for (let n = 0; n < 20; n++) {
+            let x = Math.floor(Math.random() * DATA_SIZE);
+            let y = Math.floor(Math.random() * DATA_SIZE);
+            let h = Math.random() * 4 - 2;
+            for (let i = Math.max(x - 16, 0); i < x + 16 && i < DATA_SIZE; i++) {
+                for (let j = Math.max(y - 16, 0); j < y + 16 && j < DATA_SIZE; j++) {
+                    output[i][j] += h;
+                }
+            }
+        }
+        for (let n = 0; n < 100; n++) {
+            let x = Math.floor(Math.random() * DATA_SIZE);
+            let y = Math.floor(Math.random() * DATA_SIZE);
+            let h = Math.random() * 4 - 2;
+            for (let i = Math.max(x - 8, 0); i < x + 8 && i < DATA_SIZE; i++) {
+                for (let j = Math.max(y - 8, 0); j < y + 8 && j < DATA_SIZE; j++) {
+                    output[i][j] += h;
+                }
+            }
+        }
+        for (let i = 0; i < DATA_SIZE; i++) {
+            for (let j = 0; j < DATA_SIZE; j++) {
+                let n = 0;
+                let o = 0;
+                for (let ii = i - 1; ii <= i + 1; ii++) {
+                    for (let jj = j - 1; jj <= j + 1; jj++) {
+                        if (ii >= 0 && ii < DATA_SIZE && jj > 0 && jj < DATA_SIZE) {
+                            n++;
+                            o += output[ii][jj];
+                        }
+                    }
+                }
+                output[i][j] = Math.floor(o / n);
+            }
+        }
+        let done = false;
+        while (!done) {
+            done = true;
+            for (let i = 0; i < DATA_SIZE - 1; i++) {
+                for (let j = 0; j < DATA_SIZE - 1; j++) {
+                    let h1 = output[i][j];
+                    let h2 = output[i][j + 1];
+                    let h3 = output[i + 1][j + 1];
+                    let h4 = output[i + 1][j];
+                    let max = Math.max(h1, h2, h3, h4);
+                    let min = Math.min(h1, h2, h3, h4);
+                    if (max - min > 2) {
+                        output[i][j] = Math.floor(h1 * 0.4 + h2 * 0.2 + h3 * 0.2 + h4 * 0.2);
+                        output[i][j + 1] = Math.floor(h1 * 0.2 + h2 * 0.4 + h3 * 0.2 + h4 * 0.2);
+                        output[i + 1][j + 1] = Math.floor(h1 * 0.2 + h2 * 0.2 + h3 * 0.4 + h4 * 0.2);
+                        output[i + 1][j] = Math.floor(h1 * 0.2 + h2 * 0.2 + h3 * 0.2 + h4 * 0.4);
+                        done = false;
+                    }
+                }
+            }
+        }
+        return output;
+    }
+}
+WorldDataGenerator._RawDatas = new Map();
+WorldDataGenerator._Datas = new Map();
 class BranchMesh {
     constructor() {
         this.branches = [];

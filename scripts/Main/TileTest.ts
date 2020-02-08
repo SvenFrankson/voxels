@@ -10,10 +10,13 @@ class TileTest extends Main {
 
     public async initialize(): Promise<void> {
         await super.initializeScene();
-        
-        let tile = new Tile(0, 0);
-        tile.makeRandom();
 
-        tile.updateTerrainMeshLod0();
+        let tileManager = new TileManager();
+        
+        for (let I = -6; I <= 6; I++) {
+            for (let J = -6; J <= 6; J++) {
+                await tileManager.updateTile(I, J);
+            }
+        }
     }
 }

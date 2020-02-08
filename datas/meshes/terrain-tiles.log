@@ -94,8 +94,8 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num indices        :  108
 	processing begun of mesh:  0022
 		WARNING: No materials have been assigned: 
-		num positions      :  23
-		num normals        :  23
+		num positions      :  12
+		num normals        :  12
 		num tangents       :  0
 		num uvs            :  0
 		num uvs2           :  0
@@ -130,8 +130,8 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num indices        :  174
 	processing begun of mesh:  0121
 		WARNING: No materials have been assigned: 
-		num positions      :  128
-		num normals        :  128
+		num positions      :  36
+		num normals        :  36
 		num tangents       :  0
 		num uvs            :  0
 		num uvs2           :  0
@@ -157,8 +157,8 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num indices        :  174
 	processing begun of mesh:  0202
 		WARNING: No materials have been assigned: 
-		num positions      :  125
-		num normals        :  125
+		num positions      :  36
+		num normals        :  36
 		num tangents       :  0
 		num uvs            :  0
 		num uvs2           :  0
@@ -194,4 +194,4 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 	writing mesh:  0000
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.116 secs
+elapsed time:  0 min, 0.2604 secs
