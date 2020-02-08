@@ -14,6 +14,6 @@ class TileTest extends Main {
         let tile = new Tile(0, 0);
         tile.makeRandom();
 
-        tile.updateTerrainMesh();
+        tile.updateTerrainMeshLod0();
     }
 }

@@ -1,0 +1,197 @@
+Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		texture directory   :  C:\Users\svent\Documents\SvenFrankson\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  0011
+		WARNING: No materials have been assigned: 
+		num positions      :  12
+		num normals        :  12
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  30
+	processing begun of mesh:  0001
+		WARNING: No materials have been assigned: 
+		num positions      :  24
+		num normals        :  24
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  96
+	processing begun of mesh:  0111
+		WARNING: No materials have been assigned: 
+		num positions      :  24
+		num normals        :  24
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  96
+	processing begun of mesh:  0101
+		WARNING: No materials have been assigned: 
+		num positions      :  44
+		num normals        :  44
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  198
+	processing begun of mesh:  0002
+		WARNING: No materials have been assigned: 
+		num positions      :  22
+		num normals        :  22
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  90
+	processing begun of mesh:  0222
+		WARNING: No materials have been assigned: 
+		num positions      :  22
+		num normals        :  22
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  90
+	processing begun of mesh:  0112
+		WARNING: No materials have been assigned: 
+		num positions      :  30
+		num normals        :  30
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  120
+	processing begun of mesh:  0211
+		WARNING: No materials have been assigned: 
+		num positions      :  30
+		num normals        :  30
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  120
+	processing begun of mesh:  0021
+		WARNING: No materials have been assigned: 
+		num positions      :  27
+		num normals        :  27
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  108
+	processing begun of mesh:  0022
+		WARNING: No materials have been assigned: 
+		num positions      :  23
+		num normals        :  23
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  30
+	processing begun of mesh:  0122
+		WARNING: No materials have been assigned: 
+		num positions      :  27
+		num normals        :  27
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  108
+	processing begun of mesh:  0221
+		WARNING: No materials have been assigned: 
+		num positions      :  27
+		num normals        :  27
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  108
+	processing begun of mesh:  0212
+		WARNING: No materials have been assigned: 
+		num positions      :  40
+		num normals        :  40
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  174
+	processing begun of mesh:  0121
+		WARNING: No materials have been assigned: 
+		num positions      :  128
+		num normals        :  128
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  150
+	processing begun of mesh:  0012
+		WARNING: No materials have been assigned: 
+		num positions      :  27
+		num normals        :  27
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  108
+	processing begun of mesh:  0102
+		WARNING: No materials have been assigned: 
+		num positions      :  40
+		num normals        :  40
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  174
+	processing begun of mesh:  0202
+		WARNING: No materials have been assigned: 
+		num positions      :  125
+		num normals        :  125
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  150
+	processing begun of mesh:  0000
+		WARNING: No materials have been assigned: 
+		num positions      :  4
+		num normals        :  4
+		num tangents       :  0
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  6
+========= Writing of JSON file started =========
+	writing mesh:  0011
+	writing mesh:  0001
+	writing mesh:  0111
+	writing mesh:  0101
+	writing mesh:  0002
+	writing mesh:  0222
+	writing mesh:  0112
+	writing mesh:  0211
+	writing mesh:  0021
+	writing mesh:  0022
+	writing mesh:  0122
+	writing mesh:  0221
+	writing mesh:  0212
+	writing mesh:  0121
+	writing mesh:  0012
+	writing mesh:  0102
+	writing mesh:  0202
+	writing mesh:  0000
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.116 secs

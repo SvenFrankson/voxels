@@ -1,6 +1,6 @@
 var TILE_SIZE = 9;
-var DX = 0.7;
-var DY = 0.3;
+var DX = 0.8;
+var DY = 0.32;
 
 interface TileData {
     i: number;
@@ -36,12 +36,80 @@ class Tile extends BABYLON.Mesh {
         for (let i = 0; i < TILE_SIZE; i++) {
             this.heights[i] = [];
             for (let j = 0; j < TILE_SIZE; j++) {
-                this.heights[i][j] = Math.floor(Math.random() * 2);
+                this.heights[i][j] = Math.floor(Math.random() * 3);
             }
         }
     }
 
-    public updateTerrainMesh(): void {
+    public async updateTerrainMeshLod0(): Promise<void> {
+        let data = new BABYLON.VertexData();
+        let positions: number[] = [];
+        let colors: number[] = [];
+        let indices: number[] = [];
+        let normals = [];
+
+        for (let j = 0; j < TILE_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_SIZE - 1; i++) {
+                let h1 = this.heights[i][j];
+                    let h2 = this.heights[i][j + 1];
+                    let h3 = this.heights[i + 1][j + 1];
+                    let h4 = this.heights[i + 1][j];
+                    let min = Math.min(h1, h2, h3, h4);
+                    h1 -= min;
+                    h2 -= min;
+                    h3 -= min;
+                    h4 -= min;
+
+                    let data = await TerrainTile.GetDataFor(h1, h2, h3, h4);
+                    let mesh: BABYLON.Mesh;
+                    if (data) {
+                        let l = positions.length / 3;
+                        for (let ip = 0; ip < data.positions.length / 3; ip++) {
+                            let x = data.positions[3 * ip];
+                            let y = data.positions[3 * ip + 1];
+                            let z = data.positions[3 * ip + 2];
+                            positions.push(x + (2 * i + 1) * DX);
+                            positions.push(y + min * DY * 3);
+                            positions.push(z + (2 * j + 1) * DX);
+                        }
+                        for (let ii = 0; ii < data.indices.length; ii++) {
+                            indices.push(data.indices[ii] + l);
+                        }
+                        normals.push(...data.normals);
+                    }
+            }
+        }
+
+        data.positions = positions;
+        //data.colors = colors;
+        data.indices = indices;
+        data.normals = normals;
+
+        
+        for (let j = 0; j < TILE_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_SIZE - 1; i++) {
+                let h00 = this.heights[i][j];
+                let h10 = this.heights[i + 1][j];
+                let h11 = this.heights[i + 1][j + 1];
+                let h01 = this.heights[i][j + 1];
+
+                BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                if (h00 === h10) {
+                    BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                }
+                if (h00 === h01) {
+                    BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    if (h00 === h10 && h00 === h11) {
+                        BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    }
+                }
+            }
+        }
+
+        data.applyToMesh(this);
+    }
+
+    public updateTerrainMeshLod1(): void {
         let data = new BABYLON.VertexData();
         let positions: number[] = [];
         let colors: number[] = [];

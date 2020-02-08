@@ -3403,7 +3403,7 @@ class TileTest extends Main {
         await super.initializeScene();
         let tile = new Tile(0, 0);
         tile.makeRandom();
-        tile.updateTerrainMesh();
+        tile.updateTerrainMeshLod0();
     }
 }
 class SeaMaterial extends BABYLON.ShaderMaterial {
@@ -3971,9 +3971,106 @@ class VMath {
         }
     }
 }
+class TerrainTile {
+    static async _LoadVertexDatas() {
+        return new Promise(resolve => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/terrain-tiles.babylon", "", Main.Scene, (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        TerrainTile._VertexDatas.set(mesh.name + "-rz-0", BABYLON.VertexData.ExtractFromMesh(mesh));
+                        mesh.dispose();
+                    }
+                }
+                console.log(TerrainTile._VertexDatas);
+                resolve();
+            });
+        });
+    }
+    static clone(data) {
+        let clonedData = new BABYLON.VertexData();
+        clonedData.positions = [...data.positions];
+        clonedData.indices = [...data.indices];
+        clonedData.normals = [...data.normals];
+        if (data.uvs) {
+            clonedData.uvs = [...data.uvs];
+        }
+        if (data.colors) {
+            clonedData.colors = [...data.colors];
+        }
+        return clonedData;
+    }
+    static async Get(name, dir = 0) {
+        let ref = name + "-rz-" + dir;
+        if (TerrainTile._VertexDatas.get(ref)) {
+            return TerrainTile._VertexDatas.get(ref);
+        }
+        await TerrainTile._LoadVertexDatas();
+        if (dir === 0) {
+            return TerrainTile._VertexDatas.get(ref);
+        }
+        else {
+            let base = await TerrainTile.Get(name, 0);
+            if (!base) {
+                console.log(name + " not found.");
+            }
+            let data = TerrainTile.RotateZ(base, dir * Math.PI / 2);
+            TerrainTile._VertexDatas.set(ref, data);
+            return TerrainTile._VertexDatas.get(ref);
+        }
+    }
+    static RotateZ(baseData, angle) {
+        let data = new BABYLON.VertexData();
+        let positions = [...baseData.positions];
+        let normals;
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            normals = [...baseData.normals];
+        }
+        data.indices = [...baseData.indices];
+        let cosa = Math.cos(angle);
+        let sina = Math.sin(angle);
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            positions[3 * i] = x * cosa - z * sina;
+            positions[3 * i + 2] = x * sina + z * cosa;
+            if (normals) {
+                let xn = normals[3 * i];
+                let zn = normals[3 * i + 2];
+                normals[3 * i] = xn * cosa - zn * sina;
+                normals[3 * i + 2] = xn * sina + zn * cosa;
+            }
+        }
+        data.positions = positions;
+        if (normals) {
+            data.normals = normals;
+        }
+        return data;
+    }
+    static RotateRef(ref, rotation) {
+        return ref.substr(rotation) + ref.substring(0, rotation);
+    }
+    static async GetDataFor(h1, h2, h3, h4) {
+        let sRef = h1.toFixed(0) + h2.toFixed(0) + h3.toFixed(0) + h4.toFixed(0);
+        for (let i = 0; i < TerrainTile.LoadedRefs.length; i++) {
+            let ref = TerrainTile.LoadedRefs[i];
+            for (let r = 0; r < 4; r++) {
+                if (sRef === TerrainTile.RotateRef(ref, r)) {
+                    return TerrainTile.Get(ref, r);
+                }
+            }
+        }
+    }
+}
+TerrainTile.LoadedRefs = [
+    "0000",
+    "0001", "0011", "0101", "0111",
+    "0102", "0022", "0122", "0002", "0222", "0221", "0212", "0121", "0211", "0112", "0012", "0021", "0202"
+];
+TerrainTile._VertexDatas = new Map();
 var TILE_SIZE = 9;
-var DX = 0.7;
-var DY = 0.3;
+var DX = 0.8;
+var DY = 0.32;
 class Tile extends BABYLON.Mesh {
     constructor(i, j) {
         super("tile_" + i + "_" + j);
@@ -3996,11 +4093,71 @@ class Tile extends BABYLON.Mesh {
         for (let i = 0; i < TILE_SIZE; i++) {
             this.heights[i] = [];
             for (let j = 0; j < TILE_SIZE; j++) {
-                this.heights[i][j] = Math.floor(Math.random() * 2);
+                this.heights[i][j] = Math.floor(Math.random() * 3);
             }
         }
     }
-    updateTerrainMesh() {
+    async updateTerrainMeshLod0() {
+        let data = new BABYLON.VertexData();
+        let positions = [];
+        let colors = [];
+        let indices = [];
+        let normals = [];
+        for (let j = 0; j < TILE_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_SIZE - 1; i++) {
+                let h1 = this.heights[i][j];
+                let h2 = this.heights[i][j + 1];
+                let h3 = this.heights[i + 1][j + 1];
+                let h4 = this.heights[i + 1][j];
+                let min = Math.min(h1, h2, h3, h4);
+                h1 -= min;
+                h2 -= min;
+                h3 -= min;
+                h4 -= min;
+                let data = await TerrainTile.GetDataFor(h1, h2, h3, h4);
+                let mesh;
+                if (data) {
+                    let l = positions.length / 3;
+                    for (let ip = 0; ip < data.positions.length / 3; ip++) {
+                        let x = data.positions[3 * ip];
+                        let y = data.positions[3 * ip + 1];
+                        let z = data.positions[3 * ip + 2];
+                        positions.push(x + (2 * i + 1) * DX);
+                        positions.push(y + min * DY * 3);
+                        positions.push(z + (2 * j + 1) * DX);
+                    }
+                    for (let ii = 0; ii < data.indices.length; ii++) {
+                        indices.push(data.indices[ii] + l);
+                    }
+                    normals.push(...data.normals);
+                }
+            }
+        }
+        data.positions = positions;
+        //data.colors = colors;
+        data.indices = indices;
+        data.normals = normals;
+        for (let j = 0; j < TILE_SIZE - 1; j++) {
+            for (let i = 0; i < TILE_SIZE - 1; i++) {
+                let h00 = this.heights[i][j];
+                let h10 = this.heights[i + 1][j];
+                let h11 = this.heights[i + 1][j + 1];
+                let h01 = this.heights[i][j + 1];
+                BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                if (h00 === h10) {
+                    BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
+                }
+                if (h00 === h01) {
+                    BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    if (h00 === h10 && h00 === h11) {
+                        BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
+                    }
+                }
+            }
+        }
+        data.applyToMesh(this);
+    }
+    updateTerrainMeshLod1() {
         let data = new BABYLON.VertexData();
         let positions = [];
         let colors = [];
