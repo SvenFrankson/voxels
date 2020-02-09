@@ -460,7 +460,7 @@ class BrickVertexData {
                 let knx = data.normals[3 * i];
                 let kny = data.normals[3 * i + 1];
                 let knz = data.normals[3 * i + 2];
-                normals.push(knx + x, kny + y, knz + z);
+                normals.push(knx, kny, knz);
             }
             for (let i = 0; i < data.indices.length; i++) {
                 let kn = data.indices[i];
@@ -2710,16 +2710,20 @@ class Main {
         `;
         BABYLON.Engine.ShadersRepository = "./shaders/";
         let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
+        /*
         let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
         postProcess.onApply = (effect) => {
             effect.setTexture("depthSampler", depthMap);
             effect.setFloat("width", Main.Engine.getRenderWidth());
             effect.setFloat("height", Main.Engine.getRenderHeight());
         };
+        
         let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
         noPostProcessCamera.parent = Main.Camera;
         noPostProcessCamera.layerMask = 0x10000000;
+        
         Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
+        */
         // Skybox seed : 1vt3h8rxhb28
         Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 3000.0 }, Main.Scene);
         Main.Skybox.layerMask = 1;
@@ -4095,6 +4099,7 @@ class Tile extends BABYLON.Mesh {
         this.currentLOD = -1;
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
+        this.material = Main.terrainCellShadingMaterial;
     }
     makeEmpty() {
         this.heights = [];
@@ -4378,7 +4383,7 @@ class TileManager {
                             tile.updateTerrainMeshLod1();
                         }
                     }
-                    done = performance.now() - t0 > 15;
+                    done = performance.now() - t0 > 30;
                 }
                 else {
                     this._checkIndex = 0;

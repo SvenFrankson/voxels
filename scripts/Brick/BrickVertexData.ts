@@ -47,7 +47,7 @@ class BrickVertexData {
                 let knx = data.normals[3 * i];
                 let kny = data.normals[3 * i + 1];
                 let knz = data.normals[3 * i + 2];
-                normals.push(knx + x, kny + y, knz + z);
+                normals.push(knx, kny, knz);
             }
     
             for (let i = 0; i < data.indices.length; i++) {

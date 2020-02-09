@@ -124,6 +124,7 @@ class Main {
         
 		let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
 		
+		/*
 		let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
 		postProcess.onApply = (effect) => {
 			effect.setTexture("depthSampler", depthMap);
@@ -136,6 +137,7 @@ class Main {
 		noPostProcessCamera.layerMask = 0x10000000;
 		
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
+		*/
 
 		// Skybox seed : 1vt3h8rxhb28
 		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 3000.0 }, Main.Scene);

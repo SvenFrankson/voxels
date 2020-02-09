@@ -132,7 +132,7 @@ class TileManager {
                         tile.updateTerrainMeshLod1();
                     }
                 }
-                done = performance.now() - t0 > 15;
+                done = performance.now() - t0 > 30;
             }
             else {
                 this._checkIndex = 0;

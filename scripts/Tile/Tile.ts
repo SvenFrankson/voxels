@@ -21,6 +21,7 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
+        this.material = Main.terrainCellShadingMaterial;
     }
 
     public makeEmpty(): void {
