@@ -10,6 +10,8 @@ class TileTest extends Main {
 
     public async initialize(): Promise<void> {
         await super.initializeScene();
+        await TerrainTileVertexData.InitializeData();
+        await BrickVertexData.InitializeData();
 
         let tileManager = new TileManager();
         Main.Scene.onBeforeRenderObservable.add(tileManager.updateLoop);

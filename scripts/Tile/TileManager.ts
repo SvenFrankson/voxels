@@ -85,7 +85,9 @@ class TileManager {
         let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
         let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
 
-        for (let n = 0; n < 30; n++) {
+        let done = false;
+        let t0 = performance.now();
+        while (!done) {
             let _checkPosition = this._checkPositions[this._checkIndex];
             this._checkIndex++;
             if (_checkPosition) {
@@ -130,6 +132,7 @@ class TileManager {
                         tile.updateTerrainMeshLod1();
                     }
                 }
+                done = performance.now() - t0 > 15;
             }
             else {
                 this._checkIndex = 0;

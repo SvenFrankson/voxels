@@ -1,39 +1,59 @@
 class BrickVertexData {
 
-    private static _KnobPositions = [0,0.17,0.24,0.12,0,0.2078,0,0,0.24,0.12,0.17,0.2078,0.2078,0,0.12,0.2078,0.17,0.12,0.24,0,0,0.24,0.17,0,0.2078,0,-0.12,0.2078,0.17,-0.12,0.12,0,-0.2078,0.12,0.17,-0.2078,0,0,-0.24,0,0.17,-0.24,-0.12,0,-0.2078,-0.12,0.17,-0.2078,-0.2078,0,-0.12
-        ,-0.2078,0.17,-0.12,-0.24,0,0,-0.24,0.17,0,-0.2078,0,0.12,0,0.17,0.24,-0.12,0.17,0.2078,0,0.17,0,-0.2078,0.17,0.12,-0.12,0,0.2078,-0.12,0.17,0.2078,0,0,0.24,-0.12,0,0.2078,0.2078,0.17,-0.12,0.24,0.17,0,0,0.17,0,0.12,0.17,0.2078,0,0.17,0.24
-        ,0,0.17,0,0.2078,0.17,0.12,0,0.17,0,-0.2078,0.17,0.12,0,0.17,0,0,0.17,0,-0.24,0.17,0,0,0.17,0,-0.2078,0.17,-0.12,0,0.17,0,-0.12,0.17,-0.2078,0,0.17,0,0,0.17,-0.24,0,0.17,0,0.12,0.17,-0.2078,0,0.17,0,0,0.17,0
-        ,-0.12,0.17,0.2078,0,0.17,0.24];
+    private static _KnobVertexDatas: BABYLON.VertexData[] = [];
 
-    private static _KnobNormals = [0.259,0,0.966,0.5,0,0.866,0.259,0,0.966,0.5,0,0.866,0.866,0,0.5,0.866,0,0.5,1,0,0,1,0,0,0.866,0,-0.5,0.866,0,-0.5,0.5,0,-0.866,0.5,0,-0.866,0,0,-1,0,0,-1,-0.5,0,-0.866,-0.5,0,-0.866,-0.866,0,-0.5
-        ,-0.866,0,-0.5,-1,0,0,-1,0,0,-0.866,0,0.5,0,1,0,0,1,0,0,1,0,-0.866,0,0.5,-0.707,0,0.707,-0.259,0,0.966,-0.259,0,0.966,-0.259,0,0.966,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0
-        ,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0
-        ,-0.707,0,0.707,-0.259,0,0.966];
+    private static async _LoadKnobsVertexDatas(): Promise<void> {
+        return new Promise<void>(
+            resolve => {
+                BABYLON.SceneLoader.ImportMesh(
+                    "",
+                    "./datas/meshes/knobs.babylon",
+                    "",
+                    Main.Scene,
+                    (meshes) => {
+                        for (let i = 0; i < meshes.length; i++) {
+                            let mesh = meshes[i];
+                            if (mesh instanceof BABYLON.Mesh) {
+                                let lod = parseInt(mesh.name.replace("knob-lod", ""));
+                                BrickVertexData._KnobVertexDatas[lod] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                                mesh.dispose();
+                            }
+                        }
+                        resolve();
+                    }
+                );
+            }
+        );
+    }
 
-    private static _KnobIndices = [0,1,2,3,4,1,5,6,4,7,8,6,9,10,8,11,12,10,13,14,12,15,16,14,17,18,16,19,20,18,21,22,23,24,25,20,26,27,28,29,30,31,32,33,34,30,35,36,22,37
-    ,38,35,32,39,37,40,41,40,42,43,42,44,45,44,46,47,46,48,49,48,29,50,0,3,1,3,5,4,5,7,6,7,9,8,9,11,10,11,13,12,13,15,14,15,17,16,17,19,18,19
-    ,24,20,24,51,25,26,52,27];
+    public static async InitializeData(): Promise<boolean> {
+        await BrickVertexData._LoadKnobsVertexDatas();
+        return true;
+    }
         
-    public static AddKnob(x: number, y: number, z: number, positions: number[], indices: number[], normals: number[]): void {
+    public static AddKnob(x: number, y: number, z: number, positions: number[], indices: number[], normals: number[], lod: number): void {
         let l = positions.length / 3;
+        let data = BrickVertexData._KnobVertexDatas[lod];
+        if (data) {
 
-        for (let i = 0; i < BrickVertexData._KnobPositions.length / 3; i++) {
-            let kx = BrickVertexData._KnobPositions[3 * i];
-            let ky = BrickVertexData._KnobPositions[3 * i + 1];
-            let kz = BrickVertexData._KnobPositions[3 * i + 2];
-            positions.push(kx + x, ky + y, kz + z);
-        }
-
-        for (let i = 0; i < BrickVertexData._KnobNormals.length / 3; i++) {
-            let knx = BrickVertexData._KnobNormals[3 * i];
-            let kny = BrickVertexData._KnobNormals[3 * i + 1];
-            let knz = BrickVertexData._KnobNormals[3 * i + 2];
-            normals.push(knx + x, kny + y, knz + z);
-        }
-
-        for (let i = 0; i < BrickVertexData._KnobIndices.length; i++) {
-            let kn = BrickVertexData._KnobIndices[i];
-            indices.push(kn + l);
+            for (let i = 0; i < data.positions.length / 3; i++) {
+                let kx = data.positions[3 * i];
+                let ky = data.positions[3 * i + 1];
+                let kz = data.positions[3 * i + 2];
+                positions.push(kx + x, ky + y, kz + z);
+            }
+    
+            for (let i = 0; i < data.normals.length / 3; i++) {
+                let knx = data.normals[3 * i];
+                let kny = data.normals[3 * i + 1];
+                let knz = data.normals[3 * i + 2];
+                normals.push(knx + x, kny + y, knz + z);
+            }
+    
+            for (let i = 0; i < data.indices.length; i++) {
+                let kn = data.indices[i];
+                indices.push(kn + l);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-class TerrainTile {
+class TerrainTileVertexData {
 
     public static LoadedRefs: string[] = [
         "0000",
@@ -8,7 +8,7 @@ class TerrainTile {
 
     private static _VertexDatas: Map<string, BABYLON.VertexData> = new Map<string, BABYLON.VertexData>();
 
-    private static async _LoadVertexDatas(): Promise<void> {
+    private static async _LoadTerrainTileVertexDatas(): Promise<void> {
         return new Promise<void>(
             resolve => {
                 BABYLON.SceneLoader.ImportMesh(
@@ -20,11 +20,10 @@ class TerrainTile {
                         for (let i = 0; i < meshes.length; i++) {
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh) {
-                                TerrainTile._VertexDatas.set(mesh.name + "-rz-0", BABYLON.VertexData.ExtractFromMesh(mesh));
+                                TerrainTileVertexData._VertexDatas.set(mesh.name + "-rz-0", BABYLON.VertexData.ExtractFromMesh(mesh));
                                 mesh.dispose();
                             }
                         }
-                        console.log(TerrainTile._VertexDatas);
                         resolve();
                     }
                 );
@@ -32,7 +31,12 @@ class TerrainTile {
         );
     }
 
-    public static clone(data: BABYLON.VertexData): BABYLON.VertexData {
+    public static async InitializeData(): Promise<boolean> {
+        await TerrainTileVertexData._LoadTerrainTileVertexDatas();
+        return true;
+    }
+
+    public static Clone(data: BABYLON.VertexData): BABYLON.VertexData {
         let clonedData = new BABYLON.VertexData();
         clonedData.positions = [...data.positions];
         clonedData.indices = [...data.indices];
@@ -46,24 +50,23 @@ class TerrainTile {
         return clonedData;
     }
 
-    public static async Get(name: string, dir: number = 0): Promise<BABYLON.VertexData> {
+    public static Get(name: string, dir: number = 0): BABYLON.VertexData {
         let ref = name + "-rz-" + dir;
-        if (TerrainTile._VertexDatas.get(ref)) {
-            return TerrainTile._VertexDatas.get(ref);
+        if (TerrainTileVertexData._VertexDatas.get(ref)) {
+            return TerrainTileVertexData._VertexDatas.get(ref);
         }
-        await TerrainTile._LoadVertexDatas();
 
         if (dir === 0) {
-            return TerrainTile._VertexDatas.get(ref);
+            return TerrainTileVertexData._VertexDatas.get(ref);
         }
         else {
-            let base = await TerrainTile.Get(name, 0);
+            let base = TerrainTileVertexData.Get(name, 0);
             if (!base) {
                 console.log(name + " not found.");
             }
-            let data = TerrainTile.RotateZ(base, dir * Math.PI / 2);
-            TerrainTile._VertexDatas.set(ref, data);
-            return TerrainTile._VertexDatas.get(ref);
+            let data = TerrainTileVertexData.RotateZ(base, dir * Math.PI / 2);
+            TerrainTileVertexData._VertexDatas.set(ref, data);
+            return TerrainTileVertexData._VertexDatas.get(ref);
         }
     }
 
@@ -102,14 +105,14 @@ class TerrainTile {
         return ref.substr(rotation) + ref.substring(0, rotation);
     }
 
-    public static async GetDataFor(h1: number, h2: number, h3: number, h4: number): Promise<BABYLON.VertexData> {
+    public static GetDataFor(h1: number, h2: number, h3: number, h4: number): BABYLON.VertexData {
         let sRef = h1.toFixed(0) + h2.toFixed(0) + h3.toFixed(0) + h4.toFixed(0);
 
-        for (let i = 0; i < TerrainTile.LoadedRefs.length; i++) {
-            let ref = TerrainTile.LoadedRefs[i];
+        for (let i = 0; i < TerrainTileVertexData.LoadedRefs.length; i++) {
+            let ref = TerrainTileVertexData.LoadedRefs[i];
             for (let r = 0; r < 4; r++) {
-                if (sRef === TerrainTile.RotateRef(ref, r)) {
-                    return TerrainTile.Get(ref, r);
+                if (sRef === TerrainTileVertexData.RotateRef(ref, r)) {
+                    return TerrainTileVertexData.Get(ref, r);
                 }
             }
         }
