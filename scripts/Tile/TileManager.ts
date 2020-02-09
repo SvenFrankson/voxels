@@ -2,6 +2,24 @@ class TileManager {
 
     public tiles: Map<string, Tile> = new Map<string, Tile>();
 
+    private _requestLod: {i: number, j: number, lod: number}[] = [];
+    private _checkPositions: {i: number, j: number, d: number}[] = [];
+
+    constructor() {
+        let sqr15 = 15 * 15
+        this._checkPositions = [];
+        for (let i = - 15; i <= 15; i++) {
+            for (let j = - 15; j <= 15; j++) {
+                if (i * i + j * j <= sqr15) {
+                    this._checkPositions.push({i: i, j: j, d: Math.sqrt(i * i + j * j)});
+                }
+            }
+        }
+        this._checkPositions.sort((a, b) => {
+            return (a.i * a.i + a.j * a.j) - (b.i * b.i + b.j * b.j);
+        });
+    }
+
     private _createTile(iTile: number, jTile: number): Tile {
         let tile = new Tile(iTile, jTile);
         tile.makeEmpty();
@@ -56,63 +74,31 @@ class TileManager {
         return tile;
     }
 
-    public async updateTile(i: number, j: number, lod: number): Promise<void> {
-        let tileRef = i + "_" + j;
-        let tile = this.tiles.get(tileRef);
-        if (!tile) {
-            tile = this._createTile(i, j);
-            this.tiles.set(tileRef, tile);
-        }
-        if (lod === 0) {
-            await tile.updateTerrainMeshLod0();
-        }
-        else if (lod === 1) {
-            await tile.updateTerrainMeshLod1();
-        }
-    }
-
-    private _requestLod: {i: number, j: number, lod: number}[] = [];
-
+    private _checkIndex: number = 0;
     public updateLoop = () => {
         let cameraPosition = Main.Camera.position;
 
         let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
         let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
 
-        for (let i = camI - 6; i <= camI + 6; i++) {
-            for (let j = camJ - 6; j <= camJ + 6; j++) {
-                let request = this._requestLod.find(r => { return r.i === i && r.j === j});
-                if (!request) {
-                    request = { i: i, j: j, lod: 2};
-                    this._requestLod.push(request);
-                }
-                let dSquare = (i - camI) * (i - camI) + (j - camJ) * (j - camJ);
-                if (dSquare < 9) {
-                    request.lod = 0;
-                }
-                else if (dSquare <= 36) {
-                    request.lod = 1;
-                }
-                else {
-                    request.lod = 2;
-                }
-            }
-        }
-
-        for (let i = 0; i < 10; i++) {
-            if (this._requestLod.length > 0) {
-                let request = this._requestLod.splice(0, 1)[0];
-                if (request.lod < 2) {
-                    let tile = this.getOrCreateTile(request.i, request.j);
-                    if (tile.currentLOD !== request.lod) {
-                        if (request.lod === 0) {
-                            tile.updateTerrainMeshLod0();
-                        }
-                        else if (request.lod === 1) {
-                            tile.updateTerrainMeshLod1();
-                        }
+        for (let n = 0; n < 30; n++) {
+            let _checkPosition = this._checkPositions[this._checkIndex];
+            this._checkIndex++;
+            if (_checkPosition) {
+                let tile = this.getOrCreateTile(_checkPosition.i + camI, _checkPosition.j + camJ);
+                let lod = Math.floor(_checkPosition.d / 5);
+                if (tile.currentLOD !== lod) {
+                    if (lod === 0) {
+                        tile.updateTerrainMeshLod0();
+                    }
+                    else if (lod === 1) {
+                        tile.updateTerrainMeshLod1();
                     }
                 }
+            }
+            else {
+                this._checkIndex = 0;
+                return;
             }
         }
     }
