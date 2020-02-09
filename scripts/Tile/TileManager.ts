@@ -1,17 +1,21 @@
+var LOD0_DIST = 4;
+var LOD1_DIST = 8;
+var LOD2_DIST = 12;
+var LOD3_DIST = 16;
+
 class TileManager {
 
     public tiles: Map<string, Tile> = new Map<string, Tile>();
 
-    private _requestLod: {i: number, j: number, lod: number}[] = [];
     private _checkPositions: {i: number, j: number, d: number}[] = [];
 
     constructor() {
-        let sqr15 = 15 * 15
         this._checkPositions = [];
-        for (let i = - 15; i <= 15; i++) {
-            for (let j = - 15; j <= 15; j++) {
-                if (i * i + j * j <= sqr15) {
-                    this._checkPositions.push({i: i, j: j, d: Math.sqrt(i * i + j * j)});
+        for (let i = - LOD3_DIST; i <= LOD3_DIST; i++) {
+            for (let j = - LOD3_DIST; j <= LOD3_DIST; j++) {
+                let d = Math.sqrt(i * i + j * j);
+                if (d <= LOD3_DIST) {
+                    this._checkPositions.push({i: i, j: j, d: d});
                 }
             }
         }
@@ -86,12 +90,43 @@ class TileManager {
             this._checkIndex++;
             if (_checkPosition) {
                 let tile = this.getOrCreateTile(_checkPosition.i + camI, _checkPosition.j + camJ);
-                let lod = Math.floor(_checkPosition.d / 5);
-                if (tile.currentLOD !== lod) {
-                    if (lod === 0) {
+                if (tile.currentLOD === - 1) {
+                    if (_checkPosition.d <= LOD0_DIST) {
                         tile.updateTerrainMeshLod0();
                     }
-                    else if (lod === 1) {
+                    else if (_checkPosition.d <= LOD1_DIST) {
+                        tile.updateTerrainMeshLod1();
+                    }
+                    else if (_checkPosition.d <= LOD2_DIST) {
+                        tile.updateTerrainMeshLod2();
+                    }
+                    else if (_checkPosition.d <= LOD3_DIST) {
+                        tile.updateTerrainMeshLod3();
+                    }
+                }
+                else if (tile.currentLOD === 3) {
+                    if (_checkPosition.d <= LOD2_DIST) {
+                        tile.updateTerrainMeshLod2();
+                    }
+                }
+                else if (tile.currentLOD === 2) {
+                    if (_checkPosition.d <= LOD1_DIST) {
+                        tile.updateTerrainMeshLod1();
+                    }
+                    else if (_checkPosition.d >= LOD2_DIST + 4) {
+                        tile.updateTerrainMeshLod3();
+                    }
+                }
+                else if (tile.currentLOD === 1) {
+                    if (_checkPosition.d <= LOD0_DIST) {
+                        tile.updateTerrainMeshLod0();
+                    }
+                    else if (_checkPosition.d >= LOD1_DIST + 2) {
+                        tile.updateTerrainMeshLod2();
+                    }
+                }
+                else if (tile.currentLOD === 0) {
+                    if (_checkPosition.d >= LOD0_DIST + 1) {
                         tile.updateTerrainMeshLod1();
                     }
                 }

@@ -43,14 +43,7 @@ class Tile extends BABYLON.Mesh {
         }
     }
 
-    public async updateTerrainMeshLod0(): Promise<void> {
-        this.currentLOD = 0;
-        let data = new BABYLON.VertexData();
-        let positions: number[] = [];
-        let colors: number[] = [];
-        let indices: number[] = [];
-        let normals = [];
-
+    private async _generateFromMesh(positions: number[], indices: number[], normals: number[]): Promise<void> {
         for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
             for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
                 let h1 = this.heights[i][j];
@@ -81,12 +74,9 @@ class Tile extends BABYLON.Mesh {
                     }
             }
         }
+    }
 
-        data.positions = positions;
-        //data.colors = colors;
-        data.indices = indices;
-        data.normals = normals;
-
+    private _addKnobs(positions: number[], indices: number[], normals: number[]): void {
         for (let j = 0; j < TILE_SIZE; j++) {
             for (let i = 0; i < TILE_SIZE; i++) {
                 let h00 = this.heights[i][j];
@@ -106,13 +96,57 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+    }
+
+    public async updateTerrainMeshLod0(): Promise<void> {
+        this.currentLOD = 0;
+        let data = new BABYLON.VertexData();
+        let positions: number[] = [];
+        let indices: number[] = [];
+        let normals: number[] = [];
+        let colors: number[] = [];
+
+        await this._generateFromMesh(positions, indices, normals);
+        this._addKnobs(positions, indices, normals);
+
+        for (let i = 0; i < positions.length / 3; i++) {
+            colors.push(1, 0, 0, 1);
+        }
+
+        data.positions = positions;
+        data.colors = colors;
+        data.indices = indices;
+        data.normals = normals;
 
         data.applyToMesh(this);
         this.currentLOD = 0;
     }
 
-    public updateTerrainMeshLod1(): void {
+    public async updateTerrainMeshLod1(): Promise<void> {
         this.currentLOD = 1;
+        let data = new BABYLON.VertexData();
+        let positions: number[] = [];
+        let indices: number[] = [];
+        let normals: number[] = [];
+        let colors: number[] = [];
+
+        await this._generateFromMesh(positions, indices, normals);
+
+        for (let i = 0; i < positions.length / 3; i++) {
+            colors.push(0, 1, 0, 1);
+        }
+
+        data.positions = positions;
+        data.colors = colors;
+        data.indices = indices;
+        data.normals = normals;
+
+        data.applyToMesh(this);
+        this.currentLOD = 1;
+    }
+
+    public updateTerrainMeshLod2(): void {
+        this.currentLOD = 2;
         let data = new BABYLON.VertexData();
         let positions: number[] = [];
         let colors: number[] = [];
@@ -185,37 +219,25 @@ class Tile extends BABYLON.Mesh {
             }
         }
 
+        for (let i = 0; i < positions.length / 3; i++) {
+            colors.push(0, 0, 1, 1);
+        }
+
         data.positions = positions;
-        //data.colors = colors;
+        data.colors = colors;
         data.indices = indices;
         let normals = [];
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
         data.normals = normals;
 
-        /*
-        for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
-            for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
-                let h00 = this.heights[i][j];
-                let h10 = this.heights[i + 1][j];
-                let h11 = this.heights[i + 1][j + 1];
-                let h01 = this.heights[i][j + 1];
-
-                BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
-                if (h00 === h10) {
-                    BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
-                }
-                if (h00 === h01) {
-                    BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
-                    if (h00 === h10 && h00 === h11) {
-                        BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals);
-                    }
-                }
-            }
-        }
-        */
-
         data.applyToMesh(this);
-        this.currentLOD = 1;
+        this.currentLOD = 2;
+    }
+
+    public updateTerrainMeshLod3(): void {
+        this.currentLOD = 3;
+        this.updateTerrainMeshLod2();
+        this.currentLOD = 3;
     }
 
     public serialize(): TileData {
