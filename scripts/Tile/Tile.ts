@@ -12,6 +12,7 @@ interface TileData {
 class Tile extends BABYLON.Mesh {
 
     public heights: number[][];
+    public currentLOD: number = -1;
 
     constructor(
         public i: number,
@@ -43,6 +44,7 @@ class Tile extends BABYLON.Mesh {
     }
 
     public async updateTerrainMeshLod0(): Promise<void> {
+        this.currentLOD = 0;
         let data = new BABYLON.VertexData();
         let positions: number[] = [];
         let colors: number[] = [];
@@ -62,7 +64,6 @@ class Tile extends BABYLON.Mesh {
                     h4 -= min;
 
                     let data = await TerrainTile.GetDataFor(h1, h2, h3, h4);
-                    let mesh: BABYLON.Mesh;
                     if (data) {
                         let l = positions.length / 3;
                         for (let ip = 0; ip < data.positions.length / 3; ip++) {
@@ -86,9 +87,8 @@ class Tile extends BABYLON.Mesh {
         data.indices = indices;
         data.normals = normals;
 
-        /*
-        for (let j = 0; j < TILE_SIZE - 1; j++) {
-            for (let i = 0; i < TILE_SIZE - 1; i++) {
+        for (let j = 0; j < TILE_SIZE; j++) {
+            for (let i = 0; i < TILE_SIZE; i++) {
                 let h00 = this.heights[i][j];
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
@@ -106,12 +106,13 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
-        */
 
         data.applyToMesh(this);
+        this.currentLOD = 0;
     }
 
     public updateTerrainMeshLod1(): void {
+        this.currentLOD = 1;
         let data = new BABYLON.VertexData();
         let positions: number[] = [];
         let colors: number[] = [];
@@ -191,7 +192,7 @@ class Tile extends BABYLON.Mesh {
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
         data.normals = normals;
 
-        
+        /*
         for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
             for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
                 let h00 = this.heights[i][j];
@@ -211,8 +212,10 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+        */
 
         data.applyToMesh(this);
+        this.currentLOD = 1;
     }
 
     public serialize(): TileData {

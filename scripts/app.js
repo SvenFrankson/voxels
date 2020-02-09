@@ -3402,11 +3402,7 @@ class TileTest extends Main {
     async initialize() {
         await super.initializeScene();
         let tileManager = new TileManager();
-        for (let I = -6; I <= 6; I++) {
-            for (let J = -6; J <= 6; J++) {
-                await tileManager.updateTile(I, J);
-            }
-        }
+        Main.Scene.onBeforeRenderObservable.add(tileManager.updateLoop);
     }
 }
 class SeaMaterial extends BABYLON.ShaderMaterial {
@@ -4080,6 +4076,7 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.i = i;
         this.j = j;
+        this.currentLOD = -1;
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
     }
@@ -4102,6 +4099,7 @@ class Tile extends BABYLON.Mesh {
         }
     }
     async updateTerrainMeshLod0() {
+        this.currentLOD = 0;
         let data = new BABYLON.VertexData();
         let positions = [];
         let colors = [];
@@ -4119,7 +4117,6 @@ class Tile extends BABYLON.Mesh {
                 h3 -= min;
                 h4 -= min;
                 let data = await TerrainTile.GetDataFor(h1, h2, h3, h4);
-                let mesh;
                 if (data) {
                     let l = positions.length / 3;
                     for (let ip = 0; ip < data.positions.length / 3; ip++) {
@@ -4141,14 +4138,12 @@ class Tile extends BABYLON.Mesh {
         //data.colors = colors;
         data.indices = indices;
         data.normals = normals;
-        /*
-        for (let j = 0; j < TILE_SIZE - 1; j++) {
-            for (let i = 0; i < TILE_SIZE - 1; i++) {
+        for (let j = 0; j < TILE_SIZE; j++) {
+            for (let i = 0; i < TILE_SIZE; i++) {
                 let h00 = this.heights[i][j];
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
                 let h01 = this.heights[i][j + 1];
-
                 BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
                 if (h00 === h10) {
                     BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
@@ -4161,10 +4156,11 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
-        */
         data.applyToMesh(this);
+        this.currentLOD = 0;
     }
     updateTerrainMeshLod1() {
+        this.currentLOD = 1;
         let data = new BABYLON.VertexData();
         let positions = [];
         let colors = [];
@@ -4232,12 +4228,14 @@ class Tile extends BABYLON.Mesh {
         let normals = [];
         BABYLON.VertexData.ComputeNormals(positions, indices, normals);
         data.normals = normals;
+        /*
         for (let j = 0; j < TILE_VERTEX_SIZE - 1; j++) {
             for (let i = 0; i < TILE_VERTEX_SIZE - 1; i++) {
                 let h00 = this.heights[i][j];
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
                 let h01 = this.heights[i][j + 1];
+
                 BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
                 if (h00 === h10) {
                     BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals);
@@ -4250,7 +4248,9 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+        */
         data.applyToMesh(this);
+        this.currentLOD = 1;
     }
     serialize() {
         return {
@@ -4268,6 +4268,47 @@ class Tile extends BABYLON.Mesh {
 class TileManager {
     constructor() {
         this.tiles = new Map();
+        this._requestLod = [];
+        this.updateLoop = () => {
+            let cameraPosition = Main.Camera.position;
+            let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
+            let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
+            for (let i = camI - 6; i <= camI + 6; i++) {
+                for (let j = camJ - 6; j <= camJ + 6; j++) {
+                    let request = this._requestLod.find(r => { return r.i === i && r.j === j; });
+                    if (!request) {
+                        request = { i: i, j: j, lod: 2 };
+                        this._requestLod.push(request);
+                    }
+                    let dSquare = (i - camI) * (i - camI) + (j - camJ) * (j - camJ);
+                    if (dSquare < 9) {
+                        request.lod = 0;
+                    }
+                    else if (dSquare <= 36) {
+                        request.lod = 1;
+                    }
+                    else {
+                        request.lod = 2;
+                    }
+                }
+            }
+            for (let i = 0; i < 10; i++) {
+                if (this._requestLod.length > 0) {
+                    let request = this._requestLod.splice(0, 1)[0];
+                    if (request.lod < 2) {
+                        let tile = this.getOrCreateTile(request.i, request.j);
+                        if (tile.currentLOD !== request.lod) {
+                            if (request.lod === 0) {
+                                tile.updateTerrainMeshLod0();
+                            }
+                            else if (request.lod === 1) {
+                                tile.updateTerrainMeshLod1();
+                            }
+                        }
+                    }
+                }
+            }
+        };
     }
     _createTile(iTile, jTile) {
         let tile = new Tile(iTile, jTile);
@@ -4309,14 +4350,28 @@ class TileManager {
         }
         return tile;
     }
-    async updateTile(i, j) {
+    getOrCreateTile(i, j) {
         let tileRef = i + "_" + j;
         let tile = this.tiles.get(tileRef);
         if (!tile) {
             tile = this._createTile(i, j);
             this.tiles.set(tileRef, tile);
         }
-        await tile.updateTerrainMeshLod0();
+        return tile;
+    }
+    async updateTile(i, j, lod) {
+        let tileRef = i + "_" + j;
+        let tile = this.tiles.get(tileRef);
+        if (!tile) {
+            tile = this._createTile(i, j);
+            this.tiles.set(tileRef, tile);
+        }
+        if (lod === 0) {
+            await tile.updateTerrainMeshLod0();
+        }
+        else if (lod === 1) {
+            await tile.updateTerrainMeshLod1();
+        }
     }
 }
 var DATA_SIZE = 128;
