@@ -44,38 +44,6 @@ class PlayerTest extends Main {
 					Main.ChunckManager.updateBuffer.push(chunck);
 				}
 			);
-			console.log("Scene generated");
-			/*
-			let t0 = performance.now();
-			var request = new XMLHttpRequest();
-			request.open('GET', './datas/scenes/island.json', true);
-
-			request.onload = () => {
-				if (request.status >= 200 && request.status < 400) {
-					let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
-					Main.ChunckManager.deserialize(defaultTerrain);
-					Main.ChunckManager.foreachChunck(
-						chunck => {
-							manyChuncks.push(chunck);
-						}
-					);
-					let loopOut = async () => {
-						await Main.ChunckManager.generateManyChuncks(manyChuncks);
-						let t1 = performance.now();
-						console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
-					}
-					loopOut();
-				} else {
-					alert("Scene file not found. My bad. Sven.")
-				}
-			};
-
-			request.onerror = () => {
-				alert("Unknown error. My bad. Sven.")
-			};
-
-			request.send();
-			*/
 		}
         
         let player = new Player();

@@ -15,10 +15,15 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager = new PlayerActionManager(this);
     }
 
-    public register(): void {
+    public register(brickMode: boolean = false): void {
         this.playerActionManager.register();
 
-        Main.Scene.onBeforeRenderObservable.add(this.update);
+        if (brickMode) {
+            Main.Scene.onBeforeRenderObservable.add(this.updateBrickMode);
+        }
+        else {
+            Main.Scene.onBeforeRenderObservable.add(this.update);
+        }
 
         Main.Canvas.addEventListener("keyup", (e) => {
             if (this.currentAction) {
@@ -83,7 +88,6 @@ class Player extends BABYLON.Mesh {
     }
 
     public update = () => {
-
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
 
@@ -112,6 +116,35 @@ class Player extends BABYLON.Mesh {
                 }
             }
         );
+
+        if (this.currentAction) {
+            if (this.currentAction.onUpdate) {
+                this.currentAction.onUpdate();
+            }
+        }
+    }
+
+    public updateBrickMode = () => {
+        let right = this.getDirection(BABYLON.Axis.X);
+        let forward = this.getDirection(BABYLON.Axis.Z);
+
+        if (this._inputLeft) { this.position.addInPlace(right.scale(-0.08)); }
+        if (this._inputRight) { this.position.addInPlace(right.scale(0.08)); }
+        if (this._inputBack) { this.position.addInPlace(forward.scale(-0.08)); }
+        if (this._inputForward) { this.position.addInPlace(forward.scale(0.08)); }
+        
+        let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, - 1, 0));
+        let pick = Main.Scene.pickWithRay(
+            ray,
+            (mesh) => {
+                return mesh instanceof Tile;
+            }
+        );
+        if (pick.hit) {
+            let y = Math.floor(pick.pickedPoint.y / DY) * DY + 1;
+            this.position.y *= 0.5;
+            this.position.y += y * 0.5;
+        }
 
         if (this.currentAction) {
             if (this.currentAction.onUpdate) {

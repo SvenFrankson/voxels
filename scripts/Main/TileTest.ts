@@ -3,8 +3,7 @@
 class TileTest extends Main {
 
     public initializeCamera(): void {
-        let camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 10, -20), Main.Scene);
-        camera.attachControl(Main.Canvas);
+        let camera = new BABYLON.FreeCamera("camera1", BABYLON.Vector3.Zero(), Main.Scene);
 		Main.Camera = camera;
     }
 
@@ -12,6 +11,18 @@ class TileTest extends Main {
         await super.initializeScene();
         await TerrainTileVertexData.InitializeData();
         await BrickVertexData.InitializeData();
+
+        let player = new Player();
+        player.position.y = 30;
+        player.register(true);
+
+		let inventory = new Inventory(player);
+		inventory.initialize();
+
+        if (Main.Camera instanceof BABYLON.FreeCamera) {
+            Main.Camera.parent = player;
+            Main.Camera.position.y = 1.25;
+		}
 
         let tileManager = new TileManager();
         Main.Scene.onBeforeRenderObservable.add(tileManager.updateLoop);

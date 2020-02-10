@@ -2083,11 +2083,46 @@ class Player extends BABYLON.Mesh {
                 }
             }
         };
+        this.updateBrickMode = () => {
+            let right = this.getDirection(BABYLON.Axis.X);
+            let forward = this.getDirection(BABYLON.Axis.Z);
+            if (this._inputLeft) {
+                this.position.addInPlace(right.scale(-0.08));
+            }
+            if (this._inputRight) {
+                this.position.addInPlace(right.scale(0.08));
+            }
+            if (this._inputBack) {
+                this.position.addInPlace(forward.scale(-0.08));
+            }
+            if (this._inputForward) {
+                this.position.addInPlace(forward.scale(0.08));
+            }
+            let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, -1, 0));
+            let pick = Main.Scene.pickWithRay(ray, (mesh) => {
+                return mesh instanceof Tile;
+            });
+            if (pick.hit) {
+                let y = Math.floor(pick.pickedPoint.y / DY) * DY + 1;
+                this.position.y *= 0.5;
+                this.position.y += y * 0.5;
+            }
+            if (this.currentAction) {
+                if (this.currentAction.onUpdate) {
+                    this.currentAction.onUpdate();
+                }
+            }
+        };
         this.playerActionManager = new PlayerActionManager(this);
     }
-    register() {
+    register(brickMode = false) {
         this.playerActionManager.register();
-        Main.Scene.onBeforeRenderObservable.add(this.update);
+        if (brickMode) {
+            Main.Scene.onBeforeRenderObservable.add(this.updateBrickMode);
+        }
+        else {
+            Main.Scene.onBeforeRenderObservable.add(this.update);
+        }
         Main.Canvas.addEventListener("keyup", (e) => {
             if (this.currentAction) {
                 if (this.currentAction.onKeyUp) {
@@ -3169,38 +3204,6 @@ class PlayerTest extends Main {
             Main.ChunckManager.foreachChunck(chunck => {
                 Main.ChunckManager.updateBuffer.push(chunck);
             });
-            console.log("Scene generated");
-            /*
-            let t0 = performance.now();
-            var request = new XMLHttpRequest();
-            request.open('GET', './datas/scenes/island.json', true);
-
-            request.onload = () => {
-                if (request.status >= 200 && request.status < 400) {
-                    let defaultTerrain = JSON.parse(request.responseText) as TerrainData;
-                    Main.ChunckManager.deserialize(defaultTerrain);
-                    Main.ChunckManager.foreachChunck(
-                        chunck => {
-                            manyChuncks.push(chunck);
-                        }
-                    );
-                    let loopOut = async () => {
-                        await Main.ChunckManager.generateManyChuncks(manyChuncks);
-                        let t1 = performance.now();
-                        console.log("Scene loaded from file in " + (t1 - t0).toFixed(1) + " ms");
-                    }
-                    loopOut();
-                } else {
-                    alert("Scene file not found. My bad. Sven.")
-                }
-            };
-
-            request.onerror = () => {
-                alert("Unknown error. My bad. Sven.")
-            };
-
-            request.send();
-            */
         }
         let player = new Player();
         player.position.y = 60;
@@ -3411,14 +3414,22 @@ class SkullIsland extends Main {
 /// <reference path="./Main.ts"/>
 class TileTest extends Main {
     initializeCamera() {
-        let camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 10, -20), Main.Scene);
-        camera.attachControl(Main.Canvas);
+        let camera = new BABYLON.FreeCamera("camera1", BABYLON.Vector3.Zero(), Main.Scene);
         Main.Camera = camera;
     }
     async initialize() {
         await super.initializeScene();
         await TerrainTileVertexData.InitializeData();
         await BrickVertexData.InitializeData();
+        let player = new Player();
+        player.position.y = 30;
+        player.register(true);
+        let inventory = new Inventory(player);
+        inventory.initialize();
+        if (Main.Camera instanceof BABYLON.FreeCamera) {
+            Main.Camera.parent = player;
+            Main.Camera.position.y = 1.25;
+        }
         let tileManager = new TileManager();
         Main.Scene.onBeforeRenderObservable.add(tileManager.updateLoop);
     }
@@ -3988,6 +3999,124 @@ class VMath {
         }
     }
 }
+class TerrainTileTexture extends BABYLON.DynamicTexture {
+    constructor(tile, _size = 32) {
+        super(tile.name + "-texture-" + _size, _size, Main.Scene, true);
+        this.tile = tile;
+        this._size = _size;
+    }
+    resize() {
+        if (this._size !== TerrainTileTexture.LodResolutions[this.tile.currentLOD]) {
+            let resizedTexture = new TerrainTileTexture(this.tile, TerrainTileTexture.LodResolutions[this.tile.currentLOD]);
+            this.tile.tileTexture = resizedTexture;
+            resizedTexture.redraw();
+            this.dispose();
+            return true;
+        }
+        return false;
+    }
+    redraw() {
+        if (this.resize()) {
+            return;
+        }
+        let context = this.getContext();
+        let types = this.tile.types;
+        let w = this._size / TILE_SIZE;
+        for (let j = 0; j < TILE_SIZE; j++) {
+            for (let i = 0; i < TILE_SIZE; i++) {
+                let t1 = types[i][j];
+                let t2 = types[i + 1][j];
+                let t3 = types[i + 1][j + 1];
+                let t4 = types[i][j + 1];
+                let values = [t1, t2, t3, t4].sort((a, b) => { return a - b; });
+                let max = -1;
+                let maxOcc = -1;
+                for (let ii = 0; ii < 4; ii++) {
+                    let occ = 1;
+                    for (let jj = 0; jj < 4; jj++) {
+                        if (ii != jj) {
+                            if (values[ii] === values[jj]) {
+                                occ++;
+                            }
+                        }
+                    }
+                    if (occ > maxOcc) {
+                        max = values[ii];
+                        maxOcc = occ;
+                    }
+                }
+                let color = TerrainTileTexture.TerrainColors[max];
+                context.fillStyle = color;
+                context.fillRect(i * w, (TILE_SIZE - 1 - j) * w, w, w);
+                if (t1 !== max) {
+                    let color = TerrainTileTexture.TerrainColors[t1];
+                    context.fillStyle = color;
+                    if (t1 !== t2 && t1 !== t4) {
+                        context.beginPath();
+                        context.moveTo(i * w, (TILE_SIZE - j) * w);
+                        context.arc(i * w, (TILE_SIZE - j) * w, w * 0.5, 1.5 * Math.PI, 0);
+                        context.lineTo(i * w, (TILE_SIZE - j) * w);
+                        context.fill();
+                    }
+                    if (t1 === t2 && t1 != t4) {
+                        context.fillRect(i * w, (TILE_SIZE - 1 - j) * w + 0.5 * w, w, w * 0.5);
+                    }
+                    if (t1 != t2 && t1 === t4) {
+                        context.fillRect(i * w, (TILE_SIZE - 1 - j) * w, w * 0.5, w);
+                    }
+                }
+                if (t2 !== max) {
+                    let color = TerrainTileTexture.TerrainColors[t2];
+                    context.fillStyle = color;
+                    if (t2 !== t1 && t2 !== t3) {
+                        context.beginPath();
+                        context.moveTo((i + 1) * w, (TILE_SIZE - j) * w);
+                        context.arc((i + 1) * w, (TILE_SIZE - j) * w, w * 0.5, Math.PI, 1.5 * Math.PI);
+                        context.lineTo((i + 1) * w, (TILE_SIZE - j) * w);
+                        context.fill();
+                    }
+                    if (t2 === t3) {
+                        context.fillRect(i * w + 0.5 * w, (TILE_SIZE - 1 - j) * w, w * 0.5, w);
+                    }
+                }
+                if (t3 !== max) {
+                    let color = TerrainTileTexture.TerrainColors[t3];
+                    context.fillStyle = color;
+                    if (t3 !== t2 && t3 !== t4) {
+                        context.beginPath();
+                        context.moveTo((i + 1) * w, (TILE_SIZE - 1 - j) * w);
+                        context.arc((i + 1) * w, (TILE_SIZE - 1 - j) * w, w * 0.5, 0.5 * Math.PI, Math.PI);
+                        context.lineTo((i + 1) * w, (TILE_SIZE - 1 - j) * w);
+                        context.fill();
+                    }
+                    if (t3 === t4) {
+                        context.fillRect(i * w, (TILE_SIZE - 1 - j) * w, w, w * 0.5);
+                    }
+                }
+                if (t4 !== max) {
+                    if (t4 !== t1 && t4 !== t3) {
+                        let color = TerrainTileTexture.TerrainColors[t4];
+                        context.fillStyle = color;
+                        context.beginPath();
+                        context.moveTo(i * w, (TILE_SIZE - 1 - j) * w);
+                        context.arc(i * w, (TILE_SIZE - 1 - j) * w, w * 0.5, 0, 0.5 * Math.PI);
+                        context.lineTo(i * w, (TILE_SIZE - 1 - j) * w);
+                        context.fill();
+                    }
+                }
+            }
+        }
+        this.update();
+    }
+}
+TerrainTileTexture.LodResolutions = [256, 128, 64, 32];
+TerrainTileTexture.TerrainColors = [
+    "#47a632",
+    "#a86f32",
+    "#8c8c89",
+    "#dbc67b"
+];
+TerrainTileTexture.debugTextures = [];
 class TerrainTileVertexData {
     static async _LoadTerrainTileVertexDatas() {
         return new Promise(resolve => {
@@ -4091,6 +4220,7 @@ var TILE_VERTEX_SIZE = 9;
 var TILE_SIZE = 8;
 var DX = 0.8;
 var DY = 0.32;
+var TILE_LENGTH = TILE_SIZE * DX * 2;
 class Tile extends BABYLON.Mesh {
     constructor(i, j) {
         super("tile_" + i + "_" + j);
@@ -4099,14 +4229,33 @@ class Tile extends BABYLON.Mesh {
         this.currentLOD = -1;
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
-        this.material = Main.terrainCellShadingMaterial;
+        //this.material = Main.terrainCellShadingMaterial;
+        let material = new BABYLON.StandardMaterial(this.name + "-material", Main.Scene);
+        material.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        material.diffuseTexture = new TerrainTileTexture(this);
+        this.material = material;
+    }
+    get tileTexture() {
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
+                return this.material.diffuseTexture;
+            }
+        }
+    }
+    set tileTexture(t) {
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            this.material.diffuseTexture = t;
+        }
     }
     makeEmpty() {
         this.heights = [];
+        this.types = [];
         for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
             this.heights[i] = [];
+            this.types[i] = [];
             for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = 0;
+                this.types[i][j] = Math.floor(Math.random() * 4);
             }
         }
     }
@@ -4208,6 +4357,14 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+    }
+    _generateUVS(positions, uvs) {
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            uvs.push(x / TILE_LENGTH, z / TILE_LENGTH);
+        }
     }
     _addKnobs(positions, indices, normals, lod) {
         for (let j = 0; j < TILE_SIZE; j++) {
@@ -4229,86 +4386,51 @@ class Tile extends BABYLON.Mesh {
             }
         }
     }
-    updateTerrainMeshLod0() {
-        this.currentLOD = 0;
+    updateTerrainMesh(lod) {
+        this.currentLOD = lod;
         let data = new BABYLON.VertexData();
         let positions = [];
         let normals = [];
-        let colors = [];
+        //let colors: number[] = [];
+        let uvs = [];
         let indices = [];
-        this._generateFromMesh(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 0);
+        if (lod === 0) {
+            this._generateFromMesh(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 0);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 1) {
+            this._generateFromMesh(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 1);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 2) {
+            this._generateFromData(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 2);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 3) {
+            this._generateFromData(positions, indices, normals);
+            this._generateUVS(positions, uvs);
+        }
+        /*
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(1, 0, 0, 1);
         }
+        */
         data.positions = positions;
         data.normals = normals;
-        data.colors = colors;
+        //data.colors = colors;
+        data.uvs = uvs;
         data.indices = indices;
         data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 0;
-    }
-    updateTerrainMeshLod1() {
-        this.currentLOD = 1;
-        let data = new BABYLON.VertexData();
-        let positions = [];
-        let normals = [];
-        let colors = [];
-        let indices = [];
-        this._generateFromMesh(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 1);
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(0, 1, 0, 1);
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
+                this.material.diffuseTexture.redraw();
+            }
         }
-        data.positions = positions;
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-        data.applyToMesh(this);
         this.freezeWorldMatrix();
-        this.currentLOD = 1;
-    }
-    updateTerrainMeshLod2() {
-        this.currentLOD = 2;
-        let data = new BABYLON.VertexData();
-        let positions = [];
-        let normals = [];
-        let colors = [];
-        let indices = [];
-        this._generateFromData(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 2);
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(0, 0, 1, 1);
-        }
-        data.positions = positions;
-        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-        data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 2;
-    }
-    updateTerrainMeshLod3() {
-        this.currentLOD = 3;
-        let data = new BABYLON.VertexData();
-        let positions = [];
-        let normals = [];
-        let colors = [];
-        let indices = [];
-        this._generateFromData(positions, indices, normals);
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(1, 1, 1, 1);
-        }
-        data.positions = positions;
-        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-        data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 3;
+        this.currentLOD = lod;
     }
     serialize() {
         return {
@@ -4324,13 +4446,15 @@ class Tile extends BABYLON.Mesh {
     }
 }
 var LOD0_DIST = 4;
-var LOD1_DIST = 8;
-var LOD2_DIST = 12;
-var LOD3_DIST = 16;
+var LOD1_DIST = 6;
+var LOD2_DIST = 8;
+var LOD3_DIST = 10;
 class TileManager {
     constructor() {
         this.tiles = new Map();
         this._checkPositions = [];
+        this._camIReset = NaN;
+        this._camJReset = NaN;
         this._checkIndex = 0;
         this.updateLoop = () => {
             let cameraPosition = Main.Camera.position;
@@ -4345,48 +4469,50 @@ class TileManager {
                     let tile = this.getOrCreateTile(_checkPosition.i + camI, _checkPosition.j + camJ);
                     if (tile.currentLOD === -1) {
                         if (_checkPosition.d <= LOD0_DIST) {
-                            tile.updateTerrainMeshLod0();
+                            tile.updateTerrainMesh(0);
                         }
                         else if (_checkPosition.d <= LOD1_DIST) {
-                            tile.updateTerrainMeshLod1();
+                            tile.updateTerrainMesh(1);
                         }
                         else if (_checkPosition.d <= LOD2_DIST) {
-                            tile.updateTerrainMeshLod2();
+                            tile.updateTerrainMesh(2);
                         }
                         else if (_checkPosition.d <= LOD3_DIST) {
-                            tile.updateTerrainMeshLod3();
+                            tile.updateTerrainMesh(3);
                         }
                     }
                     else if (tile.currentLOD === 3) {
                         if (_checkPosition.d <= LOD2_DIST) {
-                            tile.updateTerrainMeshLod2();
+                            tile.updateTerrainMesh(2);
                         }
                     }
                     else if (tile.currentLOD === 2) {
                         if (_checkPosition.d <= LOD1_DIST) {
-                            tile.updateTerrainMeshLod1();
+                            tile.updateTerrainMesh(1);
                         }
                         else if (_checkPosition.d >= LOD2_DIST + 4) {
-                            tile.updateTerrainMeshLod3();
+                            tile.updateTerrainMesh(3);
                         }
                     }
                     else if (tile.currentLOD === 1) {
                         if (_checkPosition.d <= LOD0_DIST) {
-                            tile.updateTerrainMeshLod0();
+                            tile.updateTerrainMesh(0);
                         }
                         else if (_checkPosition.d >= LOD1_DIST + 2) {
-                            tile.updateTerrainMeshLod2();
+                            tile.updateTerrainMesh(2);
                         }
                     }
                     else if (tile.currentLOD === 0) {
                         if (_checkPosition.d >= LOD0_DIST + 1) {
-                            tile.updateTerrainMeshLod1();
+                            tile.updateTerrainMesh(1);
                         }
                     }
                     done = performance.now() - t0 > 30;
                 }
                 else {
-                    this._checkIndex = 0;
+                    if (this._camIReset !== camI || this._camJReset !== camJ) {
+                        this._checkIndex = 0;
+                    }
                     return;
                 }
             }

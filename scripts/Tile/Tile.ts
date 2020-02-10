@@ -2,6 +2,7 @@ var TILE_VERTEX_SIZE = 9;
 var TILE_SIZE = 8;
 var DX = 0.8;
 var DY = 0.32;
+var TILE_LENGTH = TILE_SIZE * DX * 2;
 
 interface TileData {
     i: number;
@@ -12,7 +13,22 @@ interface TileData {
 class Tile extends BABYLON.Mesh {
 
     public heights: number[][];
+    public types: number[][];
     public currentLOD: number = -1;
+
+    public get tileTexture(): TerrainTileTexture {
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
+                return this.material.diffuseTexture;
+            }
+        }
+    }
+
+    public set tileTexture(t: TerrainTileTexture) {
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            this.material.diffuseTexture = t;
+        }
+    }
 
     constructor(
         public i: number,
@@ -21,15 +37,22 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
-        this.material = Main.terrainCellShadingMaterial;
+        //this.material = Main.terrainCellShadingMaterial;
+        let material = new BABYLON.StandardMaterial(this.name + "-material", Main.Scene);
+        material.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        material.diffuseTexture = new TerrainTileTexture(this);
+        this.material = material;
     }
 
     public makeEmpty(): void {
         this.heights = [];
+        this.types = [];
         for (let i = 0; i < TILE_VERTEX_SIZE; i++) {
             this.heights[i] = [];
+            this.types[i] = [];
             for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = 0;
+                this.types[i][j] = Math.floor(Math.random() * 4);
             }
         }
     }
@@ -144,6 +167,15 @@ class Tile extends BABYLON.Mesh {
                 }
             }
         }
+        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+    }
+
+    private _generateUVS(positions: number[], uvs: number[]): void {
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            uvs.push(x / TILE_LENGTH, z / TILE_LENGTH);
+        }
     }
 
     private _addKnobs(positions: number[], indices: number[], normals: number[], lod: number): void {
@@ -168,105 +200,55 @@ class Tile extends BABYLON.Mesh {
         }
     }
 
-    public updateTerrainMeshLod0(): void {
-        this.currentLOD = 0;
+    public updateTerrainMesh(lod: number): void {
+        this.currentLOD = lod;
         let data = new BABYLON.VertexData();
         let positions: number[] = [];
         let normals: number[] = [];
-        let colors: number[] = [];
+        //let colors: number[] = [];
+        let uvs: number[] = [];
         let indices: number[] = [];
 
-        this._generateFromMesh(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 0);
+        if (lod === 0) {
+            this._generateFromMesh(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 0);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 1) {
+            this._generateFromMesh(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 1);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 2) {
+            this._generateFromData(positions, indices, normals);
+            this._addKnobs(positions, indices, normals, 2);
+            this._generateUVS(positions, uvs);
+        }
+        else if (lod === 3) {
+            this._generateFromData(positions, indices, normals);
+            this._generateUVS(positions, uvs);
+        }
 
+        /*
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(1, 0, 0, 1);
         }
+        */
 
         data.positions = positions;
         data.normals = normals;
-        data.colors = colors;
+        //data.colors = colors;
+        data.uvs = uvs;
         data.indices = indices;
 
         data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 0;
-    }
-
-    public updateTerrainMeshLod1(): void {
-        this.currentLOD = 1;
-        let data = new BABYLON.VertexData();
-        let positions: number[] = [];
-        let normals: number[] = [];
-        let colors: number[] = [];
-        let indices: number[] = [];
-
-        this._generateFromMesh(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 1);
-
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(0, 1, 0, 1);
+        if (this.material instanceof BABYLON.StandardMaterial) {
+            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
+                this.material.diffuseTexture.redraw();
+            }
         }
-
-        data.positions = positions;
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-
-        data.applyToMesh(this);
         this.freezeWorldMatrix();
-        this.currentLOD = 1;
-    }
-
-    public updateTerrainMeshLod2(): void {
-        this.currentLOD = 2;
-        let data = new BABYLON.VertexData();
-        let positions: number[] = [];
-        let normals: number[] = [];
-        let colors: number[] = [];
-        let indices: number[] = [];
-
-        this._generateFromData(positions, indices, normals);
-        this._addKnobs(positions, indices, normals, 2);
-
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(0, 0, 1, 1);
-        }
-
-        data.positions = positions;
-        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-
-        data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 2;
-    }
-
-    public updateTerrainMeshLod3(): void {
-        this.currentLOD = 3;
-        let data = new BABYLON.VertexData();
-        let positions: number[] = [];
-        let normals: number[] = [];
-        let colors: number[] = [];
-        let indices: number[] = [];
-
-        this._generateFromData(positions, indices, normals);
-
-        for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(1, 1, 1, 1);
-        }
-
-        data.positions = positions;
-        BABYLON.VertexData.ComputeNormals(positions, indices, normals);
-        data.normals = normals;
-        data.colors = colors;
-        data.indices = indices;
-
-        data.applyToMesh(this);
-        this.freezeWorldMatrix();
-        this.currentLOD = 3;
+        this.currentLOD = lod;
     }
 
     public serialize(): TileData {
