@@ -249,6 +249,94 @@ class PlayerActionTemplate {
         return action;
     }
 
+    public static CreateBrickAction(brickReference: string): PlayerAction {
+        let action = new PlayerAction();
+        let previewMesh: BABYLON.Mesh;
+        let r = 0;
+
+        action.iconUrl = "./datas/textures/miniatures/" + brickReference + "-miniature.png";
+
+        action.onKeyUp = (e: KeyboardEvent) => {
+            if (e.keyCode === 82) {
+                r = (r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * r;
+            }
+        }
+
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m !== previewMesh;
+                }
+            );
+            if (pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                world.x = Math.round(world.x / DX) * DX;
+                world.y = Math.floor(world.y / DY) * DY;
+                world.z = Math.round(world.z / DX) * DX;
+                if (world) {
+                    if (!previewMesh) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                        BrickVertexData.GetBrickVertexData(brickReference).then(
+                            data => {
+                                data.applyToMesh(previewMesh);
+                            }
+                        )
+                    }
+                    previewMesh.position.copyFrom(world);
+                }
+                else {
+                    if (previewMesh) {
+                        previewMesh.dispose();
+                        previewMesh = undefined;
+                    }
+                }
+            }
+        }
+
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m !== previewMesh;
+                }
+            );
+            if (pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                /*
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                if (coordinates) {
+                    let block = new Block();
+                    block.setReference(blockReference);
+                    coordinates.chunck.addBlock(block);
+                    block.setCoordinates(coordinates.coordinates);
+                    block.r = r;
+                }
+                */
+            }
+        }
+
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+        }
+        
+        return action;
+    }
+
     public static CreateMountainAction(r: number, h: number, roughness: number): PlayerAction {
         let action = new PlayerAction();
 

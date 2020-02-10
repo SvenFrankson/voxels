@@ -19,6 +19,11 @@ class TileTest extends Main {
 		let inventory = new Inventory(player);
 		inventory.initialize();
 
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1"));
+        }
+		inventory.update();
+
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;

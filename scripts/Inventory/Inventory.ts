@@ -22,6 +22,15 @@ class InventoryItem {
         return it;
     }
 
+    public static Brick(reference: string): InventoryItem {
+        let it = new InventoryItem();
+        it.section = InventorySection.Block;
+        it.name = reference;
+        it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
+        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
+        return it;
+    }
+
     public static Cube(cubeType: CubeType): InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Cube;

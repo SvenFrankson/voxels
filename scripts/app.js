@@ -426,6 +426,85 @@ class BlockVertexData {
         });
     }
 }
+class Brick extends BABYLON.Mesh {
+    constructor() {
+        super("brick");
+        this._i = 0;
+        this._j = 0;
+        this._k = 0;
+        this._r = 0;
+        this.material = Main.cellShadingMaterial;
+    }
+    get tile() {
+        return this._tile;
+    }
+    set tile(c) {
+        this._tile = c;
+        this.parent = this.tile;
+    }
+    get i() {
+        return this._i;
+    }
+    set i(v) {
+        this._i = v;
+        this.position.x = (this.i + 0.5) * DX;
+    }
+    get j() {
+        return this._j;
+    }
+    set j(v) {
+        this._j = v;
+        this.position.y = this.j * DY;
+    }
+    get k() {
+        return this._k;
+    }
+    set k(v) {
+        this._k = v;
+        this.position.z = (this.k + 0.5) * DX;
+    }
+    get r() {
+        return this._r;
+    }
+    set r(v) {
+        this._r = v;
+        this.rotation.y = Math.PI / 2 * this.r;
+    }
+    highlight() {
+        this.renderOutline = true;
+        this.outlineColor = BABYLON.Color3.Blue();
+        this.outlineWidth = 0.01;
+    }
+    unlit() {
+        this.renderOutline = false;
+    }
+    setCoordinates(coordinates) {
+        this.i = coordinates.x;
+        this.j = coordinates.y;
+        this.k = coordinates.z;
+    }
+    setReference(reference) {
+        this.reference = reference;
+        this.name = "Brick-" + this.reference;
+        // Need to generate mesh here.
+    }
+    serialize() {
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            r: this.r,
+            reference: this.reference
+        };
+    }
+    deserialize(data) {
+        this.i = data.i;
+        this.j = data.j;
+        this.k = data.k;
+        this.r = data.r;
+        this.setReference(data.reference);
+    }
+}
 class BrickVertexData {
     static async _LoadKnobsVertexDatas() {
         return new Promise(resolve => {
@@ -435,6 +514,20 @@ class BrickVertexData {
                     if (mesh instanceof BABYLON.Mesh) {
                         let lod = parseInt(mesh.name.replace("knob-lod", ""));
                         BrickVertexData._KnobVertexDatas[lod] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                        mesh.dispose();
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+    static async _LoadBricksVertexDatas() {
+        return new Promise(resolve => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/bricks.babylon", "", Main.Scene, (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
                         mesh.dispose();
                     }
                 }
@@ -468,7 +561,16 @@ class BrickVertexData {
             }
         }
     }
+    static async GetBrickVertexData(brickReference) {
+        let data = BrickVertexData._BrickVertexDatas.get(brickReference);
+        if (!data) {
+            await BrickVertexData._LoadBricksVertexDatas();
+            data = BrickVertexData._BrickVertexDatas.get(brickReference);
+        }
+        return data;
+    }
 }
+BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
 var CHUNCK_SIZE = 8;
 class Face {
@@ -2382,6 +2484,75 @@ class PlayerActionTemplate {
         };
         return action;
     }
+    static CreateBrickAction(brickReference) {
+        let action = new PlayerAction();
+        let previewMesh;
+        let r = 0;
+        action.iconUrl = "./datas/textures/miniatures/" + brickReference + "-miniature.png";
+        action.onKeyUp = (e) => {
+            if (e.keyCode === 82) {
+                r = (r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * r;
+            }
+        };
+        action.onUpdate = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(x, y, (m) => {
+                return m !== previewMesh;
+            });
+            if (pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                world.x = Math.round(world.x / DX) * DX;
+                world.y = Math.floor(world.y / DY) * DY;
+                world.z = Math.round(world.z / DX) * DX;
+                if (world) {
+                    if (!previewMesh) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                        BrickVertexData.GetBrickVertexData(brickReference).then(data => {
+                            data.applyToMesh(previewMesh);
+                        });
+                    }
+                    previewMesh.position.copyFrom(world);
+                }
+                else {
+                    if (previewMesh) {
+                        previewMesh.dispose();
+                        previewMesh = undefined;
+                    }
+                }
+            }
+        };
+        action.onClick = () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(x, y, (m) => {
+                return m !== previewMesh;
+            });
+            if (pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                /*
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                if (coordinates) {
+                    let block = new Block();
+                    block.setReference(blockReference);
+                    coordinates.chunck.addBlock(block);
+                    block.setCoordinates(coordinates.coordinates);
+                    block.r = r;
+                }
+                */
+            }
+        };
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+        };
+        return action;
+    }
     static CreateMountainAction(r, h, roughness) {
         let action = new PlayerAction();
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
@@ -2506,6 +2677,14 @@ class InventoryItem {
         it.section = InventorySection.Block;
         it.name = reference;
         it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
+        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
+        return it;
+    }
+    static Brick(reference) {
+        let it = new InventoryItem();
+        it.section = InventorySection.Block;
+        it.name = reference;
+        it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
@@ -3426,6 +3605,10 @@ class TileTest extends Main {
         player.register(true);
         let inventory = new Inventory(player);
         inventory.initialize();
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1"));
+        }
+        inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;

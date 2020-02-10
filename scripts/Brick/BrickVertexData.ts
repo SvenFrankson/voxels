@@ -1,5 +1,6 @@
 class BrickVertexData {
 
+    private static _BrickVertexDatas: Map<string, BABYLON.VertexData> = new Map<string, BABYLON.VertexData>();
     private static _KnobVertexDatas: BABYLON.VertexData[] = [];
 
     private static async _LoadKnobsVertexDatas(): Promise<void> {
@@ -16,6 +17,29 @@ class BrickVertexData {
                             if (mesh instanceof BABYLON.Mesh) {
                                 let lod = parseInt(mesh.name.replace("knob-lod", ""));
                                 BrickVertexData._KnobVertexDatas[lod] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                                mesh.dispose();
+                            }
+                        }
+                        resolve();
+                    }
+                );
+            }
+        );
+    }
+
+    private static async _LoadBricksVertexDatas(): Promise<void> {
+        return new Promise<void>(
+            resolve => {
+                BABYLON.SceneLoader.ImportMesh(
+                    "",
+                    "./datas/meshes/bricks.babylon",
+                    "",
+                    Main.Scene,
+                    (meshes) => {
+                        for (let i = 0; i < meshes.length; i++) {
+                            let mesh = meshes[i];
+                            if (mesh instanceof BABYLON.Mesh) {
+                                BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
                                 mesh.dispose();
                             }
                         }
@@ -55,5 +79,14 @@ class BrickVertexData {
                 indices.push(kn + l);
             }
         }
+    }
+
+    public static async GetBrickVertexData(brickReference: string): Promise<BABYLON.VertexData> {
+        let data = BrickVertexData._BrickVertexDatas.get(brickReference);
+        if (!data) {
+            await BrickVertexData._LoadBricksVertexDatas();
+            data = BrickVertexData._BrickVertexDatas.get(brickReference);
+        }
+        return data;
     }
 }
