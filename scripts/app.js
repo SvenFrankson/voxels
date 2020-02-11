@@ -426,57 +426,42 @@ class BlockVertexData {
         });
     }
 }
-class Brick extends BABYLON.Mesh {
+class Brick {
     constructor() {
-        super("brick");
         this._i = 0;
         this._j = 0;
         this._k = 0;
         this._r = 0;
-        this.material = Main.cellShadingMaterial;
     }
     get tile() {
         return this._tile;
     }
     set tile(c) {
         this._tile = c;
-        this.parent = this.tile;
     }
     get i() {
         return this._i;
     }
     set i(v) {
         this._i = v;
-        this.position.x = (this.i + 0.5) * DX;
     }
     get j() {
         return this._j;
     }
     set j(v) {
         this._j = v;
-        this.position.y = this.j * DY;
     }
     get k() {
         return this._k;
     }
     set k(v) {
         this._k = v;
-        this.position.z = (this.k + 0.5) * DX;
     }
     get r() {
         return this._r;
     }
     set r(v) {
         this._r = v;
-        this.rotation.y = Math.PI / 2 * this.r;
-    }
-    highlight() {
-        this.renderOutline = true;
-        this.outlineColor = BABYLON.Color3.Blue();
-        this.outlineWidth = 0.01;
-    }
-    unlit() {
-        this.renderOutline = false;
     }
     setCoordinates(coordinates) {
         this.i = coordinates.x;
@@ -485,8 +470,6 @@ class Brick extends BABYLON.Mesh {
     }
     setReference(reference) {
         this.reference = reference;
-        this.name = "Brick-" + this.reference;
-        // Need to generate mesh here.
     }
     serialize() {
         return {
@@ -505,6 +488,22 @@ class Brick extends BABYLON.Mesh {
         this.setReference(data.reference);
     }
 }
+class BrickData {
+}
+class BrickDataManager {
+    static InitializeData() {
+        BrickDataManager._BrickDatas.set("brick-1x1", {
+            knobs: [0, 3, 0],
+            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
+            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
+        });
+    }
+    static GetBrickData(brickReference) {
+        console.log(brickReference);
+        return BrickDataManager._BrickDatas.get(brickReference);
+    }
+}
+BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
     static async _LoadKnobsVertexDatas() {
         return new Promise(resolve => {
@@ -547,7 +546,7 @@ class BrickVertexData {
                 let kx = data.positions[3 * i];
                 let ky = data.positions[3 * i + 1];
                 let kz = data.positions[3 * i + 2];
-                positions.push(kx + x, ky + y, kz + z);
+                positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
             }
             for (let i = 0; i < data.normals.length / 3; i++) {
                 let knx = data.normals[3 * i];
@@ -568,6 +567,21 @@ class BrickVertexData {
             data = BrickVertexData._BrickVertexDatas.get(brickReference);
         }
         return data;
+    }
+    static async GetFullBrickVertexData(brickReference) {
+        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference);
+        let positions = [...vertexData.positions];
+        let indices = [...vertexData.indices];
+        let normals = [...vertexData.normals];
+        let brickData = BrickDataManager.GetBrickData(brickReference);
+        for (let i = 0; i < brickData.knobs.length; i++) {
+            BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0);
+        }
+        let fullVertexData = new BABYLON.VertexData();
+        fullVertexData.positions = positions;
+        fullVertexData.normals = normals;
+        fullVertexData.indices = indices;
+        return fullVertexData;
     }
 }
 BrickVertexData._BrickVertexDatas = new Map();
@@ -2510,7 +2524,7 @@ class PlayerActionTemplate {
                 if (world) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
-                        BrickVertexData.GetBrickVertexData(brickReference).then(data => {
+                        BrickVertexData.GetFullBrickVertexData(brickReference).then(data => {
                             data.applyToMesh(previewMesh);
                         });
                     }
@@ -3600,6 +3614,7 @@ class TileTest extends Main {
         await super.initializeScene();
         await TerrainTileVertexData.InitializeData();
         await BrickVertexData.InitializeData();
+        await BrickDataManager.InitializeData();
         let player = new Player();
         player.position.y = 30;
         player.register(true);
@@ -4556,14 +4571,14 @@ class Tile extends BABYLON.Mesh {
                 let h10 = this.heights[i + 1][j];
                 let h11 = this.heights[i + 1][j + 1];
                 let h01 = this.heights[i][j + 1];
-                BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals, lod);
+                BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
                 if (h00 === h10) {
-                    BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX, positions, indices, normals, lod);
+                    BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
                 }
                 if (h00 === h01) {
-                    BrickVertexData.AddKnob(2 * i * DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals, lod);
+                    BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
                     if (h00 === h10 && h00 === h11) {
-                        BrickVertexData.AddKnob(2 * i * DX + DX, this.heights[i][j] * DY * 3, 2 * j * DX + DX, positions, indices, normals, lod);
+                        BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
                     }
                 }
             }
@@ -4640,7 +4655,7 @@ class TileManager {
         this._camJReset = NaN;
         this._checkIndex = 0;
         this.updateLoop = () => {
-            let cameraPosition = Main.Camera.position;
+            let cameraPosition = Main.Camera.globalPosition;
             let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
             let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
             let done = false;
@@ -4694,6 +4709,8 @@ class TileManager {
                 }
                 else {
                     if (this._camIReset !== camI || this._camJReset !== camJ) {
+                        this._camIReset = camI;
+                        this._camJReset = camJ;
                         this._checkIndex = 0;
                     }
                     return;

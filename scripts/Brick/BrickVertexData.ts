@@ -64,7 +64,7 @@ class BrickVertexData {
                 let kx = data.positions[3 * i];
                 let ky = data.positions[3 * i + 1];
                 let kz = data.positions[3 * i + 2];
-                positions.push(kx + x, ky + y, kz + z);
+                positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
             }
     
             for (let i = 0; i < data.normals.length / 3; i++) {
@@ -88,5 +88,21 @@ class BrickVertexData {
             data = BrickVertexData._BrickVertexDatas.get(brickReference);
         }
         return data;
+    }
+    
+    public static async GetFullBrickVertexData(brickReference: string): Promise<BABYLON.VertexData> {
+        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference);
+        let positions = [...vertexData.positions];
+        let indices = [...vertexData.indices];
+        let normals = [...vertexData.normals];
+        let brickData = BrickDataManager.GetBrickData(brickReference);
+        for (let i = 0; i < brickData.knobs.length; i++) {
+            BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0);
+        }
+        let fullVertexData = new BABYLON.VertexData();
+        fullVertexData.positions = positions;
+        fullVertexData.normals = normals;
+        fullVertexData.indices = indices;
+        return fullVertexData;
     }
 }

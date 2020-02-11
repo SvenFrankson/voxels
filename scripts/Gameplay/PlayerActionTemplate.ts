@@ -283,7 +283,7 @@ class PlayerActionTemplate {
                 if (world) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
-                        BrickVertexData.GetBrickVertexData(brickReference).then(
+                        BrickVertexData.GetFullBrickVertexData(brickReference).then(
                             data => {
                                 data.applyToMesh(previewMesh);
                             }

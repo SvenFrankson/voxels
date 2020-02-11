@@ -82,7 +82,7 @@ class TileManager {
     private _camJReset: number = NaN;
     private _checkIndex: number = 0;
     public updateLoop = () => {
-        let cameraPosition = Main.Camera.position;
+        let cameraPosition = Main.Camera.globalPosition;
 
         let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
         let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
@@ -138,6 +138,8 @@ class TileManager {
             }
             else {
                 if (this._camIReset !== camI || this._camJReset !== camJ) {
+                    this._camIReset = camI;
+                    this._camJReset = camJ;
                     this._checkIndex = 0;
                 }
                 return;
