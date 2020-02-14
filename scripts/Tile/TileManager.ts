@@ -5,11 +5,14 @@ var LOD3_DIST = 10;
 
 class TileManager {
 
+    public static Instance: TileManager;
+
     public tiles: Map<string, Tile> = new Map<string, Tile>();
 
     private _checkPositions: {i: number, j: number, d: number}[] = [];
 
     constructor() {
+        TileManager.Instance = this;
         this._checkPositions = [];
         for (let i = - LOD3_DIST; i <= LOD3_DIST; i++) {
             for (let j = - LOD3_DIST; j <= LOD3_DIST; j++) {
@@ -66,6 +69,11 @@ class TileManager {
         }
 
         return tile;
+    }
+
+    public static GetTile(i: number, j: number): Tile {
+        let tileRef = i + "_" + j;
+        return TileManager.Instance.tiles.get(tileRef);
     }
 
     public getOrCreateTile(i: number, j: number): Tile {

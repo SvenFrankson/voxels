@@ -14,6 +14,7 @@ class Tile extends BABYLON.Mesh {
 
     public heights: number[][];
     public types: number[][];
+    public bricks: Brick[] = [];
     public currentLOD: number = -1;
 
     public get tileTexture(): TerrainTileTexture {
@@ -249,6 +250,22 @@ class Tile extends BABYLON.Mesh {
         }
         this.freezeWorldMatrix();
         this.currentLOD = lod;
+    }
+
+    public async updateBricks(): Promise<void> {
+        let children = this.getChildMeshes();
+        while (children.length > 0) {
+            children.pop().dispose();
+        }
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let b = new BABYLON.Mesh("brick-" + i);
+            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            data.applyToMesh(b);
+            b.position.copyFromFloats(brick.i * DX, brick.k * DY, brick.j * DX);
+            b.rotation.y = Math.PI / 2 * brick.r;
+            b.parent = this;
+        }
     }
 
     public serialize(): TileData {

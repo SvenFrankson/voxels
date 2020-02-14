@@ -290,6 +290,7 @@ class PlayerActionTemplate {
                         )
                     }
                     previewMesh.position.copyFrom(world);
+                    previewMesh.rotation.y = Math.PI / 2 * r;
                 }
                 else {
                     if (previewMesh) {
@@ -314,16 +315,20 @@ class PlayerActionTemplate {
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                /*
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                console.log(coordinates);
                 if (coordinates) {
-                    let block = new Block();
-                    block.setReference(blockReference);
-                    coordinates.chunck.addBlock(block);
-                    block.setCoordinates(coordinates.coordinates);
-                    block.r = r;
+                    let brick = new Brick();
+                    brick.setReference(brickReference);
+                    brick.i = coordinates.i;
+                    brick.j = coordinates.j;
+                    brick.k = coordinates.k;
+                    brick.r = r;
+                    if (coordinates.tile) {
+                        coordinates.tile.bricks.push(brick);
+                        coordinates.tile.updateBricks();
+                    }
                 }
-                */
             }
         }
 

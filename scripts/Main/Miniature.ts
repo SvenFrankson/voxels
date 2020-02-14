@@ -28,6 +28,8 @@ class Miniature extends Main {
 
     public async initialize(): Promise<void> {
         super.initialize();
+        await BrickVertexData.InitializeData();
+        await BrickDataManager.InitializeData();
 
 		Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
 
@@ -50,6 +52,10 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
+        await this.createBrick("brick-1x1");
+        await this.createBrick("brick-1x2");
+        await this.createBrick("brick-1x4");
+		/*
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
@@ -57,6 +63,7 @@ class Miniature extends Main {
 			let reference = BlockList.References[i];
 			await this.createBlock(reference);
 		}
+		*/
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {
@@ -119,6 +126,33 @@ class Miniature extends Main {
                             async () => {
 								await this.makeScreenShot(reference, false);
 								block.dispose();
+                                resolve();
+                            },
+                            200
+                        )
+                    },
+                    200
+                )
+            }
+        )
+	}
+
+	public async createBrick(brickReference: string): Promise<void> {
+		let mesh = new BABYLON.Mesh("mesh");
+		let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
+		data.applyToMesh(mesh);
+		
+		this.targets = [mesh];
+		
+		return new Promise<void>(
+            resolve => {
+                setTimeout(
+                    () => {
+                        this.updateCameraPosition();
+                        setTimeout(
+                            async () => {
+								await this.makeScreenShot(brickReference, false);
+								mesh.dispose();
                                 resolve();
                             },
                             200

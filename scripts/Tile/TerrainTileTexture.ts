@@ -1,6 +1,6 @@
 class TerrainTileTexture extends BABYLON.DynamicTexture {
 
-    public static LodResolutions: number[] = [256, 128, 64, 32];
+    public static LodResolutions: number[] = [512, 256, 128, 64];
     public static TerrainColors: string[] = [
         "#47a632",
         "#a86f32",
@@ -10,7 +10,7 @@ class TerrainTileTexture extends BABYLON.DynamicTexture {
 
     public static debugTextures: BABYLON.StandardMaterial[] = [];
 
-    constructor(public tile: Tile, private _size: number = 32) {
+    constructor(public tile: Tile, private _size: number = 64) {
         super(tile.name + "-texture-" + _size, _size, Main.Scene, true);
     }
 

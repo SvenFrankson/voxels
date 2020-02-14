@@ -31,6 +31,27 @@ class ChunckUtils {
         }
     }
 
+    public static WorldPositionToTileBrickCoordinates(world: BABYLON.Vector3): { tile: Tile, i: number, j: number, k: number} {
+        let iGlobal = Math.round(world.x / DX);
+        let jGlobal = Math.round(world.z / DX);
+
+        let I = Math.floor(iGlobal / TILE_SIZE / 2);
+        let J = Math.floor(jGlobal / TILE_SIZE / 2);
+
+        let tile = TileManager.GetTile(I, J);
+
+        let i = Math.round((world.x - I * (TILE_SIZE * DX * 2)) / DX);
+        let j = Math.round((world.z - J * (TILE_SIZE * DX * 2)) / DX);
+        let k = Math.floor(world.y / DY);
+
+        return {
+            tile: tile,
+            i: i,
+            j: j,
+            k: k
+        };
+    }
+
     public static XYScreenToChunckCoordinates(x: number, y: number, behindPickedFace: boolean = false): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
         let pickInfo = Main.Scene.pick(
             x, y,

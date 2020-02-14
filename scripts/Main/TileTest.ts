@@ -23,6 +23,12 @@ class TileTest extends Main {
 		for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x1"));
         }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4"));
+        }
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

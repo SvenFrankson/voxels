@@ -497,6 +497,16 @@ class BrickDataManager {
             covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
             blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
         });
+        BrickDataManager._BrickDatas.set("brick-1x2", {
+            knobs: [0, 3, 0, 0, 3, 1],
+            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
+            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
+        });
+        BrickDataManager._BrickDatas.set("brick-1x4", {
+            knobs: [0, 3, 0, 0, 3, 1, 0, 3, 2, 0, 3, 3],
+            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
+            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
+        });
     }
     static GetBrickData(brickReference) {
         console.log(brickReference);
@@ -1591,6 +1601,22 @@ class ChunckUtils {
             coordinates: coordinates
         };
     }
+    static WorldPositionToTileBrickCoordinates(world) {
+        let iGlobal = Math.round(world.x / DX);
+        let jGlobal = Math.round(world.z / DX);
+        let I = Math.floor(iGlobal / TILE_SIZE / 2);
+        let J = Math.floor(jGlobal / TILE_SIZE / 2);
+        let tile = TileManager.GetTile(I, J);
+        let i = Math.round((world.x - I * (TILE_SIZE * DX * 2)) / DX);
+        let j = Math.round((world.z - J * (TILE_SIZE * DX * 2)) / DX);
+        let k = Math.floor(world.y / DY);
+        return {
+            tile: tile,
+            i: i,
+            j: j,
+            k: k
+        };
+    }
     static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
         let pickInfo = Main.Scene.pick(x, y, (m) => {
             return m instanceof Chunck;
@@ -2529,6 +2555,7 @@ class PlayerActionTemplate {
                         });
                     }
                     previewMesh.position.copyFrom(world);
+                    previewMesh.rotation.y = Math.PI / 2 * r;
                 }
                 else {
                     if (previewMesh) {
@@ -2547,16 +2574,20 @@ class PlayerActionTemplate {
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                /*
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                console.log(coordinates);
                 if (coordinates) {
-                    let block = new Block();
-                    block.setReference(blockReference);
-                    coordinates.chunck.addBlock(block);
-                    block.setCoordinates(coordinates.coordinates);
-                    block.r = r;
+                    let brick = new Brick();
+                    brick.setReference(brickReference);
+                    brick.i = coordinates.i;
+                    brick.j = coordinates.j;
+                    brick.k = coordinates.k;
+                    brick.r = r;
+                    if (coordinates.tile) {
+                        coordinates.tile.bricks.push(brick);
+                        coordinates.tile.updateBricks();
+                    }
                 }
-                */
             }
         };
         action.onUnequip = () => {
@@ -2681,6 +2712,7 @@ var InventorySection;
     InventorySection[InventorySection["Action"] = 0] = "Action";
     InventorySection[InventorySection["Cube"] = 1] = "Cube";
     InventorySection[InventorySection["Block"] = 2] = "Block";
+    InventorySection[InventorySection["Brick"] = 3] = "Brick";
 })(InventorySection || (InventorySection = {}));
 class InventoryItem {
     constructor() {
@@ -2696,7 +2728,7 @@ class InventoryItem {
     }
     static Brick(reference) {
         let it = new InventoryItem();
-        it.section = InventorySection.Block;
+        it.section = InventorySection.Brick;
         it.name = reference;
         it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
@@ -2733,20 +2765,33 @@ class Inventory {
         }
         this.body = document.getElementById("inventory");
         this._sectionActions = document.getElementById("section-actions");
-        this._sectionActions.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Action;
-            this.update();
-        });
+        if (this._sectionActions) {
+            this._sectionActions.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Action;
+                this.update();
+            });
+        }
         this._sectionCubes = document.getElementById("section-cubes");
-        this._sectionCubes.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Cube;
-            this.update();
-        });
+        if (this._sectionCubes) {
+            this._sectionCubes.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Cube;
+                this.update();
+            });
+        }
         this._sectionBlocks = document.getElementById("section-blocks");
-        this._sectionBlocks.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Block;
-            this.update();
-        });
+        if (this._sectionBlocks) {
+            this._sectionBlocks.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Block;
+                this.update();
+            });
+        }
+        this._sectionBricks = document.getElementById("section-bricks");
+        if (this._sectionBricks) {
+            this._sectionBricks.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Brick;
+                this.update();
+            });
+        }
         this._subSections = document.getElementById("sub-sections");
         this._items = document.getElementById("items");
         document.getElementById("inventory-close").addEventListener("pointerup", () => {
@@ -2781,29 +2826,45 @@ class Inventory {
         return sectionItems;
     }
     update() {
-        if (this.currentSection === InventorySection.Action) {
-            this._sectionActions.style.background = "white";
-            this._sectionActions.style.color = "black";
+        if (this._sectionActions) {
+            if (this.currentSection === InventorySection.Action) {
+                this._sectionActions.style.background = "white";
+                this._sectionActions.style.color = "black";
+            }
+            else {
+                this._sectionActions.style.background = "black";
+                this._sectionActions.style.color = "white";
+            }
         }
-        else {
-            this._sectionActions.style.background = "black";
-            this._sectionActions.style.color = "white";
+        if (this._sectionCubes) {
+            if (this.currentSection === InventorySection.Cube) {
+                this._sectionCubes.style.background = "white";
+                this._sectionCubes.style.color = "black";
+            }
+            else {
+                this._sectionCubes.style.background = "black";
+                this._sectionCubes.style.color = "white";
+            }
         }
-        if (this.currentSection === InventorySection.Cube) {
-            this._sectionCubes.style.background = "white";
-            this._sectionCubes.style.color = "black";
+        if (this._sectionBlocks) {
+            if (this.currentSection === InventorySection.Block) {
+                this._sectionBlocks.style.background = "white";
+                this._sectionBlocks.style.color = "black";
+            }
+            else {
+                this._sectionBlocks.style.background = "black";
+                this._sectionBlocks.style.color = "white";
+            }
         }
-        else {
-            this._sectionCubes.style.background = "black";
-            this._sectionCubes.style.color = "white";
-        }
-        if (this.currentSection === InventorySection.Block) {
-            this._sectionBlocks.style.background = "white";
-            this._sectionBlocks.style.color = "black";
-        }
-        else {
-            this._sectionBlocks.style.background = "black";
-            this._sectionBlocks.style.color = "white";
+        if (this._sectionBricks) {
+            if (this.currentSection === InventorySection.Brick) {
+                this._sectionBricks.style.background = "white";
+                this._sectionBricks.style.color = "black";
+            }
+            else {
+                this._sectionBricks.style.background = "black";
+                this._sectionBricks.style.color = "white";
+            }
         }
         this.clearSubsections();
         this.clearItems();
@@ -3213,6 +3274,8 @@ class Miniature extends Main {
     }
     async initialize() {
         super.initialize();
+        await BrickVertexData.InitializeData();
+        await BrickDataManager.InitializeData();
         Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
         console.log("Miniature initialized.");
         let loop = () => {
@@ -3228,6 +3291,10 @@ class Miniature extends Main {
         loop();
     }
     async runAllScreenShots() {
+        await this.createBrick("brick-1x1");
+        await this.createBrick("brick-1x2");
+        await this.createBrick("brick-1x4");
+        /*
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
         await this.createCube(CubeType.Sand);
@@ -3235,6 +3302,7 @@ class Miniature extends Main {
             let reference = BlockList.References[i];
             await this.createBlock(reference);
         }
+        */
     }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
@@ -3275,6 +3343,22 @@ class Miniature extends Main {
                 setTimeout(async () => {
                     await this.makeScreenShot(reference, false);
                     block.dispose();
+                    resolve();
+                }, 200);
+            }, 200);
+        });
+    }
+    async createBrick(brickReference) {
+        let mesh = new BABYLON.Mesh("mesh");
+        let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
+        data.applyToMesh(mesh);
+        this.targets = [mesh];
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.updateCameraPosition();
+                setTimeout(async () => {
+                    await this.makeScreenShot(brickReference, false);
+                    mesh.dispose();
                     resolve();
                 }, 200);
             }, 200);
@@ -3622,6 +3706,12 @@ class TileTest extends Main {
         inventory.initialize();
         for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x1"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4"));
         }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
@@ -4198,7 +4288,7 @@ class VMath {
     }
 }
 class TerrainTileTexture extends BABYLON.DynamicTexture {
-    constructor(tile, _size = 32) {
+    constructor(tile, _size = 64) {
         super(tile.name + "-texture-" + _size, _size, Main.Scene, true);
         this.tile = tile;
         this._size = _size;
@@ -4307,7 +4397,7 @@ class TerrainTileTexture extends BABYLON.DynamicTexture {
         this.update();
     }
 }
-TerrainTileTexture.LodResolutions = [256, 128, 64, 32];
+TerrainTileTexture.LodResolutions = [512, 256, 128, 64];
 TerrainTileTexture.TerrainColors = [
     "#47a632",
     "#a86f32",
@@ -4424,6 +4514,7 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.i = i;
         this.j = j;
+        this.bricks = [];
         this.currentLOD = -1;
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
@@ -4630,6 +4721,21 @@ class Tile extends BABYLON.Mesh {
         this.freezeWorldMatrix();
         this.currentLOD = lod;
     }
+    async updateBricks() {
+        let children = this.getChildMeshes();
+        while (children.length > 0) {
+            children.pop().dispose();
+        }
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let b = new BABYLON.Mesh("brick-" + i);
+            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            data.applyToMesh(b);
+            b.position.copyFromFloats(brick.i * DX, brick.k * DY, brick.j * DX);
+            b.rotation.y = Math.PI / 2 * brick.r;
+            b.parent = this;
+        }
+    }
     serialize() {
         return {
             i: this.i,
@@ -4717,6 +4823,7 @@ class TileManager {
                 }
             }
         };
+        TileManager.Instance = this;
         this._checkPositions = [];
         for (let i = -LOD3_DIST; i <= LOD3_DIST; i++) {
             for (let j = -LOD3_DIST; j <= LOD3_DIST; j++) {
@@ -4769,6 +4876,10 @@ class TileManager {
             }
         }
         return tile;
+    }
+    static GetTile(i, j) {
+        let tileRef = i + "_" + j;
+        return TileManager.Instance.tiles.get(tileRef);
     }
     getOrCreateTile(i, j) {
         let tileRef = i + "_" + j;

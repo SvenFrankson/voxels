@@ -1,7 +1,8 @@
 enum InventorySection {
     Action,
     Cube,
-    Block
+    Block,
+    Brick
 }
 
 class InventoryItem {
@@ -24,7 +25,7 @@ class InventoryItem {
 
     public static Brick(reference: string): InventoryItem {
         let it = new InventoryItem();
-        it.section = InventorySection.Block;
+        it.section = InventorySection.Brick;
         it.name = reference;
         it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
@@ -51,6 +52,7 @@ class Inventory {
     private _sectionActions: HTMLButtonElement;
     private _sectionCubes: HTMLButtonElement;
     private _sectionBlocks: HTMLButtonElement;
+    private _sectionBricks: HTMLButtonElement;
 
     private _subSections: HTMLDivElement;
     private _items: HTMLDivElement;
@@ -83,20 +85,33 @@ class Inventory {
         this.body = document.getElementById("inventory") as HTMLDivElement;
 
         this._sectionActions = document.getElementById("section-actions") as HTMLButtonElement;
-        this._sectionActions.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Action;
-            this.update();
-        });
+        if (this._sectionActions) {
+            this._sectionActions.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Action;
+                this.update();
+            });
+        }
         this._sectionCubes = document.getElementById("section-cubes") as HTMLButtonElement;
-        this._sectionCubes.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Cube;
-            this.update();
-        });
+        if (this._sectionCubes) {
+            this._sectionCubes.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Cube;
+                this.update();
+            });
+        }
         this._sectionBlocks = document.getElementById("section-blocks") as HTMLButtonElement;
-        this._sectionBlocks.addEventListener("pointerup", () => {
-            this.currentSection = InventorySection.Block;
-            this.update();
-        });
+        if (this._sectionBlocks) {
+            this._sectionBlocks.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Block;
+                this.update();
+            });
+        }
+        this._sectionBricks = document.getElementById("section-bricks") as HTMLButtonElement;
+        if (this._sectionBricks) {
+            this._sectionBricks.addEventListener("pointerup", () => {
+                this.currentSection = InventorySection.Brick;
+                this.update();
+            });
+        }
         this._subSections = document.getElementById("sub-sections") as HTMLDivElement;
         this._items = document.getElementById("items") as HTMLDivElement;
         document.getElementById("inventory-close").addEventListener("pointerup", () => {
@@ -134,30 +149,47 @@ class Inventory {
     }
 
     public update(): void {
-        if (this.currentSection === InventorySection.Action) {
-            this._sectionActions.style.background = "white";
-            this._sectionActions.style.color = "black";
+        if (this._sectionActions) {
+            if (this.currentSection === InventorySection.Action) {
+                this._sectionActions.style.background = "white";
+                this._sectionActions.style.color = "black";
+            }
+            else {
+                this._sectionActions.style.background = "black";
+                this._sectionActions.style.color = "white";
+            }
         }
-        else {
-            this._sectionActions.style.background = "black";
-            this._sectionActions.style.color = "white";
+        if (this._sectionCubes) {
+            if (this.currentSection === InventorySection.Cube) {
+                this._sectionCubes.style.background = "white";
+                this._sectionCubes.style.color = "black";
+            }
+            else {
+                this._sectionCubes.style.background = "black";
+                this._sectionCubes.style.color = "white";
+            }
         }
-        if (this.currentSection === InventorySection.Cube) {
-            this._sectionCubes.style.background = "white";
-            this._sectionCubes.style.color = "black";
+        if (this._sectionBlocks) {
+            if (this.currentSection === InventorySection.Block) {
+                this._sectionBlocks.style.background = "white";
+                this._sectionBlocks.style.color = "black";
+            }
+            else {
+                this._sectionBlocks.style.background = "black";
+                this._sectionBlocks.style.color = "white";
+            }
         }
-        else {
-            this._sectionCubes.style.background = "black";
-            this._sectionCubes.style.color = "white";
+        if (this._sectionBricks) {
+            if (this.currentSection === InventorySection.Brick) {
+                this._sectionBricks.style.background = "white";
+                this._sectionBricks.style.color = "black";
+            }
+            else {
+                this._sectionBricks.style.background = "black";
+                this._sectionBricks.style.color = "white";
+            }
         }
-        if (this.currentSection === InventorySection.Block) {
-            this._sectionBlocks.style.background = "white";
-            this._sectionBlocks.style.color = "black";
-        }
-        else {
-            this._sectionBlocks.style.background = "black";
-            this._sectionBlocks.style.color = "white";
-        }
+
         this.clearSubsections();
         this.clearItems();
         let currentSectionItems = this.getCurrentSectionItems();
