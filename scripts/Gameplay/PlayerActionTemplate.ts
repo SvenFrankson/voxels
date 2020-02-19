@@ -249,12 +249,13 @@ class PlayerActionTemplate {
         return action;
     }
 
-    public static CreateBrickAction(brickReference: string): PlayerAction {
+    public static CreateBrickAction(brickReferenceStr: string): PlayerAction {
+        let brickReference = Brick.ParseReference(brickReferenceStr);
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
         let r = 0;
 
-        action.iconUrl = "./datas/textures/miniatures/" + brickReference + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
 
         action.onKeyUp = (e: KeyboardEvent) => {
             if (e.keyCode === 82) {
@@ -316,10 +317,9 @@ class PlayerActionTemplate {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
-                console.log(coordinates);
                 if (coordinates) {
                     let brick = new Brick();
-                    brick.setReference(brickReference);
+                    brick.reference = brickReference;
                     brick.i = coordinates.i;
                     brick.j = coordinates.j;
                     brick.k = coordinates.k;

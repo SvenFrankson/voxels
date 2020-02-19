@@ -6,9 +6,25 @@ interface IBrickData {
     r: number;
 }
 
+interface IBrickReference {
+    name: string;
+    color: string;
+}
+
 class Brick {
 
-    public reference: string;
+    public static ParseReference(brickReference: string): IBrickReference {
+        let splitRef = brickReference.split("-");
+        let color = splitRef.pop();
+        let name = splitRef.join("-");
+        return {
+            name: name,
+            color: color
+        };
+    }
+
+    public reference: IBrickReference;
+
     private _tile: Tile;
     public get tile(): Tile {
         return this._tile;
@@ -51,17 +67,13 @@ class Brick {
         this.k = coordinates.z;
     }
 
-    public setReference(reference: string) {
-        this.reference = reference;
-    }
-
     public serialize(): IBrickData {
         return {
             i: this.i,
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference
+            reference: this.reference.name + "-" + this.reference.color
         };
     }
 
@@ -70,6 +82,6 @@ class Brick {
         this.j = data.j;
         this.k = data.k;
         this.r = data.r;
-        this.setReference(data.reference);
+        this.reference = Brick.ParseReference(data.reference);
     }
 }

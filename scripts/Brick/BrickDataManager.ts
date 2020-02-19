@@ -27,8 +27,7 @@ class BrickDataManager {
         });
     }
 
-    public static GetBrickData(brickReference: string): BrickData {
-        console.log(brickReference);
-        return BrickDataManager._BrickDatas.get(brickReference);
+    public static GetBrickData(brickReference: IBrickReference): BrickData {
+        return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }

@@ -1,6 +1,6 @@
 class TerrainTileTexture extends BABYLON.DynamicTexture {
 
-    public static LodResolutions: number[] = [512, 256, 128, 64];
+    public static LodResolutions: number[] = [1024, 256, 128, 64];
     public static TerrainColors: string[] = [
         "#47a632",
         "#a86f32",

@@ -433,6 +433,15 @@ class Brick {
         this._k = 0;
         this._r = 0;
     }
+    static ParseReference(brickReference) {
+        let splitRef = brickReference.split("-");
+        let color = splitRef.pop();
+        let name = splitRef.join("-");
+        return {
+            name: name,
+            color: color
+        };
+    }
     get tile() {
         return this._tile;
     }
@@ -468,16 +477,13 @@ class Brick {
         this.j = coordinates.y;
         this.k = coordinates.z;
     }
-    setReference(reference) {
-        this.reference = reference;
-    }
     serialize() {
         return {
             i: this.i,
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference
+            reference: this.reference.name + "-" + this.reference.color
         };
     }
     deserialize(data) {
@@ -485,7 +491,7 @@ class Brick {
         this.j = data.j;
         this.k = data.k;
         this.r = data.r;
-        this.setReference(data.reference);
+        this.reference = Brick.ParseReference(data.reference);
     }
 }
 class BrickData {
@@ -509,8 +515,7 @@ class BrickDataManager {
         });
     }
     static GetBrickData(brickReference) {
-        console.log(brickReference);
-        return BrickDataManager._BrickDatas.get(brickReference);
+        return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
 BrickDataManager._BrickDatas = new Map();
@@ -545,6 +550,11 @@ class BrickVertexData {
         });
     }
     static async InitializeData() {
+        BrickVertexData.BrickColors.set("red", new BABYLON.Color3(1, 0, 0));
+        BrickVertexData.BrickColors.set("green", new BABYLON.Color3(0, 1, 0));
+        BrickVertexData.BrickColors.set("blue", new BABYLON.Color3(0, 0, 1));
+        BrickVertexData.BrickColors.set("white", new BABYLON.Color3(1, 1, 1));
+        BrickVertexData.BrickColors.set("black", new BABYLON.Color3(0.1, 0.1, 0.1));
         await BrickVertexData._LoadKnobsVertexDatas();
         return true;
     }
@@ -571,10 +581,10 @@ class BrickVertexData {
         }
     }
     static async GetBrickVertexData(brickReference) {
-        let data = BrickVertexData._BrickVertexDatas.get(brickReference);
+        let data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
         if (!data) {
             await BrickVertexData._LoadBricksVertexDatas();
-            data = BrickVertexData._BrickVertexDatas.get(brickReference);
+            data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
         }
         return data;
     }
@@ -587,13 +597,20 @@ class BrickVertexData {
         for (let i = 0; i < brickData.knobs.length; i++) {
             BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0);
         }
+        let colors = [];
+        let color = BrickVertexData.BrickColors.get(brickReference.color);
+        for (let i = 0; i < positions.length / 3; i++) {
+            colors.push(color.r, color.g, color.b, 1);
+        }
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
         fullVertexData.normals = normals;
         fullVertexData.indices = indices;
+        fullVertexData.colors = colors;
         return fullVertexData;
     }
 }
+BrickVertexData.BrickColors = new Map();
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
 var CHUNCK_SIZE = 8;
@@ -2524,11 +2541,12 @@ class PlayerActionTemplate {
         };
         return action;
     }
-    static CreateBrickAction(brickReference) {
+    static CreateBrickAction(brickReferenceStr) {
+        let brickReference = Brick.ParseReference(brickReferenceStr);
         let action = new PlayerAction();
         let previewMesh;
         let r = 0;
-        action.iconUrl = "./datas/textures/miniatures/" + brickReference + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
         action.onKeyUp = (e) => {
             if (e.keyCode === 82) {
                 r = (r + 1) % 4;
@@ -2575,10 +2593,9 @@ class PlayerActionTemplate {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
-                console.log(coordinates);
                 if (coordinates) {
                     let brick = new Brick();
-                    brick.setReference(brickReference);
+                    brick.reference = brickReference;
                     brick.i = coordinates.i;
                     brick.j = coordinates.j;
                     brick.k = coordinates.k;
@@ -2910,6 +2927,12 @@ class Main {
             Main._terrainCellShadingMaterial = new TerrainToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
         }
         return Main._terrainCellShadingMaterial;
+    }
+    static get toonRampTexture() {
+        if (!Main._toonRampTexture) {
+            Main._toonRampTexture = new BABYLON.Texture("./datas/textures/toon-ramp.png", Main.Scene);
+        }
+        return Main._toonRampTexture;
     }
     constructor(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
@@ -3291,9 +3314,15 @@ class Miniature extends Main {
         loop();
     }
     async runAllScreenShots() {
-        await this.createBrick("brick-1x1");
-        await this.createBrick("brick-1x2");
-        await this.createBrick("brick-1x4");
+        let brickNames = ["brick-1x1", "brick-1x2", "brick-1x4"];
+        let colors = ["red", "green", "blue", "white", "black"];
+        for (let i = 0; i < brickNames.length; i++) {
+            let name = brickNames[i];
+            for (let j = 0; j < colors.length; j++) {
+                let color = colors[j];
+                await this.createBrick(name + "-" + color);
+            }
+        }
         /*
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
@@ -3348,7 +3377,8 @@ class Miniature extends Main {
             }, 200);
         });
     }
-    async createBrick(brickReference) {
+    async createBrick(brickReferenceStr) {
+        let brickReference = Brick.ParseReference(brickReferenceStr);
         let mesh = new BABYLON.Mesh("mesh");
         let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
         data.applyToMesh(mesh);
@@ -3357,7 +3387,7 @@ class Miniature extends Main {
             setTimeout(() => {
                 this.updateCameraPosition();
                 setTimeout(async () => {
-                    await this.makeScreenShot(brickReference, false);
+                    await this.makeScreenShot(brickReferenceStr, false);
                     mesh.dispose();
                     resolve();
                 }, 200);
@@ -3705,13 +3735,31 @@ class TileTest extends Main {
         let inventory = new Inventory(player);
         inventory.initialize();
         for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1"));
+            inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
         }
         for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2"));
+            inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
         }
         for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4"));
+            inventory.addItem(InventoryItem.Brick("brick-1x4-blue"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1-black"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2-black"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4-black"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1-white"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2-white"));
+        }
+        for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4-white"));
         }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
@@ -3781,6 +3829,26 @@ class TerrainToonMaterial extends BABYLON.ShaderMaterial {
         this.setColor3("colDirt", BABYLON.Color3.FromHexString("#a86f32"));
         this.setColor3("colRock", BABYLON.Color3.FromHexString("#8c8c89"));
         this.setColor3("colSand", BABYLON.Color3.FromHexString("#dbc67b"));
+    }
+}
+class TerrainTileToonMaterial extends BABYLON.ShaderMaterial {
+    constructor(name, scene) {
+        super(name, scene, {
+            vertex: "terrainTileToon",
+            fragment: "terrainTileToon",
+        }, {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+        });
+        this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5, 2.5, 1.5)).normalize());
+        this.setTexture("toonRampTexture", Main.toonRampTexture);
+    }
+    get diffuseTexture() {
+        return this._diffuseTexture;
+    }
+    set diffuseTexture(tex) {
+        this._diffuseTexture = tex;
+        this.setTexture("diffuseTexture", this._diffuseTexture);
     }
 }
 class ToonMaterial extends BABYLON.ShaderMaterial {
@@ -4397,7 +4465,7 @@ class TerrainTileTexture extends BABYLON.DynamicTexture {
         this.update();
     }
 }
-TerrainTileTexture.LodResolutions = [512, 256, 128, 64];
+TerrainTileTexture.LodResolutions = [1024, 256, 128, 64];
 TerrainTileTexture.TerrainColors = [
     "#47a632",
     "#a86f32",
@@ -4518,21 +4586,19 @@ class Tile extends BABYLON.Mesh {
         this.currentLOD = -1;
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
-        //this.material = Main.terrainCellShadingMaterial;
-        let material = new BABYLON.StandardMaterial(this.name + "-material", Main.Scene);
-        material.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        let material = new TerrainTileToonMaterial(this.name + "-material", Main.Scene);
         material.diffuseTexture = new TerrainTileTexture(this);
         this.material = material;
     }
     get tileTexture() {
-        if (this.material instanceof BABYLON.StandardMaterial) {
+        if (this.material instanceof TerrainTileToonMaterial) {
             if (this.material.diffuseTexture instanceof TerrainTileTexture) {
                 return this.material.diffuseTexture;
             }
         }
     }
     set tileTexture(t) {
-        if (this.material instanceof BABYLON.StandardMaterial) {
+        if (this.material instanceof TerrainTileToonMaterial) {
             this.material.diffuseTexture = t;
         }
     }
@@ -4544,7 +4610,7 @@ class Tile extends BABYLON.Mesh {
             this.types[i] = [];
             for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = 0;
-                this.types[i][j] = Math.floor(Math.random() * 4);
+                this.types[i][j] = 0;
             }
         }
     }
@@ -4713,11 +4779,7 @@ class Tile extends BABYLON.Mesh {
         data.uvs = uvs;
         data.indices = indices;
         data.applyToMesh(this);
-        if (this.material instanceof BABYLON.StandardMaterial) {
-            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
-                this.material.diffuseTexture.redraw();
-            }
-        }
+        this.tileTexture.redraw();
         this.freezeWorldMatrix();
         this.currentLOD = lod;
     }

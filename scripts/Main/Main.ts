@@ -28,6 +28,14 @@ class Main {
 		return Main._terrainCellShadingMaterial;
 	}
 
+    public static _toonRampTexture: BABYLON.Texture;
+	public static get toonRampTexture(): BABYLON.Texture {
+		if (!Main._toonRampTexture) {
+			Main._toonRampTexture = new BABYLON.Texture("./datas/textures/toon-ramp.png", Main.Scene);
+		}
+		return Main._toonRampTexture;
+	}
+
     constructor(canvasElement: string) {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });

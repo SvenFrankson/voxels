@@ -21,13 +21,31 @@ class TileTest extends Main {
 		inventory.initialize();
 
 		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1"));
+            inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
         }
 		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2"));
+            inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
         }
 		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4"));
+            inventory.addItem(InventoryItem.Brick("brick-1x4-blue"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1-black"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2-black"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4-black"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x1-white"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x2-white"));
+        }
+		for (let n = 0; n <= Math.random() * 100; n++) {
+            inventory.addItem(InventoryItem.Brick("brick-1x4-white"));
         }
 		inventory.update();
 

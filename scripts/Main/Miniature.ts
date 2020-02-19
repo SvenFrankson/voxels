@@ -52,9 +52,15 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
-        await this.createBrick("brick-1x1");
-        await this.createBrick("brick-1x2");
-        await this.createBrick("brick-1x4");
+		let brickNames = ["brick-1x1", "brick-1x2", "brick-1x4"];
+		let colors = ["red", "green", "blue", "white", "black"];
+		for (let i = 0; i < brickNames.length; i++) {
+			let name = brickNames[i];
+			for (let j = 0; j < colors.length; j++) {
+				let color = colors[j];
+				await this.createBrick(name + "-" + color);
+			}
+		}
 		/*
         await this.createCube(CubeType.Dirt);
         await this.createCube(CubeType.Rock);
@@ -137,7 +143,8 @@ class Miniature extends Main {
         )
 	}
 
-	public async createBrick(brickReference: string): Promise<void> {
+	public async createBrick(brickReferenceStr: string): Promise<void> {
+		let brickReference = Brick.ParseReference(brickReferenceStr);
 		let mesh = new BABYLON.Mesh("mesh");
 		let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
 		data.applyToMesh(mesh);
@@ -151,7 +158,7 @@ class Miniature extends Main {
                         this.updateCameraPosition();
                         setTimeout(
                             async () => {
-								await this.makeScreenShot(brickReference, false);
+								await this.makeScreenShot(brickReferenceStr, false);
 								mesh.dispose();
                                 resolve();
                             },

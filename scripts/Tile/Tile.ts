@@ -18,7 +18,7 @@ class Tile extends BABYLON.Mesh {
     public currentLOD: number = -1;
 
     public get tileTexture(): TerrainTileTexture {
-        if (this.material instanceof BABYLON.StandardMaterial) {
+        if (this.material instanceof TerrainTileToonMaterial) {
             if (this.material.diffuseTexture instanceof TerrainTileTexture) {
                 return this.material.diffuseTexture;
             }
@@ -26,7 +26,7 @@ class Tile extends BABYLON.Mesh {
     }
 
     public set tileTexture(t: TerrainTileTexture) {
-        if (this.material instanceof BABYLON.StandardMaterial) {
+        if (this.material instanceof TerrainTileToonMaterial) {
             this.material.diffuseTexture = t;
         }
     }
@@ -38,9 +38,7 @@ class Tile extends BABYLON.Mesh {
         super("tile_" + i + "_" + j);
         this.position.x = TILE_SIZE * this.i * DX * 2;
         this.position.z = TILE_SIZE * this.j * DX * 2;
-        //this.material = Main.terrainCellShadingMaterial;
-        let material = new BABYLON.StandardMaterial(this.name + "-material", Main.Scene);
-        material.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        let material = new TerrainTileToonMaterial(this.name + "-material", Main.Scene);
         material.diffuseTexture = new TerrainTileTexture(this);
         this.material = material;
     }
@@ -53,7 +51,7 @@ class Tile extends BABYLON.Mesh {
             this.types[i] = [];
             for (let j = 0; j < TILE_VERTEX_SIZE; j++) {
                 this.heights[i][j] = 0;
-                this.types[i][j] = Math.floor(Math.random() * 4);
+                this.types[i][j] = 0;
             }
         }
     }
@@ -243,11 +241,7 @@ class Tile extends BABYLON.Mesh {
         data.indices = indices;
 
         data.applyToMesh(this);
-        if (this.material instanceof BABYLON.StandardMaterial) {
-            if (this.material.diffuseTexture instanceof TerrainTileTexture) {
-                this.material.diffuseTexture.redraw();
-            }
-        }
+        this.tileTexture.redraw();
         this.freezeWorldMatrix();
         this.currentLOD = lod;
     }

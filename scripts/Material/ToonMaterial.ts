@@ -21,6 +21,35 @@ class TerrainToonMaterial extends BABYLON.ShaderMaterial {
     }
 }
 
+class TerrainTileToonMaterial extends BABYLON.ShaderMaterial {
+
+    constructor(name: string, scene: BABYLON.Scene) {
+        super(
+            name,
+            scene,
+            {
+                vertex: "terrainTileToon",
+                fragment: "terrainTileToon",
+            },
+            {
+                attributes: ["position", "normal", "uv"],
+                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+            }
+        );
+        this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5, 2.5, 1.5)).normalize());
+        this.setTexture("toonRampTexture", Main.toonRampTexture);
+    }
+
+    private _diffuseTexture: BABYLON.Texture;
+    public get diffuseTexture(): BABYLON.Texture {
+        return this._diffuseTexture;
+    }
+    public set diffuseTexture(tex: BABYLON.Texture) {
+        this._diffuseTexture = tex;
+        this.setTexture("diffuseTexture", this._diffuseTexture);
+    }
+}
+
 class ToonMaterial extends BABYLON.ShaderMaterial {
 
     constructor(name: string, color: BABYLON.Color3, scene: BABYLON.Scene) {
