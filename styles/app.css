@@ -13,6 +13,18 @@ html, body {
     touch-action: none;
 }
 
+#debug-layer {
+    position: fixed;
+    top: 50px;
+    left: 150px;
+    z-index: 42;
+    color: magenta;
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: rgba(0, 0, 0, 30%);
+    padding: 10px;
+}
+
 #chunck-editor {
     position: fixed;
     top: 10px;

@@ -64,14 +64,19 @@ class Player extends BABYLON.Mesh {
             }
         });
 
+        let smoothnessX: number = 3;
+        let smoothnessXFactor: number = 1 / smoothnessX;
+        let smoothnessY: number = 3;
+        let smoothnessYFactor: number = 1 / smoothnessY;
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                this.rotation.y += e.movementX / 200;
+                let newRY = this.rotation.y + e.movementX / 200;
+                this.rotation.y = this.rotation.y * (1 - smoothnessYFactor) + newRY * smoothnessYFactor;
                 if (Main.Camera instanceof BABYLON.FreeCamera) {
-                    Main.Camera.rotation.x = Math.min(Math.max(
+                    let newRX = Math.min(Math.max(
                         Main.Camera.rotation.x + e.movementY / 200, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60
                     )
-                        
+                    Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - smoothnessXFactor) + newRX * smoothnessXFactor;
                 }
             }
         });

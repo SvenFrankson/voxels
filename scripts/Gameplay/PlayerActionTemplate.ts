@@ -277,7 +277,11 @@ class PlayerActionTemplate {
             );
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
+                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
+                if (!hitKnob) {
+                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                }
                 world.x = Math.round(world.x / DX) * DX;
                 world.y = Math.floor(world.y / DY) * DY;
                 world.z = Math.round(world.z / DX) * DX;
@@ -315,7 +319,11 @@ class PlayerActionTemplate {
             );
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
+                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
+                if (!hitKnob) {
+                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                }
                 let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 if (coordinates) {
                     let brick = new Brick();

@@ -23,6 +23,7 @@ class TileTest extends Main {
 		for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
         }
+        player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);
 		for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
         }

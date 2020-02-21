@@ -2318,11 +2318,17 @@ class Player extends BABYLON.Mesh {
                 this._inputForward = true;
             }
         });
+        let smoothnessX = 3;
+        let smoothnessXFactor = 1 / smoothnessX;
+        let smoothnessY = 3;
+        let smoothnessYFactor = 1 / smoothnessY;
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                this.rotation.y += e.movementX / 200;
+                let newRY = this.rotation.y + e.movementX / 200;
+                this.rotation.y = this.rotation.y * (1 - smoothnessYFactor) + newRY * smoothnessYFactor;
                 if (Main.Camera instanceof BABYLON.FreeCamera) {
-                    Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                    let newRX = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                    Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - smoothnessXFactor) + newRX * smoothnessXFactor;
                 }
             }
         });
@@ -2561,7 +2567,11 @@ class PlayerActionTemplate {
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
+                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
+                if (!hitKnob) {
+                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                }
                 world.x = Math.round(world.x / DX) * DX;
                 world.y = Math.floor(world.y / DY) * DY;
                 world.z = Math.round(world.z / DX) * DX;
@@ -2591,7 +2601,11 @@ class PlayerActionTemplate {
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
+                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
+                if (!hitKnob) {
+                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                }
                 let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 if (coordinates) {
                     let brick = new Brick();
@@ -3737,6 +3751,7 @@ class TileTest extends Main {
         for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
         }
+        player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);
         for (let n = 0; n <= Math.random() * 100; n++) {
             inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
         }
@@ -4951,6 +4966,38 @@ class TileManager {
             this.tiles.set(tileRef, tile);
         }
         return tile;
+    }
+}
+var KNOB_RADIUS_SQUARED = 0.24 * 0.24;
+class TileUtils {
+    static IsKnobHit(worldPosition, normal) {
+        if (normal.y === 0) {
+            console.log("a");
+            let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
+            if (dy < 0.17) {
+                let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
+                let dz = worldPosition.z - Math.round(worldPosition.z / DX) * DX;
+                let dd = dx * dx + dz * dz;
+                console.log(Math.sqrt(dd));
+                if (dd <= KNOB_RADIUS_SQUARED) {
+                    if (dd >= KNOB_RADIUS_SQUARED * 0.6) {
+                        return true;
+                    }
+                }
+            }
+        }
+        else if (normal.y === 1) {
+            let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
+            if (Math.abs(dy - 0.17) < 0.001) {
+                let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
+                let dz = worldPosition.z - Math.round(worldPosition.z / DX) * DX;
+                let dd = dx * dx + dz * dz;
+                if (dd <= KNOB_RADIUS_SQUARED) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
 var DATA_SIZE = 128;
