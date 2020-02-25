@@ -2,6 +2,7 @@ class BrickVertexData {
 
     public static BrickColors: Map<string, BABYLON.Color3> = new Map<string, BABYLON.Color3>();
 
+    private static _CubicTemplateVertexData: BABYLON.VertexData[] = [];
     private static _BrickVertexDatas: Map<string, BABYLON.VertexData> = new Map<string, BABYLON.VertexData>();
     private static _KnobVertexDatas: BABYLON.VertexData[] = [];
 
@@ -29,19 +30,19 @@ class BrickVertexData {
         );
     }
 
-    private static async _LoadBricksVertexDatas(): Promise<void> {
+    private static async _LoadCubicTemplateVertexData(): Promise<void> {
         return new Promise<void>(
             resolve => {
                 BABYLON.SceneLoader.ImportMesh(
                     "",
-                    "./datas/meshes/bricks.babylon",
+                    "./datas/meshes/cubic-template.babylon",
                     "",
                     Main.Scene,
                     (meshes) => {
                         for (let i = 0; i < meshes.length; i++) {
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh) {
-                                BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                                BrickVertexData._CubicTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
                                 mesh.dispose();
                             }
                         }
@@ -50,6 +51,49 @@ class BrickVertexData {
                 );
             }
         );
+    }
+
+    private static async GenerateFromCubicTemplate(w: number, h: number, l: number): Promise<BABYLON.VertexData> {
+        if (!BrickVertexData._CubicTemplateVertexData[0]) {
+            await BrickVertexData._LoadCubicTemplateVertexData();
+        }
+        let data = new BABYLON.VertexData();
+        let positions = [...BrickVertexData._CubicTemplateVertexData[0].positions];
+        let indices = [...BrickVertexData._CubicTemplateVertexData[0].indices];
+        let normals = [...BrickVertexData._CubicTemplateVertexData[0].normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let y = positions[3 * i + 1];
+            let z = positions[3 * i + 2];
+            if (x > 0) {
+                positions[3 * i] = x + (w - 1) * DX;
+            }
+            if (y > DY * 0.5) {
+                positions[3 * i + 1] = y + (h - 1) * DY;
+            }
+            if (z > 0) {
+                positions[3 * i + 2] = z + (l - 1) * DX;
+            }
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
+
+    private static async _LoadBrickVertexData(brickName: string): Promise<BABYLON.VertexData> {
+        let type = brickName.split("-")[0];
+        let size = brickName.split("-")[1];
+        if (type === "brick") {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 3, l);
+        }
+        else if (type === "plate" || type === "tile") {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 1, l);
+        }
     }
 
     public static async InitializeData(): Promise<boolean> {
@@ -91,8 +135,8 @@ class BrickVertexData {
     public static async GetBrickVertexData(brickReference: IBrickReference): Promise<BABYLON.VertexData> {
         let data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
         if (!data) {
-            await BrickVertexData._LoadBricksVertexDatas();
-            data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
+            data = await BrickVertexData._LoadBrickVertexData(brickReference.name);
+            BrickVertexData._BrickVertexDatas.set(brickReference.name, data);
         }
         return data;
     }
