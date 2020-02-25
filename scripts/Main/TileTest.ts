@@ -18,36 +18,19 @@ class TileTest extends Main {
         player.register(true);
 
 		let inventory = new Inventory(player);
-		inventory.initialize();
-
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
+        inventory.initialize();
+        
+        for (let i = 0; i < 20; i++) {
+            let colors = ["red", "green", "blue", "white", "black"];
+            let color = colors[Math.floor(Math.random() * 5)];
+            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
+            let count = Math.floor(Math.random() * 9 + 2);
+            for (let n = 0; n < count; n++) {
+                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+            }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-blue"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-black"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-black"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-black"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-white"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-white"));
-        }
-		for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-white"));
-        }
+
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

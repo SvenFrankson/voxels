@@ -495,29 +495,67 @@ class Brick {
     }
 }
 class BrickData {
+    constructor() {
+        this.knobs = [];
+        this.covers = [];
+        this.blocks = [];
+    }
 }
 class BrickDataManager {
     static InitializeData() {
-        BrickDataManager._BrickDatas.set("brick-1x1", {
-            knobs: [0, 3, 0],
-            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
-            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
-        });
-        BrickDataManager._BrickDatas.set("brick-1x2", {
-            knobs: [0, 3, 0, 0, 3, 1],
-            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
-            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
-        });
-        BrickDataManager._BrickDatas.set("brick-1x4", {
-            knobs: [0, 3, 0, 0, 3, 1, 0, 3, 2, 0, 3, 3],
-            covers: [0, 0, 0, 0, 1, 0, 0, 2, 0],
-            blocks: [0, 0, 0, 0, 1, 0, 0, 2, 0]
-        });
+        let LValues = [1, 2, 3, 4, 6, 8];
+        let WValues = [1, 2];
+        for (let i = 0; i < LValues.length; i++) {
+            let L = LValues[i];
+            for (let j = 0; j < WValues.length; j++) {
+                let W = WValues[j];
+                if (L >= W) {
+                    // Brick
+                    let brickData = new BrickData();
+                    let brickName = "brick-" + W + "x" + L;
+                    for (let w = 0; w < W; w++) {
+                        for (let l = 0; l < L; l++) {
+                            brickData.knobs.push(w, 3, l);
+                            for (let h = 0; h < 0; h++) {
+                                brickData.covers.push(w, h, l);
+                                brickData.blocks.push(w, h, l);
+                            }
+                        }
+                    }
+                    BrickDataManager._BrickDatas.set(brickName, brickData);
+                    BrickDataManager.BrickNames.push(brickName);
+                    // Tile
+                    let tileData = new BrickData();
+                    let tileName = "tile-" + W + "x" + L;
+                    for (let w = 0; w < W; w++) {
+                        for (let l = 0; l < L; l++) {
+                            tileData.covers.push(w, 0, l);
+                            tileData.blocks.push(w, 0, l);
+                        }
+                    }
+                    BrickDataManager._BrickDatas.set(tileName, tileData);
+                    BrickDataManager.BrickNames.push(tileName);
+                    // Plate
+                    let plateData = new BrickData();
+                    let plateName = "plate-" + W + "x" + L;
+                    for (let w = 0; w < W; w++) {
+                        for (let l = 0; l < L; l++) {
+                            plateData.knobs.push(w, 1, l);
+                            plateData.covers.push(w, 0, l);
+                            plateData.blocks.push(w, 0, l);
+                        }
+                    }
+                    BrickDataManager._BrickDatas.set(plateName, plateData);
+                    BrickDataManager.BrickNames.push(plateName);
+                }
+            }
+        }
     }
     static GetBrickData(brickReference) {
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
+BrickDataManager.BrickNames = [];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
     static async _LoadKnobsVertexDatas() {
@@ -535,19 +573,60 @@ class BrickVertexData {
             });
         });
     }
-    static async _LoadBricksVertexDatas() {
+    static async _LoadCubicTemplateVertexData() {
         return new Promise(resolve => {
-            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/bricks.babylon", "", Main.Scene, (meshes) => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/cubic-template.babylon", "", Main.Scene, (meshes) => {
                 for (let i = 0; i < meshes.length; i++) {
                     let mesh = meshes[i];
                     if (mesh instanceof BABYLON.Mesh) {
-                        BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                        BrickVertexData._CubicTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
                         mesh.dispose();
                     }
                 }
                 resolve();
             });
         });
+    }
+    static async GenerateFromCubicTemplate(w, h, l) {
+        if (!BrickVertexData._CubicTemplateVertexData[0]) {
+            await BrickVertexData._LoadCubicTemplateVertexData();
+        }
+        let data = new BABYLON.VertexData();
+        let positions = [...BrickVertexData._CubicTemplateVertexData[0].positions];
+        let indices = [...BrickVertexData._CubicTemplateVertexData[0].indices];
+        let normals = [...BrickVertexData._CubicTemplateVertexData[0].normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let y = positions[3 * i + 1];
+            let z = positions[3 * i + 2];
+            if (x > 0) {
+                positions[3 * i] = x + (w - 1) * DX;
+            }
+            if (y > DY * 0.5) {
+                positions[3 * i + 1] = y + (h - 1) * DY;
+            }
+            if (z > 0) {
+                positions[3 * i + 2] = z + (l - 1) * DX;
+            }
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
+    static async _LoadBrickVertexData(brickName) {
+        let type = brickName.split("-")[0];
+        let size = brickName.split("-")[1];
+        if (type === "brick") {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 3, l);
+        }
+        else if (type === "plate" || type === "tile") {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 1, l);
+        }
     }
     static async InitializeData() {
         BrickVertexData.BrickColors.set("red", new BABYLON.Color3(1, 0, 0));
@@ -583,8 +662,8 @@ class BrickVertexData {
     static async GetBrickVertexData(brickReference) {
         let data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
         if (!data) {
-            await BrickVertexData._LoadBricksVertexDatas();
-            data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
+            data = await BrickVertexData._LoadBrickVertexData(brickReference.name);
+            BrickVertexData._BrickVertexDatas.set(brickReference.name, data);
         }
         return data;
     }
@@ -611,6 +690,7 @@ class BrickVertexData {
     }
 }
 BrickVertexData.BrickColors = new Map();
+BrickVertexData._CubicTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
 var CHUNCK_SIZE = 8;
@@ -3328,10 +3408,9 @@ class Miniature extends Main {
         loop();
     }
     async runAllScreenShots() {
-        let brickNames = ["brick-1x1", "brick-1x2", "brick-1x4"];
         let colors = ["red", "green", "blue", "white", "black"];
-        for (let i = 0; i < brickNames.length; i++) {
-            let name = brickNames[i];
+        for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
+            let name = BrickDataManager.BrickNames[i];
             for (let j = 0; j < colors.length; j++) {
                 let color = colors[j];
                 await this.createBrick(name + "-" + color);
@@ -3367,8 +3446,8 @@ class Miniature extends Main {
                 setTimeout(async () => {
                     await this.makeScreenShot(ChunckUtils.CubeTypeToString(cubeType).toLocaleLowerCase(), false);
                     resolve();
-                }, 100);
-            }, 100);
+                }, 80);
+            }, 80);
         });
     }
     async createBlock(reference) {
@@ -3748,34 +3827,16 @@ class TileTest extends Main {
         player.register(true);
         let inventory = new Inventory(player);
         inventory.initialize();
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-red"));
+        for (let i = 0; i < 20; i++) {
+            let colors = ["red", "green", "blue", "white", "black"];
+            let color = colors[Math.floor(Math.random() * 5)];
+            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
+            let count = Math.floor(Math.random() * 9 + 2);
+            for (let n = 0; n < count; n++) {
+                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+            }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-green"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-blue"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-black"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-black"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-black"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x1-white"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x2-white"));
-        }
-        for (let n = 0; n <= Math.random() * 100; n++) {
-            inventory.addItem(InventoryItem.Brick("brick-1x4-white"));
-        }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;

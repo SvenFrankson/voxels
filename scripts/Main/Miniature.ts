@@ -52,10 +52,9 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
-		let brickNames = ["brick-1x1", "brick-1x2", "brick-1x4"];
 		let colors = ["red", "green", "blue", "white", "black"];
-		for (let i = 0; i < brickNames.length; i++) {
-			let name = brickNames[i];
+		for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
+			let name = BrickDataManager.BrickNames[i];
 			for (let j = 0; j < colors.length; j++) {
 				let color = colors[j];
 				await this.createBrick(name + "-" + color);
@@ -100,10 +99,10 @@ class Miniature extends Main {
                                 await this.makeScreenShot(ChunckUtils.CubeTypeToString(cubeType).toLocaleLowerCase(), false);
                                 resolve();
                             },
-                            100
+                            80
                         )
                     },
-                    100
+                    80
                 )
             }
         )
