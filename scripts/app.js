@@ -2262,7 +2262,7 @@ class Player extends BABYLON.Mesh {
                 return mesh instanceof Tile;
             });
             if (pick.hit) {
-                let y = Math.floor(pick.pickedPoint.y / DY) * DY + 1;
+                let y = Math.floor((pick.pickedPoint.y + 0.01) / DY) * DY + 1;
                 this.position.y *= 0.5;
                 this.position.y += y * 0.5;
             }
