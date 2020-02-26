@@ -503,6 +503,21 @@ class BrickData {
 }
 class BrickDataManager {
     static InitializeData() {
+        BrickDataManager.BrickColors.set("brightyellow", new BABYLON.Color3(255 / 255, 205 / 255, 3 / 255));
+        BrickDataManager.BrickColors.set("brightorange", new BABYLON.Color3(245 / 255, 205 / 125, 3 / 32));
+        BrickDataManager.BrickColors.set("brightred", new BABYLON.Color3(221 / 255, 26 / 125, 33 / 32));
+        BrickDataManager.BrickColors.set("brightpurple", new BABYLON.Color3(233 / 255, 93 / 125, 162 / 32));
+        BrickDataManager.BrickColors.set("brightblue", new BABYLON.Color3(0 / 255, 108 / 125, 183 / 32));
+        BrickDataManager.BrickColors.set("darkazur", new BABYLON.Color3(0 / 255, 163 / 125, 218 / 32));
+        BrickDataManager.BrickColors.set("yellowishgreen", new BABYLON.Color3(204 / 255, 225 / 125, 151 / 32));
+        BrickDataManager.BrickColors.set("brightgreen", new BABYLON.Color3(0 / 255, 175 / 125, 77 / 32));
+        BrickDataManager.BrickColors.set("brightyellowishgreen", new BABYLON.Color3(154 / 255, 202 / 125, 60 / 32));
+        BrickDataManager.BrickColors.set("redishbrown", new BABYLON.Color3(105 / 255, 46 / 125, 20 / 32));
+        BrickDataManager.BrickColors.set("nougat", new BABYLON.Color3(222 / 255, 139 / 125, 95 / 32));
+        BrickDataManager.BrickColors.set("white", new BABYLON.Color3(244 / 255, 244 / 125, 244 / 32));
+        BrickDataManager.BrickColors.forEach((color, name) => {
+            BrickDataManager.BrickColorNames.push(name);
+        });
         let LValues = [1, 2, 3, 4, 6, 8];
         let WValues = [1, 2];
         for (let i = 0; i < LValues.length; i++) {
@@ -555,6 +570,8 @@ class BrickDataManager {
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
+BrickDataManager.BrickColorNames = [];
+BrickDataManager.BrickColors = new Map();
 BrickDataManager.BrickNames = [];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
@@ -629,11 +646,6 @@ class BrickVertexData {
         }
     }
     static async InitializeData() {
-        BrickVertexData.BrickColors.set("red", new BABYLON.Color3(1, 0, 0));
-        BrickVertexData.BrickColors.set("green", new BABYLON.Color3(0, 1, 0));
-        BrickVertexData.BrickColors.set("blue", new BABYLON.Color3(0, 0, 1));
-        BrickVertexData.BrickColors.set("white", new BABYLON.Color3(1, 1, 1));
-        BrickVertexData.BrickColors.set("black", new BABYLON.Color3(0.1, 0.1, 0.1));
         await BrickVertexData._LoadKnobsVertexDatas();
         return true;
     }
@@ -677,7 +689,7 @@ class BrickVertexData {
             BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0);
         }
         let colors = [];
-        let color = BrickVertexData.BrickColors.get(brickReference.color);
+        let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(color.r, color.g, color.b, 1);
         }
@@ -689,7 +701,6 @@ class BrickVertexData {
         return fullVertexData;
     }
 }
-BrickVertexData.BrickColors = new Map();
 BrickVertexData._CubicTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
@@ -3426,7 +3437,7 @@ class Miniature extends Main {
         loop();
     }
     async runAllScreenShots() {
-        let colors = ["red", "green", "blue", "white", "black"];
+        let colors = BrickDataManager.BrickColorNames;
         for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
             let name = BrickDataManager.BrickNames[i];
             for (let j = 0; j < colors.length; j++) {
@@ -3846,8 +3857,8 @@ class TileTest extends Main {
         let inventory = new Inventory(player);
         inventory.initialize();
         for (let i = 0; i < 20; i++) {
-            let colors = ["red", "green", "blue", "white", "black"];
-            let color = colors[Math.floor(Math.random() * 5)];
+            let colors = BrickDataManager.BrickColorNames;
+            let color = colors[Math.floor(Math.random() * colors.length)];
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {
@@ -4890,6 +4901,7 @@ class Tile extends BABYLON.Mesh {
             b.position.copyFromFloats(brick.i * DX, brick.k * DY, brick.j * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
+            b.material = Main.cellShadingMaterial;
         }
     }
     serialize() {

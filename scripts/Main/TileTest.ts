@@ -21,8 +21,8 @@ class TileTest extends Main {
         inventory.initialize();
         
         for (let i = 0; i < 20; i++) {
-            let colors = ["red", "green", "blue", "white", "black"];
-            let color = colors[Math.floor(Math.random() * 5)];
+            let colors = BrickDataManager.BrickColorNames;
+            let color = colors[Math.floor(Math.random() * colors.length)];
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {

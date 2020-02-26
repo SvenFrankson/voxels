@@ -259,6 +259,7 @@ class Tile extends BABYLON.Mesh {
             b.position.copyFromFloats(brick.i * DX, brick.k * DY, brick.j * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
+            b.material = Main.cellShadingMaterial;
         }
     }
 

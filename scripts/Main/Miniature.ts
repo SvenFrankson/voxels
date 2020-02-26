@@ -52,7 +52,7 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
-		let colors = ["red", "green", "blue", "white", "black"];
+		let colors = BrickDataManager.BrickColorNames;
 		for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
 			let name = BrickDataManager.BrickNames[i];
 			for (let j = 0; j < colors.length; j++) {
