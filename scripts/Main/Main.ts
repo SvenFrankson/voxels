@@ -174,8 +174,26 @@ class Main {
     }
 
     public animate(): void {
+		let fpsValues = [];
         Main.Engine.runRenderLoop(() => {
-            Main.Scene.render();
+			Main.Scene.render();
+			let dt = Main.Engine.getDeltaTime();
+			let fps = 1000 / dt;
+			if (isFinite(fps)) {
+				fpsValues.push(fps);
+				while (fpsValues.length > 60) {
+					fpsValues.splice(0, 1);
+				}
+				let fpsCurrent = fpsValues[0];
+				let fpsSpike = fpsValues[0];
+				for (let i = 1; i < fpsValues.length; i++) {
+					fpsCurrent += fpsValues[i];
+					fpsSpike = Math.min(fpsSpike, fpsValues[i]);
+				}
+				fpsCurrent /= fpsValues.length;
+				document.getElementById("fps-current").textContent = fpsCurrent.toFixed(0);
+				document.getElementById("fps-spike").textContent = fpsSpike.toFixed(0);
+			}
         });
 
         window.addEventListener("resize", () => {

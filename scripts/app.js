@@ -587,14 +587,14 @@ class BrickVertexData {
             });
         });
     }
-    static async GenerateFromCubicTemplate(w, h, l) {
-        if (!BrickVertexData._CubicTemplateVertexData[0]) {
+    static async GenerateFromCubicTemplate(w, h, l, lod) {
+        if (!BrickVertexData._CubicTemplateVertexData[lod]) {
             await BrickVertexData._LoadCubicTemplateVertexData();
         }
         let data = new BABYLON.VertexData();
-        let positions = [...BrickVertexData._CubicTemplateVertexData[0].positions];
-        let indices = [...BrickVertexData._CubicTemplateVertexData[0].indices];
-        let normals = [...BrickVertexData._CubicTemplateVertexData[0].normals];
+        let positions = [...BrickVertexData._CubicTemplateVertexData[lod].positions];
+        let indices = [...BrickVertexData._CubicTemplateVertexData[lod].indices];
+        let normals = [...BrickVertexData._CubicTemplateVertexData[lod].normals];
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
@@ -614,18 +614,18 @@ class BrickVertexData {
         data.normals = normals;
         return data;
     }
-    static async _LoadBrickVertexData(brickName) {
+    static async _LoadBrickVertexData(brickName, lod) {
         let type = brickName.split("-")[0];
         let size = brickName.split("-")[1];
         if (type === "brick") {
             let w = parseInt(size.split("x")[0]);
             let l = parseInt(size.split("x")[1]);
-            return BrickVertexData.GenerateFromCubicTemplate(w, 3, l);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 3, l, lod);
         }
         else if (type === "plate" || type === "tile") {
             let w = parseInt(size.split("x")[0]);
             let l = parseInt(size.split("x")[1]);
-            return BrickVertexData.GenerateFromCubicTemplate(w, 1, l);
+            return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
     }
     static async InitializeData() {
@@ -659,16 +659,16 @@ class BrickVertexData {
             }
         }
     }
-    static async GetBrickVertexData(brickReference) {
-        let data = BrickVertexData._BrickVertexDatas.get(brickReference.name);
+    static async GetBrickVertexData(brickReference, lod) {
+        let data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
         if (!data) {
-            data = await BrickVertexData._LoadBrickVertexData(brickReference.name);
-            BrickVertexData._BrickVertexDatas.set(brickReference.name, data);
+            data = await BrickVertexData._LoadBrickVertexData(brickReference.name, lod);
+            BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
         }
         return data;
     }
     static async GetFullBrickVertexData(brickReference) {
-        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference);
+        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference, 0);
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
@@ -3149,8 +3149,26 @@ class Main {
         console.log("Main scene Initialized.");
     }
     animate() {
+        let fpsValues = [];
         Main.Engine.runRenderLoop(() => {
             Main.Scene.render();
+            let dt = Main.Engine.getDeltaTime();
+            let fps = 1000 / dt;
+            if (isFinite(fps)) {
+                fpsValues.push(fps);
+                while (fpsValues.length > 60) {
+                    fpsValues.splice(0, 1);
+                }
+                let fpsCurrent = fpsValues[0];
+                let fpsSpike = fpsValues[0];
+                for (let i = 1; i < fpsValues.length; i++) {
+                    fpsCurrent += fpsValues[i];
+                    fpsSpike = Math.min(fpsSpike, fpsValues[i]);
+                }
+                fpsCurrent /= fpsValues.length;
+                document.getElementById("fps-current").textContent = fpsCurrent.toFixed(0);
+                document.getElementById("fps-spike").textContent = fpsSpike.toFixed(0);
+            }
         });
         window.addEventListener("resize", () => {
             Main.Engine.resize();
