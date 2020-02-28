@@ -13,18 +13,18 @@ class BrickDataManager {
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
     public static InitializeData(): void {
-        BrickDataManager.BrickColors.set("brightyellow", new BABYLON.Color3(255 / 255, 205 / 255, 3 / 255));
-        BrickDataManager.BrickColors.set("brightorange", new BABYLON.Color3(245 / 255, 205 / 125, 3 / 32));
-        BrickDataManager.BrickColors.set("brightred", new BABYLON.Color3(221 / 255, 26 / 125, 33 / 32));
-        BrickDataManager.BrickColors.set("brightpurple", new BABYLON.Color3(233 / 255, 93 / 125, 162 / 32));
-        BrickDataManager.BrickColors.set("brightblue", new BABYLON.Color3(0 / 255, 108 / 125, 183 / 32));
-        BrickDataManager.BrickColors.set("darkazur", new BABYLON.Color3(0 / 255, 163 / 125, 218 / 32));
-        BrickDataManager.BrickColors.set("yellowishgreen", new BABYLON.Color3(204 / 255, 225 / 125, 151 / 32));
-        BrickDataManager.BrickColors.set("brightgreen", new BABYLON.Color3(0 / 255, 175 / 125, 77 / 32));
-        BrickDataManager.BrickColors.set("brightyellowishgreen", new BABYLON.Color3(154 / 255, 202 / 125, 60 / 32));
-        BrickDataManager.BrickColors.set("redishbrown", new BABYLON.Color3(105 / 255, 46 / 125, 20 / 32));
-        BrickDataManager.BrickColors.set("nougat", new BABYLON.Color3(222 / 255, 139 / 125, 95 / 32));
-        BrickDataManager.BrickColors.set("white", new BABYLON.Color3(244 / 255, 244 / 125, 244 / 32));
+        BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color3.FromInts(255, 205, 3));
+        BrickDataManager.BrickColors.set("brightorange", BABYLON.Color3.FromInts(245, 125, 32));
+        BrickDataManager.BrickColors.set("brightred", BABYLON.Color3.FromInts(221, 26, 33));
+        BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color3.FromInts(233, 93, 162));
+        BrickDataManager.BrickColors.set("brightblue", BABYLON.Color3.FromInts(0, 108, 183));
+        BrickDataManager.BrickColors.set("darkazur", BABYLON.Color3.FromInts(0, 163, 218));
+        BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color3.FromInts(204, 225, 151));
+        BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color3.FromInts(0, 175, 77));
+        BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color3.FromInts(154, 202, 60));
+        BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color3.FromInts(105, 46, 20));
+        BrickDataManager.BrickColors.set("nougat", BABYLON.Color3.FromInts(222, 139, 95));
+        BrickDataManager.BrickColors.set("white", BABYLON.Color3.FromInts(244, 244, 244));
 
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
