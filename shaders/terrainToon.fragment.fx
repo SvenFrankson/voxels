@@ -16,50 +16,69 @@ uniform vec3 colRock;
 uniform vec3 colSand;
 
 void main(void) {
-    float ToonThresholds[5];
-    ToonThresholds[0] = 0.9;
-    ToonThresholds[1] = 0.65;
-    ToonThresholds[2] = 0.4;
-    ToonThresholds[3] = 0.1;
-    ToonThresholds[4] = - 0.4;
+    float ToonThresholds[4];
+    ToonThresholds[0] = 0.8;
+    ToonThresholds[1] = 0.5;
+    ToonThresholds[2] = 0.1;
 
-    float ToonBrightnessLevels[6];
+    float ToonBrightnessLevels[5];
     ToonBrightnessLevels[0] = 1.0;
     ToonBrightnessLevels[1] = 0.84;
     ToonBrightnessLevels[2] = 0.68;
     ToonBrightnessLevels[3] = 0.52;
-    ToonBrightnessLevels[4] = 0.36;
-    ToonBrightnessLevels[5] = 0.2;
 
     // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
 
-    vec3 color = colGrass;
-    
+    vec3 color = colDirt;
+    if (vNormalW.y > 0.6) {
+        color = colGrass;
+    }
+    float d = vColor.r;
+    float dRock = vColor.g;
+    float dSand = vColor.b;
+    if (dRock > d) {
+        d = dRock;
+        if (vNormalW.y < 0.7) {
+            color = colRock * 0.9;
+        }
+        else {
+            color = colRock * 1.1;
+        }
+    }
+    if (dSand > d) {
+        d = dSand;
+        color = colSand;
+        if (vNormalW.y < 0.7) {
+            color = colSand * 0.9;
+        }
+        else {
+            color = colSand * 1.1;
+        }
+    }
+
+    int index = 0;
     if (ndl > ToonThresholds[0])
     {
-        color *= ToonBrightnessLevels[0];
+        index = 0;
     }
     else if (ndl > ToonThresholds[1])
     {
-        color *= ToonBrightnessLevels[1];
+        index = 1;
     }
     else if (ndl > ToonThresholds[2])
     {
-        color *= ToonBrightnessLevels[2];
-    }
-    else if (ndl > ToonThresholds[3])
-    {
-        color *= ToonBrightnessLevels[3];
-    }
-    else if (ndl > ToonThresholds[4])
-    {
-        color *= ToonBrightnessLevels[4];
+        index = 2;
     }
     else
     {
-        color *= ToonBrightnessLevels[5];
+        index = 3;
     }
+    float hLeft = vPositionW.y - floor(vPositionW.y);
+    if (hLeft > 0.06 && hLeft < 0.14 && index < 3) {
+        index++;
+    }
+    color *= ToonBrightnessLevels[index];
 
     /*
     if (abs(vPositionW.x - round(vPositionW.x)) < 0.005) {

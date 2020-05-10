@@ -339,7 +339,7 @@ class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].applySmooth();
         }
-        
+
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].smooth(1);
         }

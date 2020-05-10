@@ -1,0 +1,12 @@
+diff a/shaders/terrainToon.fragment.fx b/shaders/terrainToon.fragment.fx	(rejected hunks)
+@@ -17,8 +17,8 @@
+ 
+ void main(void) {
+     float ToonThresholds[5];
+-    ToonThresholds[0] = 0.8;
+-    ToonThresholds[1] = 0.6;
++    ToonThresholds[0] = 0.9;
++    ToonThresholds[1] = 0.65;
+     ToonThresholds[2] = 0.4;
+     ToonThresholds[3] = 0.1;
+     ToonThresholds[4] = - 0.4;

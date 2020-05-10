@@ -118,21 +118,21 @@ class Main {
 				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
 				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
 				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				float threshold = 0.4 + max((depth - 20.) / 30., 0.);
+				float threshold = 0.2;
 				
-				gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+				gl_FragColor = vec4(n[4]) * 0.5;
+				gl_FragColor.a = 1.0;
 				if (sobel_depth < thresholdDepth || depth > 1000.) {
 					if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 						gl_FragColor = n[4];
 					}
-				} 
+				}
 			}
         `;
 		BABYLON.Engine.ShadersRepository = "./shaders/";
         
 		let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
 		
-		/*
 		let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
 		postProcess.onApply = (effect) => {
 			effect.setTexture("depthSampler", depthMap);
@@ -145,7 +145,6 @@ class Main {
 		noPostProcessCamera.layerMask = 0x10000000;
 		
 		Main.Scene.activeCameras.push(Main.Camera, noPostProcessCamera);
-		*/
 
 		// Skybox seed : 1vt3h8rxhb28
 		Main.Skybox = BABYLON.MeshBuilder.CreateSphere("skyBox", { diameter: 3000.0 }, Main.Scene);
