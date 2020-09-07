@@ -61,12 +61,45 @@ Exporter version: 6.4.3, Blender version: 2.82 (sub 7)
 		num uvs2           :  0
 		num colors         :  0
 		num triangles      :  48
+	processing begun of mesh:  11111100
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  10
+		num normals        :  10
+		num tangents       :  0
+		num uvs            :  20
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  8
+	processing begun of mesh:  11000000
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  10
+		num normals        :  10
+		num tangents       :  0
+		num uvs            :  20
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  8
+	processing begun of mesh:  11100000
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  28
+		num normals        :  28
+		num tangents       :  0
+		num uvs            :  56
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  34
 ========= Writing of JSON file started =========
 	writing mesh:  zero
 	writing mesh:  11110000
 	writing mesh:  11111000
 	writing mesh:  10000000
 	writing mesh:  11111010
+	writing mesh:  11111100
+	writing mesh:  11000000
+	writing mesh:  11100000
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.033 secs
+elapsed time:  0 min, 0.043 secs

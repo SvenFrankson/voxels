@@ -1493,14 +1493,36 @@ class ChunckUtils {
     }
 }
 class ChunckVertexData {
+    static RotateYChunckPartName(name) {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+        return v1 + v2 + v3 + v0 + v5 + v6 + v7 + v4;
+    }
     static async _LoadChunckVertexDatas() {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/chunck-parts.babylon", "", Main.Scene, (meshes) => {
                 for (let i = 0; i < meshes.length; i++) {
                     let mesh = meshes[i];
                     if (mesh instanceof BABYLON.Mesh) {
-                        ChunckVertexData._VertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                        let name = mesh.name;
+                        let data = BABYLON.VertexData.ExtractFromMesh(mesh);
                         mesh.dispose();
+                        if (!ChunckVertexData._VertexDatas.has(name)) {
+                            ChunckVertexData._VertexDatas.set(name, data);
+                        }
+                        for (let i = 0; i < 3; i++) {
+                            name = ChunckVertexData.RotateYChunckPartName(name);
+                            data = ChunckVertexData.RotateY(data, -Math.PI / 2);
+                            if (!ChunckVertexData._VertexDatas.has(name)) {
+                                ChunckVertexData._VertexDatas.set(name, data);
+                            }
+                        }
                     }
                 }
                 resolve();
@@ -1527,7 +1549,7 @@ class ChunckVertexData {
     static Get(name) {
         return ChunckVertexData._VertexDatas.get(name);
     }
-    static RotateZ(baseData, angle) {
+    static RotateY(baseData, angle) {
         let data = new BABYLON.VertexData();
         let positions = [...baseData.positions];
         let normals;
