@@ -45,7 +45,7 @@ class Intersections3D {
         return undefined;
     }
 
-    public static SphereChunck(center: BABYLON.Vector3, radius: number, chunck: Chunck): SphereIntersection[] {
+    public static SphereChunck(center: BABYLON.Vector3, radius: number, chunck: Chunck_V1): SphereIntersection[] {
         let intersections: SphereIntersection[] = [];
         if (!chunck.isEmpty) {
             center = center.subtract(chunck.position);
@@ -76,7 +76,7 @@ class Intersections3D {
         return intersections;
     }
 
-    public static RayChunck(ray: BABYLON.Ray, chunck: Chunck): RayIntersection {
+    public static RayChunck(ray: BABYLON.Ray, chunck: Chunck_V1): RayIntersection {
         let pickingInfo = chunck.getScene().pickWithRay(
             ray,
             (m) => {

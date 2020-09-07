@@ -54,12 +54,12 @@ class ChunckEditor {
                         let pickInfo = Main.Scene.pickWithRay(
                             eventData.pickInfo.ray,
                             (m) => {
-                                return m instanceof Chunck;
+                                return m instanceof Chunck_V1;
                             }
                         );
                         let pickedMesh = pickInfo.pickedMesh;
-                        if (pickedMesh instanceof Chunck) {
-                            let chunck = pickedMesh as Chunck;
+                        if (pickedMesh instanceof Chunck_V1) {
+                            let chunck = pickedMesh as Chunck_V1;
                             let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
                             let n = pickInfo.getNormal();
                             localPickedPoint.subtractInPlace(n.scale(0.5));

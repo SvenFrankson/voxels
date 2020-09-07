@@ -400,7 +400,7 @@ class PlayerActionTemplate {
                 x,
                 y,
                 (m) => {
-                    return m instanceof Chunck;
+                    return m instanceof Chunck_V1;
                 }
             );
             if (pickInfo.hit) {

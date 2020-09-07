@@ -106,17 +106,19 @@ class Player extends BABYLON.Mesh {
         
         Main.ChunckManager.foreachChunck(
             (chunck) => {
-                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
-                if (intersections) {
-                    for (let j = 0; j < intersections.length; j++) {
-                        let d = this.position.subtract(intersections[j].point);
-                        let l = d.length();
-                        d.normalize();
-                        if (d.y > 0.8) {
-                            this._downSpeed = 0.0;
+                if (chunck instanceof Chunck_V1) {
+                    let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                    if (intersections) {
+                        for (let j = 0; j < intersections.length; j++) {
+                            let d = this.position.subtract(intersections[j].point);
+                            let l = d.length();
+                            d.normalize();
+                            if (d.y > 0.8) {
+                                this._downSpeed = 0.0;
+                            }
+                            d.scaleInPlace((0.5 - l) * 0.5);
+                            this.position.addInPlace(d);
                         }
-                        d.scaleInPlace((0.5 - l) * 0.5);
-                        this.position.addInPlace(d);
                     }
                 }
             }

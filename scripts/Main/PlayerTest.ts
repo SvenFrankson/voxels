@@ -8,7 +8,8 @@ class PlayerTest extends Main {
     }
 
     public async initialize(): Promise<void> {
-        await super.initializeScene();
+		await super.initializeScene();
+		await ChunckVertexData.InitializeData();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
 		let savedTerrainString = window.localStorage.getItem("player-test");
@@ -127,7 +128,7 @@ class PlayerTest extends Main {
 					let pick = Main.Scene.pickWithRay(
 						ray,
 						(m) => {
-							return m instanceof Chunck;
+							return m instanceof Chunck_V1;
 						}
 					);
 					if (pick.hit) {
@@ -170,7 +171,7 @@ class PlayerTest extends Main {
 							let pick = Main.Scene.pickWithRay(
 								ray,
 								(m) => {
-									return m instanceof Chunck;
+									return m instanceof Chunck_V1;
 								}
 							);
 							if (pick.hit) {

@@ -84,8 +84,7 @@ class Miniature extends Main {
         chunck.setCube(0, 1, 1, cubeType);
         chunck.setCube(1, 0, 1, cubeType);
         chunck.setCube(1, 1, 0, cubeType);
-        chunck.generateVertices();
-        chunck.generateFaces();
+        chunck.generate();
 
         chunck.computeWorldMatrix(true);
 
@@ -112,8 +111,7 @@ class Miniature extends Main {
 		let chunck = Main.ChunckManager.createChunck(0, 0, 0);
 
         chunck.makeEmpty();
-        chunck.generateVertices();
-        chunck.generateFaces();
+        chunck.generate();
 
 		chunck.computeWorldMatrix(true);
 		

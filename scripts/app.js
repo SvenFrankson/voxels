@@ -704,14 +704,6 @@ class BrickVertexData {
 BrickVertexData._CubicTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
-var CHUNCK_SIZE = 8;
-class Face {
-    constructor(vertices, cubeType, draw = true) {
-        this.vertices = vertices;
-        this.cubeType = cubeType;
-        this.draw = draw;
-    }
-}
 class Chunck extends BABYLON.Mesh {
     constructor(manager, i, j, k) {
         super("chunck_" + i + "_" + j + "_" + k);
@@ -724,9 +716,9 @@ class Chunck extends BABYLON.Mesh {
         this.vertices = [];
         this.cubes = [];
         this.blocks = [];
-        this.position.x = CHUNCK_SIZE * this.i;
-        this.position.y = CHUNCK_SIZE * this.j;
-        this.position.z = CHUNCK_SIZE * this.k;
+    }
+    static ConstructChunck(manager, i, j, k) {
+        return new Chunck_V2(manager, i, j, k);
     }
     getCube(i, j, k) {
         return this.manager.getCube(this.i * CHUNCK_SIZE + i, this.j * CHUNCK_SIZE + j, this.k * CHUNCK_SIZE + k);
@@ -854,6 +846,740 @@ class Chunck extends BABYLON.Mesh {
                 }
             }
         }
+    }
+    async generate() {
+    }
+    addBlock(block) {
+        block.chunck = this;
+        let i = this.blocks.indexOf(block);
+        if (i === -1) {
+            this.blocks.push(block);
+        }
+    }
+    removeBlock(block) {
+        let i = this.blocks.indexOf(block);
+        if (i !== -1) {
+            this.blocks.splice(i, 1);
+        }
+    }
+    serialize() {
+        let data = "";
+        for (let i = 0; i < CHUNCK_SIZE; i++) {
+            for (let j = 0; j < CHUNCK_SIZE; j++) {
+                for (let k = 0; k < CHUNCK_SIZE; k++) {
+                    let cube = this.getCube(i, j, k);
+                    if (cube) {
+                        data += cube.cubeType;
+                    }
+                    else {
+                        data += "_";
+                    }
+                }
+            }
+        }
+        let blockDatas = [];
+        for (let i = 0; i < this.blocks.length; i++) {
+            blockDatas.push(this.blocks[i].serialize());
+        }
+        return {
+            i: this.i,
+            j: this.j,
+            k: this.k,
+            data: data,
+            blocks: blockDatas
+        };
+    }
+    deserialize(data) {
+        let l = CHUNCK_SIZE * CHUNCK_SIZE * CHUNCK_SIZE;
+        let i = 0;
+        let j = 0;
+        let k = 0;
+        for (let n = 0; n < l; n++) {
+            let v = data.data[n];
+            if (v === "0") {
+                this.setCube(i, j, k, CubeType.Dirt);
+            }
+            if (v === "1") {
+                this.setCube(i, j, k, CubeType.Rock);
+            }
+            if (v === "2") {
+                this.setCube(i, j, k, CubeType.Sand);
+            }
+            k++;
+            if (k >= CHUNCK_SIZE) {
+                k = 0;
+                j++;
+                if (j >= CHUNCK_SIZE) {
+                    j = 0;
+                    i++;
+                }
+            }
+        }
+        if (data.blocks) {
+            for (let b = 0; b < data.blocks.length; b++) {
+                let block = new Block();
+                block.deserialize(data.blocks[b]);
+                this.addBlock(block);
+            }
+        }
+    }
+}
+class ChunckEditor {
+    constructor(chunckManager) {
+        this.chunckManager = chunckManager;
+        this._xPointerDown = NaN;
+        this._yPointerDown = NaN;
+        this.brushCubeType = undefined;
+        this.brushSize = 0;
+        this.saveSceneName = "scene";
+        document.getElementById("chunck-editor").style.display = "block";
+        this.brushMesh = new BABYLON.Mesh("brush-mesh");
+        this.updateBrushMesh();
+        for (let i = 0; i < 4; i++) {
+            let ii = i;
+            document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
+                if (this.brushCubeType === ii) {
+                    this.brushCubeType = undefined;
+                }
+                else {
+                    this.brushCubeType = ii;
+                }
+                this.applyBrushTypeButtonStyle();
+                this.updateBrushMesh();
+            });
+        }
+        for (let i = 0; i < 5; i++) {
+            let ii = i;
+            document.getElementById("brush-size-button-" + ii).addEventListener("click", () => {
+                this.brushSize = ii;
+                this.applyBrushSizeButtonStyle();
+                this.updateBrushMesh();
+            });
+        }
+        document.getElementById("save").addEventListener("click", () => {
+            let data = chunckManager.serialize();
+            let stringData = JSON.stringify(data);
+            window.localStorage.setItem(this.saveSceneName, stringData);
+        });
+        Main.Scene.onPointerObservable.add((eventData, eventState) => {
+            let showBrush = false;
+            if (this.brushCubeType !== undefined) {
+                if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    this._xPointerDown = eventData.event.clientX;
+                    this._yPointerDown = eventData.event.clientY;
+                }
+                else {
+                    let pickInfo = Main.Scene.pickWithRay(eventData.pickInfo.ray, (m) => {
+                        return m instanceof Chunck_V1;
+                    });
+                    let pickedMesh = pickInfo.pickedMesh;
+                    if (pickedMesh instanceof Chunck_V1) {
+                        let chunck = pickedMesh;
+                        let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+                        let n = pickInfo.getNormal();
+                        localPickedPoint.subtractInPlace(n.scale(0.5));
+                        let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+                        if (this.brushCubeType !== CubeType.None) {
+                            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+                            if (absN.x > absN.y && absN.x > absN.z) {
+                                if (n.x > 0) {
+                                    coordinates.x++;
+                                }
+                                else {
+                                    coordinates.x--;
+                                }
+                            }
+                            if (absN.y > absN.x && absN.y > absN.z) {
+                                if (n.y > 0) {
+                                    coordinates.y++;
+                                }
+                                else {
+                                    coordinates.y--;
+                                }
+                            }
+                            if (absN.z > absN.x && absN.z > absN.y) {
+                                if (n.z > 0) {
+                                    coordinates.z++;
+                                }
+                                else {
+                                    coordinates.z--;
+                                }
+                            }
+                        }
+                        if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
+                            if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
+                                this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.brushCubeType, this.brushSize, true);
+                            }
+                        }
+                        this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
+                        this.brushMesh.position.x += 0.5;
+                        this.brushMesh.position.y += 0.5;
+                        this.brushMesh.position.z += 0.5;
+                        showBrush = true;
+                    }
+                }
+            }
+            if (showBrush) {
+                this.brushMesh.isVisible = true;
+            }
+            else {
+                this.brushMesh.isVisible = false;
+            }
+        });
+        this.applyBrushTypeButtonStyle();
+        this.applyBrushSizeButtonStyle();
+    }
+    applyBrushTypeButtonStyle() {
+        document.querySelectorAll(".brush-type-button").forEach(e => {
+            if (e instanceof HTMLElement) {
+                e.style.background = "white";
+                e.style.color = "black";
+            }
+        });
+        let e = document.getElementById("brush-type-button-" + this.brushCubeType);
+        if (e) {
+            e.style.background = "black";
+            e.style.color = "white";
+        }
+    }
+    applyBrushSizeButtonStyle() {
+        document.querySelectorAll(".brush-size-button").forEach(e => {
+            if (e instanceof HTMLElement) {
+                e.style.background = "white";
+                e.style.color = "black";
+            }
+        });
+        let e = document.getElementById("brush-size-button-" + this.brushSize);
+        e.style.background = "black";
+        e.style.color = "white";
+    }
+    updateBrushMesh() {
+        BABYLON.VertexData.CreateBox({
+            width: 1 + 2 * this.brushSize + 0.2,
+            height: 1 + 2 * this.brushSize + 0.2,
+            depth: 1 + 2 * this.brushSize + 0.2
+        }).applyToMesh(this.brushMesh);
+        if (isFinite(this.brushCubeType)) {
+            this.brushMesh.material = Cube.PreviewMaterials[this.brushCubeType];
+        }
+    }
+}
+class ChunckManager {
+    constructor() {
+        this.chuncks = new Map();
+        this.updateBuffer = [];
+        this.updateChunck = () => {
+            if (this.updateBuffer.length > 0) {
+                let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
+                let camPos = Main.Camera.position;
+                for (let i = 0; i < sortSteps; i++) {
+                    let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let i1 = Math.min(r1, r2);
+                    let i2 = Math.max(r1, r2);
+                    let c1 = this.updateBuffer[i1];
+                    let c2 = this.updateBuffer[i2];
+                    if (c1 && c2 && c1 !== c2) {
+                        let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
+                        let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
+                        if (d2 > d1) {
+                            this.updateBuffer[i1] = c2;
+                            this.updateBuffer[i2] = c1;
+                        }
+                    }
+                }
+                let done = false;
+                while (!done) {
+                    let chunck = this.updateBuffer.pop();
+                    if (chunck) {
+                        if (!chunck.isEmpty) {
+                            chunck.generate();
+                            done = true;
+                        }
+                    }
+                    else {
+                        done = true;
+                    }
+                }
+            }
+        };
+        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
+    }
+    async generateManyChuncks(chuncks) {
+        return new Promise(resolve => {
+            let iterator = 0;
+            let step = () => {
+                let done = false;
+                while (!done) {
+                    let chunck = chuncks[iterator];
+                    iterator++;
+                    if (chunck) {
+                        if (!chunck.isEmpty) {
+                            chunck.generate();
+                            done = true;
+                            requestAnimationFrame(step);
+                        }
+                    }
+                    else {
+                        done = true;
+                        resolve();
+                    }
+                }
+            };
+            step();
+        });
+    }
+    generateRandom(d = 1) {
+        this.generateAroundZero(d);
+        for (let i = -d; i <= d; i++) {
+            let mapMapChuncks = this.chuncks.get(i);
+            for (let j = -d; j <= d; j++) {
+                let mapChuncks = mapMapChuncks.get(j);
+                for (let k = -d; k <= d; k++) {
+                    mapChuncks.get(k).generateRandom();
+                }
+            }
+        }
+    }
+    generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, d = 2) {
+        this.generateAboveZero(d);
+        for (let i = -3 * CHUNCK_SIZE; i < 3 * CHUNCK_SIZE; i++) {
+            for (let j = -CHUNCK_SIZE; j < 2 * 3 * CHUNCK_SIZE; j++) {
+                for (let k = -3 * CHUNCK_SIZE; k < 3 * CHUNCK_SIZE; k++) {
+                    let p = new BABYLON.Vector3(i + 0.5, j + 0.5, k + 0.5);
+                    let dir = p.subtract(new BABYLON.Vector3(0, 20, 0)).normalize();
+                    let r = new BABYLON.Ray(p, dir);
+                    if (r.intersectsMesh(skullMesh).hit) {
+                        this.setCube(i, j, k, CubeType.Rock);
+                    }
+                }
+            }
+        }
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                for (let j = 2 * d * CHUNCK_SIZE; j >= -CHUNCK_SIZE; j--) {
+                    let cube = this.getCube(i, j, k);
+                    if (cube) {
+                        let r = Math.random();
+                        if (r > 0.05) {
+                            this.setCube(i, j + 1, k, CubeType.Dirt);
+                        }
+                        if (r > 0.9) {
+                            this.setCube(i, j + 2, k, CubeType.Dirt);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(dirtMesh);
+                if (pickInfo.hit) {
+                    let h = pickInfo.pickedPoint.y;
+                    for (let j = -1; j <= h; j++) {
+                        this.setCube(i, j, k, CubeType.Dirt);
+                    }
+                }
+            }
+        }
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(rockMesh);
+                if (pickInfo.hit) {
+                    let h = pickInfo.pickedPoint.y;
+                    for (let j = -1; j <= h; j++) {
+                        this.setCube(i, j, k, CubeType.Rock);
+                    }
+                }
+            }
+        }
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
+                let dir = new BABYLON.Vector3(0, -1, 0);
+                let r = new BABYLON.Ray(p, dir);
+                let pickInfo = r.intersectsMesh(sandMesh);
+                let h = 0;
+                if (pickInfo.hit) {
+                    h = pickInfo.pickedPoint.y;
+                }
+                for (let j = -1; j <= Math.max(h, 0); j++) {
+                    this.setCube(i, j, k, CubeType.Sand);
+                }
+            }
+        }
+    }
+    generateTerrain(d = 2) {
+        this.generateAroundZero(d);
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let r = Math.floor(i * i + k * k);
+                let pSand = r / (d * CHUNCK_SIZE * 10);
+                pSand = 1 - pSand;
+                let hSand = Math.max(-1, Math.floor(Math.random() * pSand * 3));
+                for (let j = 0; j <= hSand; j++) {
+                    this.setCube(i, j, k, CubeType.Sand);
+                }
+                let pDirt = r / (d * CHUNCK_SIZE * 7);
+                pDirt = 1 - pDirt;
+                let hDirt = Math.max(-1, Math.floor(Math.random() * pDirt * 4));
+                for (let j = 1; j <= hDirt; j++) {
+                    this.setCube(i, j + hSand, k, CubeType.Dirt);
+                }
+            }
+        }
+    }
+    generateHeightFunction(d, heightFunction) {
+        this.generateAroundZero(d);
+        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
+            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
+                let h = Math.floor(heightFunction(i, k));
+                let hDirt = Math.floor(Math.random() * 3 + 0.5);
+                for (let j = -d * CHUNCK_SIZE; j <= h - hDirt; j++) {
+                    this.setCube(i, j, k, CubeType.Rock);
+                }
+                for (let j = h - hDirt + 1; j <= h; j++) {
+                    this.setCube(i, j, k, CubeType.Dirt);
+                }
+            }
+        }
+    }
+    createChunck(i, j, k) {
+        let mapMapChuncks = this.chuncks.get(i);
+        if (!mapMapChuncks) {
+            mapMapChuncks = new Map();
+            this.chuncks.set(i, mapMapChuncks);
+        }
+        let mapChuncks = mapMapChuncks.get(j);
+        if (!mapChuncks) {
+            mapChuncks = new Map();
+            mapMapChuncks.set(j, mapChuncks);
+        }
+        let chunck = mapChuncks.get(k);
+        if (!chunck) {
+            chunck = Chunck.ConstructChunck(this, i, j, k);
+            mapChuncks.set(k, chunck);
+        }
+        return chunck;
+    }
+    getChunck(i, j, k) {
+        let mapMapChuncks = this.chuncks.get(i);
+        if (mapMapChuncks) {
+            let mapChuncks = mapMapChuncks.get(j);
+            if (mapChuncks) {
+                return mapChuncks.get(k);
+            }
+        }
+    }
+    getCube(I, J, K) {
+        let iChunck = Math.floor(I / CHUNCK_SIZE);
+        let jChunck = Math.floor(J / CHUNCK_SIZE);
+        let kChunck = Math.floor(K / CHUNCK_SIZE);
+        let chunck = this.getChunck(iChunck, jChunck, kChunck);
+        if (chunck) {
+            let iCube = I - iChunck * CHUNCK_SIZE;
+            let jCube = J - jChunck * CHUNCK_SIZE;
+            let kCube = K - kChunck * CHUNCK_SIZE;
+            if (chunck.cubes[iCube]) {
+                if (chunck.cubes[iCube][jCube]) {
+                    return chunck.cubes[iCube][jCube][kCube];
+                }
+            }
+        }
+    }
+    setChunckCube(chunck, i, j, k, cubeType, r = 0, redraw = false) {
+        this.setCube(chunck.i * CHUNCK_SIZE + i, chunck.j * CHUNCK_SIZE + j, chunck.k * CHUNCK_SIZE + k, cubeType, r, redraw);
+    }
+    setCube(I, J, K, cubeType, r = 0, redraw = false) {
+        if (r === 0) {
+            let iChunck = Math.floor(I / CHUNCK_SIZE);
+            let jChunck = Math.floor(J / CHUNCK_SIZE);
+            let kChunck = Math.floor(K / CHUNCK_SIZE);
+            let chunck = this.getChunck(iChunck, jChunck, kChunck);
+            if (chunck) {
+                let iCube = I - iChunck * CHUNCK_SIZE;
+                let jCube = J - jChunck * CHUNCK_SIZE;
+                let kCube = K - kChunck * CHUNCK_SIZE;
+                chunck.setCube(iCube, jCube, kCube, cubeType);
+                if (redraw) {
+                    this.redrawZone(I - 1, J - 1, K - 1, I + 1, J + 1, K + 1);
+                }
+            }
+        }
+        else {
+            for (let II = -r; II <= r; II++) {
+                for (let JJ = -r; JJ <= r; JJ++) {
+                    for (let KK = -r; KK <= r; KK++) {
+                        this.setCube(I + II, J + JJ, K + KK, cubeType, 0, false);
+                    }
+                }
+            }
+            if (redraw) {
+                this.redrawZone(I - 1 - r, J - 1 - r, K - 1 - r, I + 1 + r, J + 1 + r, K + 1 + r);
+            }
+        }
+    }
+    redrawZone(IMin, JMin, KMin, IMax, JMax, KMax) {
+        let iChunckMin = Math.floor(IMin / CHUNCK_SIZE);
+        let jChunckMin = Math.floor(JMin / CHUNCK_SIZE);
+        let kChunckMin = Math.floor(KMin / CHUNCK_SIZE);
+        let iChunckMax = Math.floor(IMax / CHUNCK_SIZE);
+        let jChunckMax = Math.floor(JMax / CHUNCK_SIZE);
+        let kChunckMax = Math.floor(KMax / CHUNCK_SIZE);
+        for (let i = iChunckMin; i <= iChunckMax; i++) {
+            for (let j = jChunckMin; j <= jChunckMax; j++) {
+                for (let k = kChunckMin; k <= kChunckMax; k++) {
+                    let redrawnChunck = this.getChunck(i, j, k);
+                    if (redrawnChunck) {
+                        redrawnChunck.generate();
+                    }
+                }
+            }
+        }
+    }
+    generateAroundZero(d) {
+        for (let i = -d; i <= d; i++) {
+            let mapMapChuncks = new Map();
+            this.chuncks.set(i, mapMapChuncks);
+            for (let j = -d; j <= d; j++) {
+                let mapChuncks = new Map();
+                mapMapChuncks.set(j, mapChuncks);
+                for (let k = -d; k <= d; k++) {
+                    let chunck = Chunck.ConstructChunck(this, i, j, k);
+                    mapChuncks.set(k, chunck);
+                }
+            }
+        }
+    }
+    generateAboveZero(d) {
+        for (let i = -d; i <= d; i++) {
+            let mapMapChuncks = new Map();
+            this.chuncks.set(i, mapMapChuncks);
+            for (let j = -1; j <= 2 * d - 1; j++) {
+                let mapChuncks = new Map();
+                mapMapChuncks.set(j, mapChuncks);
+                for (let k = -d; k <= d; k++) {
+                    let chunck = Chunck.ConstructChunck(this, i, j, k);
+                    mapChuncks.set(k, chunck);
+                }
+            }
+        }
+    }
+    foreachChunck(callback) {
+        this.chuncks.forEach(m => {
+            m.forEach(mm => {
+                mm.forEach(chunck => {
+                    callback(chunck);
+                });
+            });
+        });
+    }
+    serialize() {
+        let data = {
+            chuncks: []
+        };
+        this.chuncks.forEach(m => {
+            m.forEach(mm => {
+                mm.forEach(chunck => {
+                    data.chuncks.push(chunck.serialize());
+                });
+            });
+        });
+        return data;
+    }
+    deserialize(data) {
+        for (let i = 0; i < data.chuncks.length; i++) {
+            let d = data.chuncks[i];
+            if (d) {
+                this.createChunck(d.i, d.j, d.k).deserialize(d);
+            }
+        }
+    }
+}
+class ChunckUtils {
+    static CubeTypeToString(cubeType) {
+        if (cubeType === CubeType.Dirt) {
+            return "Dirt";
+        }
+        if (cubeType === CubeType.Rock) {
+            return "Rock";
+        }
+        if (cubeType === CubeType.Sand) {
+            return "Sand";
+        }
+        if (cubeType === CubeType.None) {
+            return "None";
+        }
+    }
+    static WorldPositionToChunckBlockCoordinates(world) {
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let coordinates = world.clone();
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
+        coordinates.y = Math.floor(4 * (coordinates.y - J * CHUNCK_SIZE)) / 4;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
+        return {
+            chunck: Main.ChunckManager.getChunck(I, J, K),
+            coordinates: coordinates
+        };
+    }
+    static WorldPositionToTileBrickCoordinates(world) {
+        let iGlobal = Math.round(world.x / DX);
+        let jGlobal = Math.round(world.z / DX);
+        let I = Math.floor(iGlobal / TILE_SIZE / 2);
+        let J = Math.floor(jGlobal / TILE_SIZE / 2);
+        let tile = TileManager.GetTile(I, J);
+        let i = Math.round((world.x - I * (TILE_SIZE * DX * 2)) / DX);
+        let j = Math.round((world.z - J * (TILE_SIZE * DX * 2)) / DX);
+        let k = Math.floor(world.y / DY);
+        return {
+            tile: tile,
+            i: i,
+            j: j,
+            k: k
+        };
+    }
+    static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
+        let pickInfo = Main.Scene.pick(x, y, (m) => {
+            return m instanceof Chunck_V1;
+        });
+        let pickedMesh = pickInfo.pickedMesh;
+        if (pickedMesh instanceof Chunck_V1) {
+            let chunck = pickedMesh;
+            let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+            let n = pickInfo.getNormal();
+            localPickedPoint.subtractInPlace(n.scale(0.5));
+            let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+            if (!behindPickedFace) {
+                if (absN.x > absN.y && absN.x > absN.z) {
+                    if (n.x > 0) {
+                        coordinates.x++;
+                    }
+                    else {
+                        coordinates.x--;
+                    }
+                }
+                if (absN.y > absN.x && absN.y > absN.z) {
+                    if (n.y > 0) {
+                        coordinates.y++;
+                    }
+                    else {
+                        coordinates.y--;
+                    }
+                }
+                if (absN.z > absN.x && absN.z > absN.y) {
+                    if (n.z > 0) {
+                        coordinates.z++;
+                    }
+                    else {
+                        coordinates.z--;
+                    }
+                }
+            }
+            return {
+                chunck: chunck,
+                coordinates: coordinates
+            };
+        }
+    }
+}
+class ChunckVertexData {
+    static async _LoadChunckVertexDatas() {
+        return new Promise(resolve => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/chunck-parts.babylon", "", Main.Scene, (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        ChunckVertexData._VertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                        mesh.dispose();
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+    static async InitializeData() {
+        await ChunckVertexData._LoadChunckVertexDatas();
+        return true;
+    }
+    static Clone(data) {
+        let clonedData = new BABYLON.VertexData();
+        clonedData.positions = [...data.positions];
+        clonedData.indices = [...data.indices];
+        clonedData.normals = [...data.normals];
+        if (data.uvs) {
+            clonedData.uvs = [...data.uvs];
+        }
+        if (data.colors) {
+            clonedData.colors = [...data.colors];
+        }
+        return clonedData;
+    }
+    static Get(name) {
+        return ChunckVertexData._VertexDatas.get(name);
+    }
+    static RotateZ(baseData, angle) {
+        let data = new BABYLON.VertexData();
+        let positions = [...baseData.positions];
+        let normals;
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            normals = [...baseData.normals];
+        }
+        data.indices = [...baseData.indices];
+        let cosa = Math.cos(angle);
+        let sina = Math.sin(angle);
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            positions[3 * i] = x * cosa - z * sina;
+            positions[3 * i + 2] = x * sina + z * cosa;
+            if (normals) {
+                let xn = normals[3 * i];
+                let zn = normals[3 * i + 2];
+                normals[3 * i] = xn * cosa - zn * sina;
+                normals[3 * i + 2] = xn * sina + zn * cosa;
+            }
+        }
+        data.positions = positions;
+        if (normals) {
+            data.normals = normals;
+        }
+        return data;
+    }
+    static RotateRef(ref, rotation) {
+        return ref.substr(rotation) + ref.substring(0, rotation);
+    }
+}
+ChunckVertexData._VertexDatas = new Map();
+/// <reference path="./Chunck.ts"/>
+var CHUNCK_SIZE = 8;
+class Face {
+    constructor(vertices, cubeType, draw = true) {
+        this.vertices = vertices;
+        this.cubeType = cubeType;
+        this.draw = draw;
+    }
+}
+class Chunck_V1 extends Chunck {
+    constructor(manager, i, j, k) {
+        super(manager, i, j, k);
+        this.name = "chunck_v1_" + i + "_" + j + "_" + k;
+        this.position.x = CHUNCK_SIZE * this.i;
+        this.position.y = CHUNCK_SIZE * this.j;
+        this.position.z = CHUNCK_SIZE * this.k;
+    }
+    async generate() {
+        this.generateVertices();
+        this.generateFaces();
     }
     generateVertices() {
         this.vertices = [];
@@ -1003,17 +1729,20 @@ class Chunck extends BABYLON.Mesh {
             f.vertices.splice(0, 0, center);
         }
         for (let i = 0; i < this.vertices.length; i++) {
-            this.vertices[i].smooth(1);
+            this.vertices[i].smooth(1.5);
         }
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].applySmooth();
         }
+        /*
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].smooth(1);
         }
+
         for (let i = 0; i < this.vertices.length; i++) {
             this.vertices[i].applySmooth();
         }
+        */
     }
     generateFaces() {
         let data = new BABYLON.VertexData();
@@ -1124,650 +1853,54 @@ class Chunck extends BABYLON.Mesh {
         data.applyToMesh(this);
         this.material = Main.terrainCellShadingMaterial;
     }
-    addBlock(block) {
-        block.chunck = this;
-        let i = this.blocks.indexOf(block);
-        if (i === -1) {
-            this.blocks.push(block);
-        }
+}
+/// <reference path="./Chunck.ts"/>
+var CHUNCK_SIZE = 8;
+class Chunck_V2 extends Chunck {
+    constructor(manager, i, j, k) {
+        super(manager, i, j, k);
+        this.name = "chunck_v2_" + i + "_" + j + "_" + k;
+        this.position.x = CHUNCK_SIZE * this.i * 1.6;
+        this.position.y = CHUNCK_SIZE * this.j * 0.96;
+        this.position.z = CHUNCK_SIZE * this.k * 1.6;
     }
-    removeBlock(block) {
-        let i = this.blocks.indexOf(block);
-        if (i !== -1) {
-            this.blocks.splice(i, 1);
-        }
-    }
-    serialize() {
-        let data = "";
+    async generate() {
+        let positions = [];
+        let indices = [];
+        let normals = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
-                    let cube = this.getCube(i, j, k);
-                    if (cube) {
-                        data += cube.cubeType;
-                    }
-                    else {
-                        data += "_";
-                    }
-                }
-            }
-        }
-        let blockDatas = [];
-        for (let i = 0; i < this.blocks.length; i++) {
-            blockDatas.push(this.blocks[i].serialize());
-        }
-        return {
-            i: this.i,
-            j: this.j,
-            k: this.k,
-            data: data,
-            blocks: blockDatas
-        };
-    }
-    deserialize(data) {
-        let l = CHUNCK_SIZE * CHUNCK_SIZE * CHUNCK_SIZE;
-        let i = 0;
-        let j = 0;
-        let k = 0;
-        for (let n = 0; n < l; n++) {
-            let v = data.data[n];
-            if (v === "0") {
-                this.setCube(i, j, k, CubeType.Dirt);
-            }
-            if (v === "1") {
-                this.setCube(i, j, k, CubeType.Rock);
-            }
-            if (v === "2") {
-                this.setCube(i, j, k, CubeType.Sand);
-            }
-            k++;
-            if (k >= CHUNCK_SIZE) {
-                k = 0;
-                j++;
-                if (j >= CHUNCK_SIZE) {
-                    j = 0;
-                    i++;
-                }
-            }
-        }
-        if (data.blocks) {
-            for (let b = 0; b < data.blocks.length; b++) {
-                let block = new Block();
-                block.deserialize(data.blocks[b]);
-                this.addBlock(block);
-            }
-        }
-    }
-}
-class ChunckEditor {
-    constructor(chunckManager) {
-        this.chunckManager = chunckManager;
-        this._xPointerDown = NaN;
-        this._yPointerDown = NaN;
-        this.brushCubeType = undefined;
-        this.brushSize = 0;
-        this.saveSceneName = "scene";
-        document.getElementById("chunck-editor").style.display = "block";
-        this.brushMesh = new BABYLON.Mesh("brush-mesh");
-        this.updateBrushMesh();
-        for (let i = 0; i < 4; i++) {
-            let ii = i;
-            document.getElementById("brush-type-button-" + ii).addEventListener("click", () => {
-                if (this.brushCubeType === ii) {
-                    this.brushCubeType = undefined;
-                }
-                else {
-                    this.brushCubeType = ii;
-                }
-                this.applyBrushTypeButtonStyle();
-                this.updateBrushMesh();
-            });
-        }
-        for (let i = 0; i < 5; i++) {
-            let ii = i;
-            document.getElementById("brush-size-button-" + ii).addEventListener("click", () => {
-                this.brushSize = ii;
-                this.applyBrushSizeButtonStyle();
-                this.updateBrushMesh();
-            });
-        }
-        document.getElementById("save").addEventListener("click", () => {
-            let data = chunckManager.serialize();
-            let stringData = JSON.stringify(data);
-            window.localStorage.setItem(this.saveSceneName, stringData);
-        });
-        Main.Scene.onPointerObservable.add((eventData, eventState) => {
-            let showBrush = false;
-            if (this.brushCubeType !== undefined) {
-                if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
-                    this._xPointerDown = eventData.event.clientX;
-                    this._yPointerDown = eventData.event.clientY;
-                }
-                else {
-                    let pickInfo = Main.Scene.pickWithRay(eventData.pickInfo.ray, (m) => {
-                        return m instanceof Chunck;
-                    });
-                    let pickedMesh = pickInfo.pickedMesh;
-                    if (pickedMesh instanceof Chunck) {
-                        let chunck = pickedMesh;
-                        let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
-                        let n = pickInfo.getNormal();
-                        localPickedPoint.subtractInPlace(n.scale(0.5));
-                        let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
-                        if (this.brushCubeType !== CubeType.None) {
-                            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
-                            if (absN.x > absN.y && absN.x > absN.z) {
-                                if (n.x > 0) {
-                                    coordinates.x++;
-                                }
-                                else {
-                                    coordinates.x--;
-                                }
-                            }
-                            if (absN.y > absN.x && absN.y > absN.z) {
-                                if (n.y > 0) {
-                                    coordinates.y++;
-                                }
-                                else {
-                                    coordinates.y--;
-                                }
-                            }
-                            if (absN.z > absN.x && absN.z > absN.y) {
-                                if (n.z > 0) {
-                                    coordinates.z++;
-                                }
-                                else {
-                                    coordinates.z--;
-                                }
-                            }
+                    let c0 = this.getCube(i, j, k) ? "1" : "0";
+                    let c1 = this.getCube(i + 1, j, k) ? "1" : "0";
+                    let c2 = this.getCube(i + 1, j, k + 1) ? "1" : "0";
+                    let c3 = this.getCube(i, j, k + 1) ? "1" : "0";
+                    let c4 = this.getCube(i, j + 1, k) ? "1" : "0";
+                    let c5 = this.getCube(i + 1, j + 1, k) ? "1" : "0";
+                    let c6 = this.getCube(i + 1, j + 1, k + 1) ? "1" : "0";
+                    let c7 = this.getCube(i, j + 1, k + 1) ? "1" : "0";
+                    let ref = c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7;
+                    let data = ChunckVertexData.Get(ref);
+                    if (data) {
+                        let l = positions.length / 3;
+                        for (let n = 0; n < data.positions.length / 3; n++) {
+                            positions.push(data.positions[3 * n] + i * 1.6);
+                            positions.push(data.positions[3 * n + 1] + j * 0.96);
+                            positions.push(data.positions[3 * n + 2] + k * 1.6);
                         }
-                        if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
-                            if (Math.abs(eventData.event.clientX - this._xPointerDown) < 5 && Math.abs(eventData.event.clientY - this._yPointerDown) < 5) {
-                                this.chunckManager.setChunckCube(chunck, coordinates.x, coordinates.y, coordinates.z, this.brushCubeType, this.brushSize, true);
-                            }
-                        }
-                        this.brushMesh.position.copyFrom(chunck.position).addInPlace(coordinates);
-                        this.brushMesh.position.x += 0.5;
-                        this.brushMesh.position.y += 0.5;
-                        this.brushMesh.position.z += 0.5;
-                        showBrush = true;
-                    }
-                }
-            }
-            if (showBrush) {
-                this.brushMesh.isVisible = true;
-            }
-            else {
-                this.brushMesh.isVisible = false;
-            }
-        });
-        this.applyBrushTypeButtonStyle();
-        this.applyBrushSizeButtonStyle();
-    }
-    applyBrushTypeButtonStyle() {
-        document.querySelectorAll(".brush-type-button").forEach(e => {
-            if (e instanceof HTMLElement) {
-                e.style.background = "white";
-                e.style.color = "black";
-            }
-        });
-        let e = document.getElementById("brush-type-button-" + this.brushCubeType);
-        if (e) {
-            e.style.background = "black";
-            e.style.color = "white";
-        }
-    }
-    applyBrushSizeButtonStyle() {
-        document.querySelectorAll(".brush-size-button").forEach(e => {
-            if (e instanceof HTMLElement) {
-                e.style.background = "white";
-                e.style.color = "black";
-            }
-        });
-        let e = document.getElementById("brush-size-button-" + this.brushSize);
-        e.style.background = "black";
-        e.style.color = "white";
-    }
-    updateBrushMesh() {
-        BABYLON.VertexData.CreateBox({
-            width: 1 + 2 * this.brushSize + 0.2,
-            height: 1 + 2 * this.brushSize + 0.2,
-            depth: 1 + 2 * this.brushSize + 0.2
-        }).applyToMesh(this.brushMesh);
-        if (isFinite(this.brushCubeType)) {
-            this.brushMesh.material = Cube.PreviewMaterials[this.brushCubeType];
-        }
-    }
-}
-class ChunckManager {
-    constructor() {
-        this.chuncks = new Map();
-        this.updateBuffer = [];
-        this.updateChunck = () => {
-            if (this.updateBuffer.length > 0) {
-                let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
-                let camPos = Main.Camera.position;
-                for (let i = 0; i < sortSteps; i++) {
-                    let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
-                    let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
-                    let i1 = Math.min(r1, r2);
-                    let i2 = Math.max(r1, r2);
-                    let c1 = this.updateBuffer[i1];
-                    let c2 = this.updateBuffer[i2];
-                    if (c1 && c2 && c1 !== c2) {
-                        let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
-                        let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
-                        if (d2 > d1) {
-                            this.updateBuffer[i1] = c2;
-                            this.updateBuffer[i2] = c1;
+                        normals.push(...data.normals);
+                        for (let n = 0; n < data.indices.length; n++) {
+                            indices.push(data.indices[n] + l);
                         }
                     }
                 }
-                let done = false;
-                while (!done) {
-                    let chunck = this.updateBuffer.pop();
-                    if (chunck) {
-                        if (!chunck.isEmpty) {
-                            chunck.generateVertices();
-                            chunck.generateFaces();
-                            done = true;
-                        }
-                    }
-                    else {
-                        done = true;
-                    }
-                }
-            }
-        };
-        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
-    }
-    async generateManyChuncks(chuncks) {
-        return new Promise(resolve => {
-            let iterator = 0;
-            let step = () => {
-                let done = false;
-                while (!done) {
-                    let chunck = chuncks[iterator];
-                    iterator++;
-                    if (chunck) {
-                        if (!chunck.isEmpty) {
-                            chunck.generateVertices();
-                            chunck.generateFaces();
-                            done = true;
-                            requestAnimationFrame(step);
-                        }
-                    }
-                    else {
-                        done = true;
-                        resolve();
-                    }
-                }
-            };
-            step();
-        });
-    }
-    generateRandom(d = 1) {
-        this.generateAroundZero(d);
-        for (let i = -d; i <= d; i++) {
-            let mapMapChuncks = this.chuncks.get(i);
-            for (let j = -d; j <= d; j++) {
-                let mapChuncks = mapMapChuncks.get(j);
-                for (let k = -d; k <= d; k++) {
-                    mapChuncks.get(k).generateRandom();
-                }
             }
         }
-    }
-    generateFromMesh(skullMesh, rockMesh, sandMesh, dirtMesh, d = 2) {
-        this.generateAboveZero(d);
-        for (let i = -3 * CHUNCK_SIZE; i < 3 * CHUNCK_SIZE; i++) {
-            for (let j = -CHUNCK_SIZE; j < 2 * 3 * CHUNCK_SIZE; j++) {
-                for (let k = -3 * CHUNCK_SIZE; k < 3 * CHUNCK_SIZE; k++) {
-                    let p = new BABYLON.Vector3(i + 0.5, j + 0.5, k + 0.5);
-                    let dir = p.subtract(new BABYLON.Vector3(0, 20, 0)).normalize();
-                    let r = new BABYLON.Ray(p, dir);
-                    if (r.intersectsMesh(skullMesh).hit) {
-                        this.setCube(i, j, k, CubeType.Rock);
-                    }
-                }
-            }
-        }
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                for (let j = 2 * d * CHUNCK_SIZE; j >= -CHUNCK_SIZE; j--) {
-                    let cube = this.getCube(i, j, k);
-                    if (cube) {
-                        let r = Math.random();
-                        if (r > 0.05) {
-                            this.setCube(i, j + 1, k, CubeType.Dirt);
-                        }
-                        if (r > 0.9) {
-                            this.setCube(i, j + 2, k, CubeType.Dirt);
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
-                let dir = new BABYLON.Vector3(0, -1, 0);
-                let r = new BABYLON.Ray(p, dir);
-                let pickInfo = r.intersectsMesh(dirtMesh);
-                if (pickInfo.hit) {
-                    let h = pickInfo.pickedPoint.y;
-                    for (let j = -1; j <= h; j++) {
-                        this.setCube(i, j, k, CubeType.Dirt);
-                    }
-                }
-            }
-        }
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
-                let dir = new BABYLON.Vector3(0, -1, 0);
-                let r = new BABYLON.Ray(p, dir);
-                let pickInfo = r.intersectsMesh(rockMesh);
-                if (pickInfo.hit) {
-                    let h = pickInfo.pickedPoint.y;
-                    for (let j = -1; j <= h; j++) {
-                        this.setCube(i, j, k, CubeType.Rock);
-                    }
-                }
-            }
-        }
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let p = new BABYLON.Vector3(i + 0.5, 100, k + 0.5);
-                let dir = new BABYLON.Vector3(0, -1, 0);
-                let r = new BABYLON.Ray(p, dir);
-                let pickInfo = r.intersectsMesh(sandMesh);
-                let h = 0;
-                if (pickInfo.hit) {
-                    h = pickInfo.pickedPoint.y;
-                }
-                for (let j = -1; j <= Math.max(h, 0); j++) {
-                    this.setCube(i, j, k, CubeType.Sand);
-                }
-            }
-        }
-    }
-    generateTerrain(d = 2) {
-        this.generateAroundZero(d);
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let r = Math.floor(i * i + k * k);
-                let pSand = r / (d * CHUNCK_SIZE * 10);
-                pSand = 1 - pSand;
-                let hSand = Math.max(-1, Math.floor(Math.random() * pSand * 3));
-                for (let j = 0; j <= hSand; j++) {
-                    this.setCube(i, j, k, CubeType.Sand);
-                }
-                let pDirt = r / (d * CHUNCK_SIZE * 7);
-                pDirt = 1 - pDirt;
-                let hDirt = Math.max(-1, Math.floor(Math.random() * pDirt * 4));
-                for (let j = 1; j <= hDirt; j++) {
-                    this.setCube(i, j + hSand, k, CubeType.Dirt);
-                }
-            }
-        }
-    }
-    generateHeightFunction(d, heightFunction) {
-        this.generateAroundZero(d);
-        for (let i = -d * CHUNCK_SIZE; i < d * CHUNCK_SIZE; i++) {
-            for (let k = -d * CHUNCK_SIZE; k < d * CHUNCK_SIZE; k++) {
-                let h = Math.floor(heightFunction(i, k));
-                let hDirt = Math.floor(Math.random() * 3 + 0.5);
-                for (let j = -d * CHUNCK_SIZE; j <= h - hDirt; j++) {
-                    this.setCube(i, j, k, CubeType.Rock);
-                }
-                for (let j = h - hDirt + 1; j <= h; j++) {
-                    this.setCube(i, j, k, CubeType.Dirt);
-                }
-            }
-        }
-    }
-    createChunck(i, j, k) {
-        let mapMapChuncks = this.chuncks.get(i);
-        if (!mapMapChuncks) {
-            mapMapChuncks = new Map();
-            this.chuncks.set(i, mapMapChuncks);
-        }
-        let mapChuncks = mapMapChuncks.get(j);
-        if (!mapChuncks) {
-            mapChuncks = new Map();
-            mapMapChuncks.set(j, mapChuncks);
-        }
-        let chunck = mapChuncks.get(k);
-        if (!chunck) {
-            chunck = new Chunck(this, i, j, k);
-            mapChuncks.set(k, chunck);
-        }
-        return chunck;
-    }
-    getChunck(i, j, k) {
-        let mapMapChuncks = this.chuncks.get(i);
-        if (mapMapChuncks) {
-            let mapChuncks = mapMapChuncks.get(j);
-            if (mapChuncks) {
-                return mapChuncks.get(k);
-            }
-        }
-    }
-    getCube(I, J, K) {
-        let iChunck = Math.floor(I / CHUNCK_SIZE);
-        let jChunck = Math.floor(J / CHUNCK_SIZE);
-        let kChunck = Math.floor(K / CHUNCK_SIZE);
-        let chunck = this.getChunck(iChunck, jChunck, kChunck);
-        if (chunck) {
-            let iCube = I - iChunck * CHUNCK_SIZE;
-            let jCube = J - jChunck * CHUNCK_SIZE;
-            let kCube = K - kChunck * CHUNCK_SIZE;
-            if (chunck.cubes[iCube]) {
-                if (chunck.cubes[iCube][jCube]) {
-                    return chunck.cubes[iCube][jCube][kCube];
-                }
-            }
-        }
-    }
-    setChunckCube(chunck, i, j, k, cubeType, r = 0, redraw = false) {
-        this.setCube(chunck.i * CHUNCK_SIZE + i, chunck.j * CHUNCK_SIZE + j, chunck.k * CHUNCK_SIZE + k, cubeType, r, redraw);
-    }
-    setCube(I, J, K, cubeType, r = 0, redraw = false) {
-        if (r === 0) {
-            let iChunck = Math.floor(I / CHUNCK_SIZE);
-            let jChunck = Math.floor(J / CHUNCK_SIZE);
-            let kChunck = Math.floor(K / CHUNCK_SIZE);
-            let chunck = this.getChunck(iChunck, jChunck, kChunck);
-            if (chunck) {
-                let iCube = I - iChunck * CHUNCK_SIZE;
-                let jCube = J - jChunck * CHUNCK_SIZE;
-                let kCube = K - kChunck * CHUNCK_SIZE;
-                chunck.setCube(iCube, jCube, kCube, cubeType);
-                if (redraw) {
-                    this.redrawZone(I - 1, J - 1, K - 1, I + 1, J + 1, K + 1);
-                }
-            }
-        }
-        else {
-            for (let II = -r; II <= r; II++) {
-                for (let JJ = -r; JJ <= r; JJ++) {
-                    for (let KK = -r; KK <= r; KK++) {
-                        this.setCube(I + II, J + JJ, K + KK, cubeType, 0, false);
-                    }
-                }
-            }
-            if (redraw) {
-                this.redrawZone(I - 1 - r, J - 1 - r, K - 1 - r, I + 1 + r, J + 1 + r, K + 1 + r);
-            }
-        }
-    }
-    redrawZone(IMin, JMin, KMin, IMax, JMax, KMax) {
-        let iChunckMin = Math.floor(IMin / CHUNCK_SIZE);
-        let jChunckMin = Math.floor(JMin / CHUNCK_SIZE);
-        let kChunckMin = Math.floor(KMin / CHUNCK_SIZE);
-        let iChunckMax = Math.floor(IMax / CHUNCK_SIZE);
-        let jChunckMax = Math.floor(JMax / CHUNCK_SIZE);
-        let kChunckMax = Math.floor(KMax / CHUNCK_SIZE);
-        for (let i = iChunckMin; i <= iChunckMax; i++) {
-            for (let j = jChunckMin; j <= jChunckMax; j++) {
-                for (let k = kChunckMin; k <= kChunckMax; k++) {
-                    let redrawnChunck = this.getChunck(i, j, k);
-                    if (redrawnChunck) {
-                        redrawnChunck.generateVertices();
-                        redrawnChunck.generateFaces();
-                    }
-                }
-            }
-        }
-    }
-    generateAroundZero(d) {
-        for (let i = -d; i <= d; i++) {
-            let mapMapChuncks = new Map();
-            this.chuncks.set(i, mapMapChuncks);
-            for (let j = -d; j <= d; j++) {
-                let mapChuncks = new Map();
-                mapMapChuncks.set(j, mapChuncks);
-                for (let k = -d; k <= d; k++) {
-                    let chunck = new Chunck(this, i, j, k);
-                    mapChuncks.set(k, chunck);
-                }
-            }
-        }
-    }
-    generateAboveZero(d) {
-        for (let i = -d; i <= d; i++) {
-            let mapMapChuncks = new Map();
-            this.chuncks.set(i, mapMapChuncks);
-            for (let j = -1; j <= 2 * d - 1; j++) {
-                let mapChuncks = new Map();
-                mapMapChuncks.set(j, mapChuncks);
-                for (let k = -d; k <= d; k++) {
-                    let chunck = new Chunck(this, i, j, k);
-                    mapChuncks.set(k, chunck);
-                }
-            }
-        }
-    }
-    foreachChunck(callback) {
-        this.chuncks.forEach(m => {
-            m.forEach(mm => {
-                mm.forEach(chunck => {
-                    callback(chunck);
-                });
-            });
-        });
-    }
-    serialize() {
-        let data = {
-            chuncks: []
-        };
-        this.chuncks.forEach(m => {
-            m.forEach(mm => {
-                mm.forEach(chunck => {
-                    data.chuncks.push(chunck.serialize());
-                });
-            });
-        });
-        return data;
-    }
-    deserialize(data) {
-        for (let i = 0; i < data.chuncks.length; i++) {
-            let d = data.chuncks[i];
-            if (d) {
-                this.createChunck(d.i, d.j, d.k).deserialize(d);
-            }
-        }
-    }
-}
-class ChunckUtils {
-    static CubeTypeToString(cubeType) {
-        if (cubeType === CubeType.Dirt) {
-            return "Dirt";
-        }
-        if (cubeType === CubeType.Rock) {
-            return "Rock";
-        }
-        if (cubeType === CubeType.Sand) {
-            return "Sand";
-        }
-        if (cubeType === CubeType.None) {
-            return "None";
-        }
-    }
-    static WorldPositionToChunckBlockCoordinates(world) {
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
-        let coordinates = world.clone();
-        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
-        coordinates.y = Math.floor(4 * (coordinates.y - J * CHUNCK_SIZE)) / 4;
-        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
-        return {
-            chunck: Main.ChunckManager.getChunck(I, J, K),
-            coordinates: coordinates
-        };
-    }
-    static WorldPositionToTileBrickCoordinates(world) {
-        let iGlobal = Math.round(world.x / DX);
-        let jGlobal = Math.round(world.z / DX);
-        let I = Math.floor(iGlobal / TILE_SIZE / 2);
-        let J = Math.floor(jGlobal / TILE_SIZE / 2);
-        let tile = TileManager.GetTile(I, J);
-        let i = Math.round((world.x - I * (TILE_SIZE * DX * 2)) / DX);
-        let j = Math.round((world.z - J * (TILE_SIZE * DX * 2)) / DX);
-        let k = Math.floor(world.y / DY);
-        return {
-            tile: tile,
-            i: i,
-            j: j,
-            k: k
-        };
-    }
-    static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
-        let pickInfo = Main.Scene.pick(x, y, (m) => {
-            return m instanceof Chunck;
-        });
-        let pickedMesh = pickInfo.pickedMesh;
-        if (pickedMesh instanceof Chunck) {
-            let chunck = pickedMesh;
-            let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
-            let n = pickInfo.getNormal();
-            localPickedPoint.subtractInPlace(n.scale(0.5));
-            let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
-            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
-            if (!behindPickedFace) {
-                if (absN.x > absN.y && absN.x > absN.z) {
-                    if (n.x > 0) {
-                        coordinates.x++;
-                    }
-                    else {
-                        coordinates.x--;
-                    }
-                }
-                if (absN.y > absN.x && absN.y > absN.z) {
-                    if (n.y > 0) {
-                        coordinates.y++;
-                    }
-                    else {
-                        coordinates.y--;
-                    }
-                }
-                if (absN.z > absN.x && absN.z > absN.y) {
-                    if (n.z > 0) {
-                        coordinates.z++;
-                    }
-                    else {
-                        coordinates.z--;
-                    }
-                }
-            }
-            return {
-                chunck: chunck,
-                coordinates: coordinates
-            };
-        }
+        let vertexData = new BABYLON.VertexData();
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.normals = normals;
+        vertexData.applyToMesh(this);
     }
 }
 var CubeType;
@@ -2195,7 +2328,7 @@ class Walker extends BABYLON.Mesh {
             help.dispose();
         }, 1000);
         let pick = this.getScene().pickWithRay(ray, (m) => {
-            return m instanceof Chunck;
+            return m instanceof Chunck_V1;
         });
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.leftHipJoin.absolutePosition) < 49) {
@@ -2217,7 +2350,7 @@ class Walker extends BABYLON.Mesh {
             help.dispose();
         }, 1000);
         let pick = this.getScene().pickWithRay(ray, (m) => {
-            return m instanceof Chunck;
+            return m instanceof Chunck_V1;
         });
         if (pick.hit) {
             if (BABYLON.Vector3.DistanceSquared(pick.pickedPoint, this.rightHipJoin.absolutePosition) < 49) {
@@ -2313,17 +2446,19 @@ class Player extends BABYLON.Mesh {
             this._downSpeed += 0.005;
             this._downSpeed *= 0.99;
             Main.ChunckManager.foreachChunck((chunck) => {
-                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
-                if (intersections) {
-                    for (let j = 0; j < intersections.length; j++) {
-                        let d = this.position.subtract(intersections[j].point);
-                        let l = d.length();
-                        d.normalize();
-                        if (d.y > 0.8) {
-                            this._downSpeed = 0.0;
+                if (chunck instanceof Chunck_V1) {
+                    let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                    if (intersections) {
+                        for (let j = 0; j < intersections.length; j++) {
+                            let d = this.position.subtract(intersections[j].point);
+                            let l = d.length();
+                            d.normalize();
+                            if (d.y > 0.8) {
+                                this._downSpeed = 0.0;
+                            }
+                            d.scaleInPlace((0.5 - l) * 0.5);
+                            this.position.addInPlace(d);
                         }
-                        d.scaleInPlace((0.5 - l) * 0.5);
-                        this.position.addInPlace(d);
                     }
                 }
             });
@@ -2752,7 +2887,7 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = Main.Scene.pick(x, y, (m) => {
-                return m instanceof Chunck;
+                return m instanceof Chunck_V1;
             });
             if (pickInfo.hit) {
                 let tree = new Tree(Math.floor(Math.random() * 49 + 1));
@@ -3463,8 +3598,7 @@ class Miniature extends Main {
         chunck.setCube(0, 1, 1, cubeType);
         chunck.setCube(1, 0, 1, cubeType);
         chunck.setCube(1, 1, 0, cubeType);
-        chunck.generateVertices();
-        chunck.generateFaces();
+        chunck.generate();
         chunck.computeWorldMatrix(true);
         return new Promise(resolve => {
             setTimeout(() => {
@@ -3479,8 +3613,7 @@ class Miniature extends Main {
     async createBlock(reference) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
         chunck.makeEmpty();
-        chunck.generateVertices();
-        chunck.generateFaces();
+        chunck.generate();
         chunck.computeWorldMatrix(true);
         let block = new Block();
         block.setReference(reference);
@@ -3603,6 +3736,7 @@ class PlayerTest extends Main {
     }
     async initialize() {
         await super.initializeScene();
+        await ChunckVertexData.InitializeData();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
         let savedTerrainString = window.localStorage.getItem("player-test");
@@ -3697,7 +3831,7 @@ class PlayerTest extends Main {
             while (!point) {
                 let ray = new BABYLON.Ray(new BABYLON.Vector3(-50 + 100 * Math.random(), 100, -50 + 100 * Math.random()), new BABYLON.Vector3(0, -1, 0));
                 let pick = Main.Scene.pickWithRay(ray, (m) => {
-                    return m instanceof Chunck;
+                    return m instanceof Chunck_V1;
                 });
                 if (pick.hit) {
                     point = pick.pickedPoint;
@@ -3719,7 +3853,7 @@ class PlayerTest extends Main {
                 while (!point) {
                     let ray = new BABYLON.Ray(new BABYLON.Vector3(-50 + 100 * Math.random(), 100, -50 + 100 * Math.random()), new BABYLON.Vector3(0, -1, 0));
                     let pick = Main.Scene.pickWithRay(ray, (m) => {
-                        return m instanceof Chunck;
+                        return m instanceof Chunck_V1;
                     });
                     if (pick.hit) {
                         point = pick.pickedPoint;

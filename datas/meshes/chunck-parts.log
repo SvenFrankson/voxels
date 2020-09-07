@@ -1,0 +1,72 @@
+Exporter version: 6.4.3, Blender version: 2.82 (sub 7)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		Inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		Keep Z-up r-handed  :  no
+		Texture directory   :  C:\Users\staton\Documents\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  zero
+		processing begun of material:  Green
+		num positions      :  56
+		num normals        :  56
+		num tangents       :  0
+		num uvs            :  112
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  108
+	processing begun of mesh:  11110000
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  4
+		num normals        :  4
+		num tangents       :  0
+		num uvs            :  8
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  2
+	processing begun of mesh:  11111000
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  28
+		num normals        :  28
+		num tangents       :  0
+		num uvs            :  56
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  34
+	processing begun of mesh:  10000000
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  19
+		num normals        :  19
+		num tangents       :  0
+		num uvs            :  38
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  24
+	processing begun of mesh:  11111010
+		processing begun of material:  Green
+		registered as also a user of material:  Green
+		num positions      :  37
+		num normals        :  37
+		num tangents       :  0
+		num uvs            :  74
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  48
+========= Writing of JSON file started =========
+	writing mesh:  zero
+	writing mesh:  11110000
+	writing mesh:  11111000
+	writing mesh:  10000000
+	writing mesh:  11111010
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.033 secs

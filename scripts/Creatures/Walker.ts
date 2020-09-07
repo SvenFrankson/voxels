@@ -114,7 +114,7 @@ class Walker extends BABYLON.Mesh {
         let pick = this.getScene().pickWithRay(
             ray,
             (m) => {
-                return m instanceof Chunck;
+                return m instanceof Chunck_V1;
             }
         )
         if (pick.hit) {
@@ -143,7 +143,7 @@ class Walker extends BABYLON.Mesh {
         let pick = this.getScene().pickWithRay(
             ray,
             (m) => {
-                return m instanceof Chunck;
+                return m instanceof Chunck_V1;
             }
         )
         if (pick.hit) {

@@ -44,8 +44,7 @@ class ChunckManager {
                 let chunck = this.updateBuffer.pop();
                 if (chunck) {
                     if (!chunck.isEmpty) {
-                        chunck.generateVertices();
-                        chunck.generateFaces();
+                        chunck.generate();
                         done = true;
                     }
                 }
@@ -67,8 +66,7 @@ class ChunckManager {
                         iterator++;
                         if (chunck) {
                             if (!chunck.isEmpty) {
-                                chunck.generateVertices();
-                                chunck.generateFaces();
+                                chunck.generate();
                                 done = true;
                                 requestAnimationFrame(step);
                             }
@@ -245,7 +243,7 @@ class ChunckManager {
         }
         let chunck = mapChuncks.get(k);
         if (!chunck) {
-            chunck = new Chunck(this, i, j, k);
+            chunck = Chunck.ConstructChunck(this, i, j, k);
             mapChuncks.set(k, chunck);
         }
         return chunck;
@@ -331,8 +329,7 @@ class ChunckManager {
                 for (let k = kChunckMin; k <= kChunckMax; k++) {
                     let redrawnChunck = this.getChunck(i, j, k);
                     if (redrawnChunck) {
-                        redrawnChunck.generateVertices();
-                        redrawnChunck.generateFaces();
+                        redrawnChunck.generate();
                     }
                 }
             }
@@ -347,7 +344,7 @@ class ChunckManager {
                 let mapChuncks = new Map<number, Chunck>()
                 mapMapChuncks.set(j, mapChuncks);
                 for (let k = - d; k <= d; k++) {
-                    let chunck = new Chunck(this, i, j, k);
+                    let chunck = Chunck.ConstructChunck(this, i, j, k);
                     mapChuncks.set(k, chunck);
                 }
             }
@@ -362,7 +359,7 @@ class ChunckManager {
                 let mapChuncks = new Map<number, Chunck>()
                 mapMapChuncks.set(j, mapChuncks);
                 for (let k = - d; k <= d; k++) {
-                    let chunck = new Chunck(this, i, j, k);
+                    let chunck = Chunck.ConstructChunck(this, i, j, k);
                     mapChuncks.set(k, chunck);
                 }
             }
