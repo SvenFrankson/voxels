@@ -26,6 +26,19 @@ class ChunckVertexData {
         return output
     }
 
+    public static MirrorXChunckPartName(name: string): string {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+
+        return v1 + v0 + v3 + v2 + v5 + v4 + v7 + v6;
+    }
+
     public static MirrorYChunckPartName(name: string): string {
         let v0 = name[0];
         let v1 = name[1];
@@ -39,22 +52,60 @@ class ChunckVertexData {
         return v4 + v5 + v6 + v7 + v0 + v1 + v2 + v3;
     }
 
-    private static _TryAddFlipedChunckPart(name: string, data): void {
-        let flipedName = ChunckVertexData.FlipChunckPartName(name);
-        if (!ChunckVertexData._VertexDatas.has(flipedName)) {
-            console.log(flipedName);
-            let flipedData = ChunckVertexData.Flip(data);
-            ChunckVertexData._VertexDatas.set(flipedName, flipedData);
-        }
+    public static MirrorZChunckPartName(name: string): string {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+
+        return v3 + v2 + v1 + v0 + v7 + v6 + v5 + v4;
     }
 
-    private static _TryAddMirrorYChunckPart(name: string, data): void {
+    private static _TryAddFlipedChunckPart(name: string, data): boolean {
+        return false;
+        let flipedName = ChunckVertexData.FlipChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(flipedName)) {
+            let flipedData = ChunckVertexData.Flip(data);
+            ChunckVertexData._VertexDatas.set(flipedName, flipedData);
+            return true;
+        }
+        return false;
+    }
+
+    private static _TryAddMirrorXChunckPart(name: string, data): boolean {
+        let mirrorXName = ChunckVertexData.MirrorXChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(mirrorXName)) {
+            let mirrorXData = ChunckVertexData.MirrorX(data);
+            ChunckVertexData._VertexDatas.set(mirrorXName, mirrorXData);
+            ChunckVertexData._TryAddMirrorZChunckPart(mirrorXName, mirrorXData);
+            return true;
+        }
+        return false;
+    }
+
+    private static _TryAddMirrorYChunckPart(name: string, data): boolean {
         let mirrorYName = ChunckVertexData.MirrorYChunckPartName(name);
         if (!ChunckVertexData._VertexDatas.has(mirrorYName)) {
-            console.log(mirrorYName);
             let mirrorYData = ChunckVertexData.MirrorY(data);
             ChunckVertexData._VertexDatas.set(mirrorYName, mirrorYData);
+            ChunckVertexData._TryAddMirrorZChunckPart(mirrorYName, mirrorYData);
+            return true;
         }
+        return false;
+    }
+
+    private static _TryAddMirrorZChunckPart(name: string, data): boolean {
+        let mirrorZName = ChunckVertexData.MirrorZChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(mirrorZName)) {
+            let mirrorZData = ChunckVertexData.MirrorZ(data);
+            ChunckVertexData._VertexDatas.set(mirrorZName, mirrorZData);
+            return true;
+        }
+        return false;
     }
 
     private static async _LoadChunckVertexDatas(): Promise<void> {
@@ -69,25 +120,36 @@ class ChunckVertexData {
                         for (let i = 0; i < meshes.length; i++) {
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh && mesh.name != "zero") {
+                                let useful = false;
                                 let name = mesh.name;
-                                console.log(name);
                                 let data = BABYLON.VertexData.ExtractFromMesh(mesh);
                                 mesh.dispose();
                                 if (!ChunckVertexData._VertexDatas.has(name)) {
                                     ChunckVertexData._VertexDatas.set(name, data);
+                                    useful = true;
                                 }
 
-                                ChunckVertexData._TryAddFlipedChunckPart(name, data);
-                                ChunckVertexData._TryAddMirrorYChunckPart(name, data);
+                                useful = ChunckVertexData._TryAddFlipedChunckPart(name, data) || useful;
+                                useful = ChunckVertexData._TryAddMirrorXChunckPart(name, data) || useful;
+                                useful = ChunckVertexData._TryAddMirrorYChunckPart(name, data) || useful;
+                                useful = ChunckVertexData._TryAddMirrorZChunckPart(name, data) || useful;
 
-                                for (let i = 0; i < 3; i++) {
-                                    name = ChunckVertexData.RotateYChunckPartName(name);
+                                let rotatedName = name;
+                                for (let j = 0; j < 3; j++) {
+                                    rotatedName = ChunckVertexData.RotateYChunckPartName(rotatedName);
                                     data = ChunckVertexData.RotateY(data, - Math.PI / 2);
-                                    if (!ChunckVertexData._VertexDatas.has(name)) {
-                                        ChunckVertexData._VertexDatas.set(name, data);
+                                    if (!ChunckVertexData._VertexDatas.has(rotatedName)) {
+                                        ChunckVertexData._VertexDatas.set(rotatedName, data);
+                                        useful = true;
                                     }
-                                    ChunckVertexData._TryAddFlipedChunckPart(name, data);
-                                    ChunckVertexData._TryAddMirrorYChunckPart(name, data);
+                                    useful = ChunckVertexData._TryAddFlipedChunckPart(rotatedName, data) || useful;
+                                    useful = ChunckVertexData._TryAddMirrorXChunckPart(rotatedName, data) || useful;
+                                    useful = ChunckVertexData._TryAddMirrorYChunckPart(rotatedName, data) || useful;
+                                    useful = ChunckVertexData._TryAddMirrorZChunckPart(rotatedName, data) || useful;
+                                }
+
+                                if (!useful) {
+                                    console.warn("Chunck-Part " + name + " is redundant.");
                                 }
                             }
                         }
@@ -171,6 +233,32 @@ class ChunckVertexData {
         return data;
     }
 
+    public static MirrorX(baseData: BABYLON.VertexData): BABYLON.VertexData {
+        let data = new BABYLON.VertexData();
+
+        let positions: number[] = [];
+        for (let i = 0; i < baseData.positions.length / 3; i++) {
+            positions.push(- baseData.positions[3 * i], baseData.positions[3 * i + 1], baseData.positions[3 * i + 2]);
+        }
+        data.positions = positions;
+
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals: number[] = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(- baseData.normals[3 * i], baseData.normals[3 * i + 1], baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+
+        let indices: number[] = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        
+        return data;
+    }
+
     public static MirrorY(baseData: BABYLON.VertexData): BABYLON.VertexData {
         let data = new BABYLON.VertexData();
 
@@ -184,6 +272,32 @@ class ChunckVertexData {
             let normals: number[] = [];
             for (let i = 0; i < baseData.normals.length / 3; i++) {
                 normals.push(baseData.normals[3 * i], - baseData.normals[3 * i + 1], baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+
+        let indices: number[] = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        
+        return data;
+    }
+
+    public static MirrorZ(baseData: BABYLON.VertexData): BABYLON.VertexData {
+        let data = new BABYLON.VertexData();
+
+        let positions: number[] = [];
+        for (let i = 0; i < baseData.positions.length / 3; i++) {
+            positions.push(baseData.positions[3 * i], baseData.positions[3 * i + 1], - baseData.positions[3 * i + 2]);
+        }
+        data.positions = positions;
+
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals: number[] = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(baseData.normals[3 * i], baseData.normals[3 * i + 1], - baseData.normals[3 * i + 2]);
             }
             data.normals = normals;
         }

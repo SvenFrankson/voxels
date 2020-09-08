@@ -101,7 +101,7 @@ class Player extends BABYLON.Mesh {
         if (this._inputBack) { this.position.addInPlace(forward.scale(-0.04)); }
         if (this._inputForward) { this.position.addInPlace(forward.scale(0.04)); }
         this.position.y -= this._downSpeed;
-        this._downSpeed += 0.005;
+        this._downSpeed += 0.001;
         this._downSpeed *= 0.99;
         
         Main.ChunckManager.foreachChunck(

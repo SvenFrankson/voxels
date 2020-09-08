@@ -1248,6 +1248,11 @@ class ChunckManager {
                 for (let j = h - hDirt + 1; j <= h; j++) {
                     this.setCube(i, j, k, CubeType.Dirt);
                 }
+                for (let j = h + 1; j <= h + 4; j++) {
+                    if (Math.random() > 0.9) {
+                        this.setCube(i, j, k, CubeType.Sand);
+                    }
+                }
             }
         }
     }
@@ -1514,6 +1519,17 @@ class ChunckVertexData {
         }
         return output;
     }
+    static MirrorXChunckPartName(name) {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+        return v1 + v0 + v3 + v2 + v5 + v4 + v7 + v6;
+    }
     static MirrorYChunckPartName(name) {
         let v0 = name[0];
         let v1 = name[1];
@@ -1525,21 +1541,55 @@ class ChunckVertexData {
         let v7 = name[7];
         return v4 + v5 + v6 + v7 + v0 + v1 + v2 + v3;
     }
+    static MirrorZChunckPartName(name) {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+        return v3 + v2 + v1 + v0 + v7 + v6 + v5 + v4;
+    }
     static _TryAddFlipedChunckPart(name, data) {
+        return false;
         let flipedName = ChunckVertexData.FlipChunckPartName(name);
         if (!ChunckVertexData._VertexDatas.has(flipedName)) {
-            console.log(flipedName);
             let flipedData = ChunckVertexData.Flip(data);
             ChunckVertexData._VertexDatas.set(flipedName, flipedData);
+            return true;
         }
+        return false;
+    }
+    static _TryAddMirrorXChunckPart(name, data) {
+        let mirrorXName = ChunckVertexData.MirrorXChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(mirrorXName)) {
+            let mirrorXData = ChunckVertexData.MirrorX(data);
+            ChunckVertexData._VertexDatas.set(mirrorXName, mirrorXData);
+            ChunckVertexData._TryAddMirrorZChunckPart(mirrorXName, mirrorXData);
+            return true;
+        }
+        return false;
     }
     static _TryAddMirrorYChunckPart(name, data) {
         let mirrorYName = ChunckVertexData.MirrorYChunckPartName(name);
         if (!ChunckVertexData._VertexDatas.has(mirrorYName)) {
-            console.log(mirrorYName);
             let mirrorYData = ChunckVertexData.MirrorY(data);
             ChunckVertexData._VertexDatas.set(mirrorYName, mirrorYData);
+            ChunckVertexData._TryAddMirrorZChunckPart(mirrorYName, mirrorYData);
+            return true;
         }
+        return false;
+    }
+    static _TryAddMirrorZChunckPart(name, data) {
+        let mirrorZName = ChunckVertexData.MirrorZChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(mirrorZName)) {
+            let mirrorZData = ChunckVertexData.MirrorZ(data);
+            ChunckVertexData._VertexDatas.set(mirrorZName, mirrorZData);
+            return true;
+        }
+        return false;
     }
     static async _LoadChunckVertexDatas() {
         return new Promise(resolve => {
@@ -1547,23 +1597,33 @@ class ChunckVertexData {
                 for (let i = 0; i < meshes.length; i++) {
                     let mesh = meshes[i];
                     if (mesh instanceof BABYLON.Mesh && mesh.name != "zero") {
+                        let useful = false;
                         let name = mesh.name;
-                        console.log(name);
                         let data = BABYLON.VertexData.ExtractFromMesh(mesh);
                         mesh.dispose();
                         if (!ChunckVertexData._VertexDatas.has(name)) {
                             ChunckVertexData._VertexDatas.set(name, data);
+                            useful = true;
                         }
-                        ChunckVertexData._TryAddFlipedChunckPart(name, data);
-                        ChunckVertexData._TryAddMirrorYChunckPart(name, data);
-                        for (let i = 0; i < 3; i++) {
-                            name = ChunckVertexData.RotateYChunckPartName(name);
+                        useful = ChunckVertexData._TryAddFlipedChunckPart(name, data) || useful;
+                        useful = ChunckVertexData._TryAddMirrorXChunckPart(name, data) || useful;
+                        useful = ChunckVertexData._TryAddMirrorYChunckPart(name, data) || useful;
+                        useful = ChunckVertexData._TryAddMirrorZChunckPart(name, data) || useful;
+                        let rotatedName = name;
+                        for (let j = 0; j < 3; j++) {
+                            rotatedName = ChunckVertexData.RotateYChunckPartName(rotatedName);
                             data = ChunckVertexData.RotateY(data, -Math.PI / 2);
-                            if (!ChunckVertexData._VertexDatas.has(name)) {
-                                ChunckVertexData._VertexDatas.set(name, data);
+                            if (!ChunckVertexData._VertexDatas.has(rotatedName)) {
+                                ChunckVertexData._VertexDatas.set(rotatedName, data);
+                                useful = true;
                             }
-                            ChunckVertexData._TryAddFlipedChunckPart(name, data);
-                            ChunckVertexData._TryAddMirrorYChunckPart(name, data);
+                            useful = ChunckVertexData._TryAddFlipedChunckPart(rotatedName, data) || useful;
+                            useful = ChunckVertexData._TryAddMirrorXChunckPart(rotatedName, data) || useful;
+                            useful = ChunckVertexData._TryAddMirrorYChunckPart(rotatedName, data) || useful;
+                            useful = ChunckVertexData._TryAddMirrorZChunckPart(rotatedName, data) || useful;
+                        }
+                        if (!useful) {
+                            console.warn("Chunck-Part " + name + " is redundant.");
                         }
                     }
                 }
@@ -1636,6 +1696,27 @@ class ChunckVertexData {
         data.indices = indices;
         return data;
     }
+    static MirrorX(baseData) {
+        let data = new BABYLON.VertexData();
+        let positions = [];
+        for (let i = 0; i < baseData.positions.length / 3; i++) {
+            positions.push(-baseData.positions[3 * i], baseData.positions[3 * i + 1], baseData.positions[3 * i + 2]);
+        }
+        data.positions = positions;
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(-baseData.normals[3 * i], baseData.normals[3 * i + 1], baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+        let indices = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        return data;
+    }
     static MirrorY(baseData) {
         let data = new BABYLON.VertexData();
         let positions = [];
@@ -1647,6 +1728,27 @@ class ChunckVertexData {
             let normals = [];
             for (let i = 0; i < baseData.normals.length / 3; i++) {
                 normals.push(baseData.normals[3 * i], -baseData.normals[3 * i + 1], baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+        let indices = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        return data;
+    }
+    static MirrorZ(baseData) {
+        let data = new BABYLON.VertexData();
+        let positions = [];
+        for (let i = 0; i < baseData.positions.length / 3; i++) {
+            positions.push(baseData.positions[3 * i], baseData.positions[3 * i + 1], -baseData.positions[3 * i + 2]);
+        }
+        data.positions = positions;
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(baseData.normals[3 * i], baseData.normals[3 * i + 1], -baseData.normals[3 * i + 2]);
             }
             data.normals = normals;
         }
@@ -2553,7 +2655,7 @@ class Player extends BABYLON.Mesh {
                 this.position.addInPlace(forward.scale(0.04));
             }
             this.position.y -= this._downSpeed;
-            this._downSpeed += 0.005;
+            this._downSpeed += 0.001;
             this._downSpeed *= 0.99;
             Main.ChunckManager.foreachChunck((chunck) => {
                 if (chunck instanceof Chunck_V1) {
@@ -3373,12 +3475,14 @@ class Main {
         `;
         BABYLON.Engine.ShadersRepository = "./shaders/";
         let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
+        /*
         let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
         postProcess.onApply = (effect) => {
             effect.setTexture("depthSampler", depthMap);
             effect.setFloat("width", Main.Engine.getRenderWidth());
             effect.setFloat("height", Main.Engine.getRenderHeight());
         };
+        */
         let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
         noPostProcessCamera.parent = Main.Camera;
         noPostProcessCamera.layerMask = 0x10000000;
@@ -3869,7 +3973,7 @@ class PlayerTest extends Main {
                 }
             }
             Main.ChunckManager.generateHeightFunction(l, (i, j) => {
-                return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 0.5 + Math.random();
+                return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 2 + 2 * Math.random();
             });
             Main.ChunckManager.foreachChunck(chunck => {
                 Main.ChunckManager.updateBuffer.push(chunck);
