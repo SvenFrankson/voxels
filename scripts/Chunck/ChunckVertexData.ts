@@ -13,7 +13,49 @@ class ChunckVertexData {
         let v7 = name[7];
 
         return v1 + v2 + v3 + v0 + v5 + v6 + v7 + v4;
-    } 
+    }
+
+    private static _Flip01(c: string): string {
+        return c === "0" ? "1" : "0";
+    }
+    public static FlipChunckPartName(name: string): string {
+        let output = "";
+        for (let i = 0; i < name.length; i++) {
+            output += ChunckVertexData._Flip01(name[i]);
+        }
+        return output
+    }
+
+    public static MirrorYChunckPartName(name: string): string {
+        let v0 = name[0];
+        let v1 = name[1];
+        let v2 = name[2];
+        let v3 = name[3];
+        let v4 = name[4];
+        let v5 = name[5];
+        let v6 = name[6];
+        let v7 = name[7];
+
+        return v4 + v5 + v6 + v7 + v0 + v1 + v2 + v3;
+    }
+
+    private static _TryAddFlipedChunckPart(name: string, data): void {
+        let flipedName = ChunckVertexData.FlipChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(flipedName)) {
+            console.log(flipedName);
+            let flipedData = ChunckVertexData.Flip(data);
+            ChunckVertexData._VertexDatas.set(flipedName, flipedData);
+        }
+    }
+
+    private static _TryAddMirrorYChunckPart(name: string, data): void {
+        let mirrorYName = ChunckVertexData.MirrorYChunckPartName(name);
+        if (!ChunckVertexData._VertexDatas.has(mirrorYName)) {
+            console.log(mirrorYName);
+            let mirrorYData = ChunckVertexData.MirrorY(data);
+            ChunckVertexData._VertexDatas.set(mirrorYName, mirrorYData);
+        }
+    }
 
     private static async _LoadChunckVertexDatas(): Promise<void> {
         return new Promise<void>(
@@ -26,19 +68,26 @@ class ChunckVertexData {
                     (meshes) => {
                         for (let i = 0; i < meshes.length; i++) {
                             let mesh = meshes[i];
-                            if (mesh instanceof BABYLON.Mesh) {
+                            if (mesh instanceof BABYLON.Mesh && mesh.name != "zero") {
                                 let name = mesh.name;
+                                console.log(name);
                                 let data = BABYLON.VertexData.ExtractFromMesh(mesh);
                                 mesh.dispose();
                                 if (!ChunckVertexData._VertexDatas.has(name)) {
                                     ChunckVertexData._VertexDatas.set(name, data);
                                 }
+
+                                ChunckVertexData._TryAddFlipedChunckPart(name, data);
+                                ChunckVertexData._TryAddMirrorYChunckPart(name, data);
+
                                 for (let i = 0; i < 3; i++) {
                                     name = ChunckVertexData.RotateYChunckPartName(name);
                                     data = ChunckVertexData.RotateY(data, - Math.PI / 2);
                                     if (!ChunckVertexData._VertexDatas.has(name)) {
                                         ChunckVertexData._VertexDatas.set(name, data);
                                     }
+                                    ChunckVertexData._TryAddFlipedChunckPart(name, data);
+                                    ChunckVertexData._TryAddMirrorYChunckPart(name, data);
                                 }
                             }
                         }
@@ -100,6 +149,51 @@ class ChunckVertexData {
             data.normals = normals;
         }
 
+        return data;
+    }
+
+    public static Flip(baseData: BABYLON.VertexData): BABYLON.VertexData {
+        let data = new BABYLON.VertexData();
+        data.positions = [...baseData.positions];
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals: number[] = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(- baseData.normals[3 * i], - baseData.normals[3 * i + 1], - baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+        let indices: number[] = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        
+        return data;
+    }
+
+    public static MirrorY(baseData: BABYLON.VertexData): BABYLON.VertexData {
+        let data = new BABYLON.VertexData();
+
+        let positions: number[] = [];
+        for (let i = 0; i < baseData.positions.length / 3; i++) {
+            positions.push(baseData.positions[3 * i], - baseData.positions[3 * i + 1], baseData.positions[3 * i + 2]);
+        }
+        data.positions = positions;
+
+        if (baseData.normals && baseData.normals.length === baseData.positions.length) {
+            let normals: number[] = [];
+            for (let i = 0; i < baseData.normals.length / 3; i++) {
+                normals.push(baseData.normals[3 * i], - baseData.normals[3 * i + 1], baseData.normals[3 * i + 2]);
+            }
+            data.normals = normals;
+        }
+
+        let indices: number[] = [];
+        for (let i = 0; i < baseData.indices.length / 3; i++) {
+            indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
+        }
+        data.indices = indices;
+        
         return data;
     }
 

@@ -17,6 +17,7 @@ class Chunck_V2 extends Chunck {
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
     }
 
+    public static HasLoged: boolean = false;
     public async generate(): Promise<void> {
         let positions: number[] = [];
         let indices: number[] = [];
@@ -35,6 +36,10 @@ class Chunck_V2 extends Chunck {
                     let c7 = this.getCube(i, j + 1, k + 1) ? "1" : "0";
                     let ref = c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7;
 
+                    if (ref === "00000000" || ref === "11111111") {
+                        continue;
+                    }
+
                     let data = ChunckVertexData.Get(ref);
 
                     if (data) {
@@ -48,6 +53,10 @@ class Chunck_V2 extends Chunck {
                         for (let n = 0; n < data.indices.length; n++) {
                             indices.push(data.indices[n] + l);
                         }
+                    }
+                    else if (!Chunck_V2.HasLoged) {
+                        console.warn("Missing ChunckPart : " + ref);
+                        Chunck_V2.HasLoged = true;
                     }
                 }
             }
