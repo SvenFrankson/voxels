@@ -42,7 +42,6 @@ class CollisionsTest extends Main {
     }
     public async initialize(): Promise<void> {
         await super.initializeScene();
-        Main.ChunckEditor.saveSceneName = "collisions-test";
         let l = 2;
 		let manyChuncks = [];
 		let savedTerrainString = window.localStorage.getItem("collisions-test");
@@ -130,7 +129,7 @@ class CollisionsTest extends Main {
 
             let count: number = 0;
 			for (let i = 0; i < manyChuncks.length; i++) {
-				let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
+				let intersections = Intersections3D.SphereChunck_V1(sphere.position, 0.5, manyChuncks[i]);
 				if (intersections) {
 					for (let j = 0; j < intersections.length; j++) {
                         //CollisionsTest.DisplayCross(intersections[j].point, 200);
@@ -192,5 +191,6 @@ class CollisionsTest extends Main {
             Main.Camera.radius = 10;
         }
 		Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
+        Main.ChunckEditor.saveSceneName = "collisions-test";
     }
 }

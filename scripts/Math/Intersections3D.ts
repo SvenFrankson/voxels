@@ -45,7 +45,17 @@ class Intersections3D {
         return undefined;
     }
 
-    public static SphereChunck(center: BABYLON.Vector3, radius: number, chunck: Chunck_V1): SphereIntersection[] {
+    
+    public static SphereChunck(center: BABYLON.Vector3, radius: number, chunck: Chunck): SphereIntersection[] {
+        if (chunck instanceof Chunck_V1) {
+            return Intersections3D.SphereChunck_V1(center, radius, chunck);
+        }
+        if (chunck instanceof Chunck_V2) {
+            return Intersections3D.SphereChunck_V2(center, radius, chunck);
+        }
+    }
+
+    public static SphereChunck_V1(center: BABYLON.Vector3, radius: number, chunck: Chunck_V1): SphereIntersection[] {
         let intersections: SphereIntersection[] = [];
         if (!chunck.isEmpty) {
             center = center.subtract(chunck.position);
@@ -63,6 +73,42 @@ class Intersections3D {
                         for (let k = min.z; k <= max.z; k += 1) {
                             if (chunck.getCube(i, j, k)) {
                                 let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i, j, k), new BABYLON.Vector3(i + 1, j + 1, k+ 1));
+                                if (intersection) {
+                                    intersection.point.addInPlace(chunck.position);
+                                    intersections.push(intersection);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return intersections;
+    }
+
+    public static SphereChunck_V2(center: BABYLON.Vector3, radius: number, chunck: Chunck_V2): SphereIntersection[] {
+        let intersections: SphereIntersection[] = [];
+        if (!chunck.isEmpty) {
+            center = center.subtract(chunck.position);
+            if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
+                let min = center.clone();
+                min.x = Math.floor(min.x / 1.6 - radius);
+                min.y = Math.floor(min.y / 0.96 - radius);
+                min.z = Math.floor(min.z / 1.6 - radius);
+                let max = center.clone();
+                max.x = Math.ceil(max.x / 1.6 + radius);
+                max.y = Math.ceil(max.y / 0.96 + radius);
+                max.z = Math.ceil(max.z / 1.6 + radius);
+                for (let i = min.x; i <= max.x; i += 1) {
+                    for (let j = min.y; j <= max.y; j += 1) {
+                        for (let k = min.z; k <= max.z; k += 1) {
+                            if (chunck.getCube(i, j, k)) {
+                                let intersection = Intersections3D.SphereCube(
+                                    center,
+                                    radius,
+                                    new BABYLON.Vector3(i * 1.6 - 0.8, j * 0.96 - 0.48, k * 1.6 - 0.8),
+                                    new BABYLON.Vector3((i + 1) * 1.6 - 0.8, (j + 1) * 0.96 - 0.48, (k + 1) * 1.6 - 0.8)
+                                );
                                 if (intersection) {
                                     intersection.point.addInPlace(chunck.position);
                                     intersections.push(intersection);

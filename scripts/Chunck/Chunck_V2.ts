@@ -45,9 +45,9 @@ class Chunck_V2 extends Chunck {
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
-                            positions.push(data.positions[3 * n] + i * 1.6);
-                            positions.push(data.positions[3 * n + 1] + j * 0.96);
-                            positions.push(data.positions[3 * n + 2] + k * 1.6);
+                            positions.push(data.positions[3 * n] + i * 1.6 + 0.8);
+                            positions.push(data.positions[3 * n + 1] + j * 0.96 + 0.48);
+                            positions.push(data.positions[3 * n + 2] + k * 1.6 + 0.8);
                         }
                         normals.push(...data.normals);
                         for (let n = 0; n < data.indices.length; n++) {

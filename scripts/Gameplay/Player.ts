@@ -13,6 +13,8 @@ class Player extends BABYLON.Mesh {
     constructor() {
         super("player");
         this.playerActionManager = new PlayerActionManager(this);
+        // debug
+        BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
     }
 
     public register(brickMode: boolean = false): void {
@@ -101,24 +103,22 @@ class Player extends BABYLON.Mesh {
         if (this._inputBack) { this.position.addInPlace(forward.scale(-0.04)); }
         if (this._inputForward) { this.position.addInPlace(forward.scale(0.04)); }
         this.position.y -= this._downSpeed;
-        this._downSpeed += 0.001;
+        this._downSpeed += 0.005;
         this._downSpeed *= 0.99;
         
         Main.ChunckManager.foreachChunck(
             (chunck) => {
-                if (chunck instanceof Chunck_V1) {
-                    let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
-                    if (intersections) {
-                        for (let j = 0; j < intersections.length; j++) {
-                            let d = this.position.subtract(intersections[j].point);
-                            let l = d.length();
-                            d.normalize();
-                            if (d.y > 0.8) {
-                                this._downSpeed = 0.0;
-                            }
-                            d.scaleInPlace((0.5 - l) * 0.5);
-                            this.position.addInPlace(d);
+                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        let d = this.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            this._downSpeed = 0.0;
                         }
+                        d.scaleInPlace((0.5 - l) * 0.5);
+                        this.position.addInPlace(d);
                     }
                 }
             }

@@ -2091,9 +2091,9 @@ class Chunck_V2 extends Chunck {
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
-                            positions.push(data.positions[3 * n] + i * 1.6);
-                            positions.push(data.positions[3 * n + 1] + j * 0.96);
-                            positions.push(data.positions[3 * n + 2] + k * 1.6);
+                            positions.push(data.positions[3 * n] + i * 1.6 + 0.8);
+                            positions.push(data.positions[3 * n + 1] + j * 0.96 + 0.48);
+                            positions.push(data.positions[3 * n + 2] + k * 1.6 + 0.8);
                         }
                         normals.push(...data.normals);
                         for (let n = 0; n < data.indices.length; n++) {
@@ -2655,22 +2655,20 @@ class Player extends BABYLON.Mesh {
                 this.position.addInPlace(forward.scale(0.04));
             }
             this.position.y -= this._downSpeed;
-            this._downSpeed += 0.001;
+            this._downSpeed += 0.005;
             this._downSpeed *= 0.99;
             Main.ChunckManager.foreachChunck((chunck) => {
-                if (chunck instanceof Chunck_V1) {
-                    let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
-                    if (intersections) {
-                        for (let j = 0; j < intersections.length; j++) {
-                            let d = this.position.subtract(intersections[j].point);
-                            let l = d.length();
-                            d.normalize();
-                            if (d.y > 0.8) {
-                                this._downSpeed = 0.0;
-                            }
-                            d.scaleInPlace((0.5 - l) * 0.5);
-                            this.position.addInPlace(d);
+                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        let d = this.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            this._downSpeed = 0.0;
                         }
+                        d.scaleInPlace((0.5 - l) * 0.5);
+                        this.position.addInPlace(d);
                     }
                 }
             });
@@ -2711,6 +2709,8 @@ class Player extends BABYLON.Mesh {
             }
         };
         this.playerActionManager = new PlayerActionManager(this);
+        // debug
+        BABYLON.VertexData.CreateSphere({ diameter: 1 }).applyToMesh(this);
     }
     register(brickMode = false) {
         this.playerActionManager.register();
@@ -3475,14 +3475,12 @@ class Main {
         `;
         BABYLON.Engine.ShadersRepository = "./shaders/";
         let depthMap = Main.Scene.enableDepthRenderer(Main.Camera).getDepthMap();
-        /*
         let postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.Camera);
         postProcess.onApply = (effect) => {
             effect.setTexture("depthSampler", depthMap);
             effect.setFloat("width", Main.Engine.getRenderWidth());
             effect.setFloat("height", Main.Engine.getRenderHeight());
         };
-        */
         let noPostProcessCamera = new BABYLON.FreeCamera("no-post-process-camera", BABYLON.Vector3.Zero(), Main.Scene);
         noPostProcessCamera.parent = Main.Camera;
         noPostProcessCamera.layerMask = 0x10000000;
@@ -3589,7 +3587,6 @@ class CollisionsTest extends Main {
     }
     async initialize() {
         await super.initializeScene();
-        Main.ChunckEditor.saveSceneName = "collisions-test";
         let l = 2;
         let manyChuncks = [];
         let savedTerrainString = window.localStorage.getItem("collisions-test");
@@ -3678,7 +3675,7 @@ class CollisionsTest extends Main {
             //}
             let count = 0;
             for (let i = 0; i < manyChuncks.length; i++) {
-                let intersections = Intersections3D.SphereChunck(sphere.position, 0.5, manyChuncks[i]);
+                let intersections = Intersections3D.SphereChunck_V1(sphere.position, 0.5, manyChuncks[i]);
                 if (intersections) {
                     for (let j = 0; j < intersections.length; j++) {
                         //CollisionsTest.DisplayCross(intersections[j].point, 200);
@@ -3737,6 +3734,7 @@ class CollisionsTest extends Main {
             Main.Camera.radius = 10;
         }
         Main.ChunckEditor = new ChunckEditor(Main.ChunckManager);
+        Main.ChunckEditor.saveSceneName = "collisions-test";
     }
 }
 /// <reference path="Main.ts"/>
@@ -4036,6 +4034,7 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
+            Main.Camera.position.z = -5;
         }
         return;
         setTimeout(async () => {
@@ -4351,6 +4350,14 @@ class Intersections3D {
         return undefined;
     }
     static SphereChunck(center, radius, chunck) {
+        if (chunck instanceof Chunck_V1) {
+            return Intersections3D.SphereChunck_V1(center, radius, chunck);
+        }
+        if (chunck instanceof Chunck_V2) {
+            return Intersections3D.SphereChunck_V2(center, radius, chunck);
+        }
+    }
+    static SphereChunck_V1(center, radius, chunck) {
         let intersections = [];
         if (!chunck.isEmpty) {
             center = center.subtract(chunck.position);
@@ -4368,6 +4375,36 @@ class Intersections3D {
                         for (let k = min.z; k <= max.z; k += 1) {
                             if (chunck.getCube(i, j, k)) {
                                 let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i, j, k), new BABYLON.Vector3(i + 1, j + 1, k + 1));
+                                if (intersection) {
+                                    intersection.point.addInPlace(chunck.position);
+                                    intersections.push(intersection);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return intersections;
+    }
+    static SphereChunck_V2(center, radius, chunck) {
+        let intersections = [];
+        if (!chunck.isEmpty) {
+            center = center.subtract(chunck.position);
+            if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
+                let min = center.clone();
+                min.x = Math.floor(min.x / 1.6 - radius);
+                min.y = Math.floor(min.y / 0.96 - radius);
+                min.z = Math.floor(min.z / 1.6 - radius);
+                let max = center.clone();
+                max.x = Math.ceil(max.x / 1.6 + radius);
+                max.y = Math.ceil(max.y / 0.96 + radius);
+                max.z = Math.ceil(max.z / 1.6 + radius);
+                for (let i = min.x; i <= max.x; i += 1) {
+                    for (let j = min.y; j <= max.y; j += 1) {
+                        for (let k = min.z; k <= max.z; k += 1) {
+                            if (chunck.getCube(i, j, k)) {
+                                let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i * 1.6 - 0.8, j * 0.96 - 0.48, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, (j + 1) * 0.96 - 0.48, (k + 1) * 1.6 - 0.8));
                                 if (intersection) {
                                     intersection.point.addInPlace(chunck.position);
                                     intersections.push(intersection);
