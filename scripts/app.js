@@ -1600,6 +1600,13 @@ class ChunckVertexData {
                         let useful = false;
                         let name = mesh.name;
                         let data = BABYLON.VertexData.ExtractFromMesh(mesh);
+                        if (!data.colors || data.colors.length / 4 != data.positions.length / 3) {
+                            let colors = [];
+                            for (let j = 0; j < data.positions.length / 3; j++) {
+                                colors.push(1, 1, 1, 1);
+                            }
+                            data.colors = colors;
+                        }
                         mesh.dispose();
                         if (!ChunckVertexData._VertexDatas.has(name)) {
                             ChunckVertexData._VertexDatas.set(name, data);
@@ -1677,6 +1684,9 @@ class ChunckVertexData {
         if (normals) {
             data.normals = normals;
         }
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         return data;
     }
     static Flip(baseData) {
@@ -1694,6 +1704,9 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         return data;
     }
     static MirrorX(baseData) {
@@ -1715,6 +1728,9 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         return data;
     }
     static MirrorY(baseData) {
@@ -1736,6 +1752,9 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         return data;
     }
     static MirrorZ(baseData) {
@@ -1757,6 +1776,9 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         return data;
     }
     static RotateRef(ref, rotation) {
@@ -2067,33 +2089,138 @@ class Chunck_V2 extends Chunck {
         this.position.x = CHUNCK_SIZE * this.i * 1.6;
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
+        this.material = Main.terrainCellShadingMaterial;
     }
     async generate() {
         let positions = [];
         let indices = [];
         let normals = [];
+        let colors = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
-                    let c0 = this.getCube(i, j, k) ? "1" : "0";
-                    let c1 = this.getCube(i + 1, j, k) ? "1" : "0";
-                    let c2 = this.getCube(i + 1, j, k + 1) ? "1" : "0";
-                    let c3 = this.getCube(i, j, k + 1) ? "1" : "0";
-                    let c4 = this.getCube(i, j + 1, k) ? "1" : "0";
-                    let c5 = this.getCube(i + 1, j + 1, k) ? "1" : "0";
-                    let c6 = this.getCube(i + 1, j + 1, k + 1) ? "1" : "0";
-                    let c7 = this.getCube(i, j + 1, k + 1) ? "1" : "0";
-                    let ref = c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7;
+                    let c0 = this.getCube(i, j, k);
+                    let c1 = this.getCube(i + 1, j, k);
+                    let c2 = this.getCube(i + 1, j, k + 1);
+                    let c3 = this.getCube(i, j, k + 1);
+                    let c4 = this.getCube(i, j + 1, k);
+                    let c5 = this.getCube(i + 1, j + 1, k);
+                    let c6 = this.getCube(i + 1, j + 1, k + 1);
+                    let c7 = this.getCube(i, j + 1, k + 1);
+                    let ref = (c0 ? "1" : "0") + (c1 ? "1" : "0") + (c2 ? "1" : "0") + (c3 ? "1" : "0") + (c4 ? "1" : "0") + (c5 ? "1" : "0") + (c6 ? "1" : "0") + (c7 ? "1" : "0");
                     if (ref === "00000000" || ref === "11111111") {
                         continue;
+                    }
+                    // debug
+                    if (c0) {
+                        let debugData = BABYLON.VertexData.CreateBox({ size: 0.3 });
+                        let debugColors = [];
+                        for (let n = 0; n < debugData.positions.length / 3; n++) {
+                            debugColors.push(...c0.color.asArray());
+                        }
+                        debugData.colors = debugColors;
+                        let debugMesh = new BABYLON.Mesh("debug");
+                        debugData.applyToMesh(debugMesh);
+                        debugMesh.parent = this;
+                        debugMesh.position.x = i * 1.6;
+                        debugMesh.position.y = j * 0.96;
+                        debugMesh.position.z = k * 1.6;
+                        debugMesh.scaling.y = 4;
+                        debugMesh.material = Main.cellShadingMaterial;
+                        debugMesh.freezeWorldMatrix();
                     }
                     let data = ChunckVertexData.Get(ref);
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
-                            positions.push(data.positions[3 * n] + i * 1.6 + 0.8);
-                            positions.push(data.positions[3 * n + 1] + j * 0.96 + 0.48);
-                            positions.push(data.positions[3 * n + 2] + k * 1.6 + 0.8);
+                            let x = data.positions[3 * n];
+                            let dx = (x + 0.8) / 1.6;
+                            let y = data.positions[3 * n + 1];
+                            let dy = (y + 0.48) / 0.96;
+                            let z = data.positions[3 * n + 2];
+                            let dz = (z + 0.8) / 1.6;
+                            positions.push(x + i * 1.6 + 0.8);
+                            positions.push(y + j * 0.96 + 0.48);
+                            positions.push(z + k * 1.6 + 0.8);
+                            let color0 = c0 ? c0.color : undefined;
+                            let color1 = c1 ? c1.color : undefined;
+                            let color2 = c2 ? c2.color : undefined;
+                            let color3 = c3 ? c3.color : undefined;
+                            let color4 = c4 ? c4.color : undefined;
+                            let color5 = c5 ? c5.color : undefined;
+                            let color6 = c6 ? c6.color : undefined;
+                            let color7 = c7 ? c7.color : undefined;
+                            let color01;
+                            if (color0 && color1) {
+                                color01 = color0.scale(1 - dx).add(color1.scale(dx));
+                            }
+                            else if (color0) {
+                                color01 = color0;
+                            }
+                            else {
+                                color01 = color1;
+                            }
+                            let color23;
+                            if (color2 && color3) {
+                                color23 = color3.scale(1 - dx).add(color2.scale(dx));
+                            }
+                            else if (color2) {
+                                color23 = color2;
+                            }
+                            else {
+                                color23 = color3;
+                            }
+                            let color45;
+                            if (color4 && color5) {
+                                color45 = color4.scale(1 - dx).add(color5.scale(dx));
+                            }
+                            else if (color4) {
+                                color45 = color4;
+                            }
+                            else {
+                                color45 = color5;
+                            }
+                            let color67;
+                            if (color6 && color7) {
+                                color67 = color7.scale(1 - dx).add(color6.scale(dx));
+                            }
+                            else if (color6) {
+                                color67 = color6;
+                            }
+                            else {
+                                color67 = color7;
+                            }
+                            let color0123;
+                            if (color01 && color23) {
+                                color0123 = color01.scale(1 - dz).add(color23.scale(dz));
+                            }
+                            else if (color01) {
+                                color0123 = color01;
+                            }
+                            else {
+                                color0123 = color23;
+                            }
+                            let color4567;
+                            if (color45 && color67) {
+                                color4567 = color45.scale(1 - dz).add(color67.scale(dz));
+                            }
+                            else if (color45) {
+                                color4567 = color45;
+                            }
+                            else {
+                                color4567 = color67;
+                            }
+                            let color;
+                            if (color0123 && color4567) {
+                                color = color0123.scale(1 - dy).add(color4567.scale(dy));
+                            }
+                            else if (color0123) {
+                                color = color0123;
+                            }
+                            else {
+                                color = color4567;
+                            }
+                            colors.push(color.r, color.g, color.b, color.a);
                         }
                         normals.push(...data.normals);
                         for (let n = 0; n < data.indices.length; n++) {
@@ -2111,6 +2238,7 @@ class Chunck_V2 extends Chunck {
         vertexData.positions = positions;
         vertexData.indices = indices;
         vertexData.normals = normals;
+        vertexData.colors = colors;
         vertexData.applyToMesh(this);
     }
 }
@@ -2129,6 +2257,7 @@ class Cube {
         this.j = j;
         this.k = k;
         this.cubeType = cubeType;
+        this._color = new BABYLON.Color4();
         if (this.cubeType === undefined) {
             this.cubeType = Math.floor(Math.random() * 3);
         }
@@ -2147,6 +2276,18 @@ class Cube {
             Cube._PreviewMaterials[3].diffuseColor = BABYLON.Color3.FromHexString("#ff0000");
         }
         return Cube._PreviewMaterials;
+    }
+    get color() {
+        if (this.cubeType === CubeType.Dirt) {
+            this._color.copyFromFloats(1, 0, 0, 1);
+        }
+        else if (this.cubeType === CubeType.Rock) {
+            this._color.copyFromFloats(0, 1, 0, 1);
+        }
+        else if (this.cubeType === CubeType.Sand) {
+            this._color.copyFromFloats(0, 0, 1, 1);
+        }
+        return this._color;
     }
     addVertex(v) {
         if (v.i === this.i) {
@@ -4034,7 +4175,6 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
-            Main.Camera.position.z = -5;
         }
         return;
         setTimeout(async () => {

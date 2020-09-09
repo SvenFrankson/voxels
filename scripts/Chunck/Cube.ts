@@ -45,6 +45,20 @@ class Cube {
         }
     }
 
+    private _color: BABYLON.Color4 = new BABYLON.Color4();
+    public get color(): BABYLON.Color4 {
+        if (this.cubeType === CubeType.Dirt) {
+            this._color.copyFromFloats(1, 0, 0, 1);
+        }
+        else if (this.cubeType === CubeType.Rock) {
+            this._color.copyFromFloats(0, 1, 0, 1);
+        }
+        else if (this.cubeType === CubeType.Sand) {
+            this._color.copyFromFloats(0, 0, 1, 1);
+        }
+        return this._color;
+    }
+
     public addVertex(v: Vertex): void {
         if (v.i === this.i) {
             if (v.j === this.j) {

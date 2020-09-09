@@ -112,7 +112,6 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
-            Main.Camera.position.z = - 5;
 		}
 		return;
 		setTimeout(

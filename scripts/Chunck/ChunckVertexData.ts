@@ -123,6 +123,13 @@ class ChunckVertexData {
                                 let useful = false;
                                 let name = mesh.name;
                                 let data = BABYLON.VertexData.ExtractFromMesh(mesh);
+                                if (!data.colors || data.colors.length / 4 != data.positions.length / 3) {
+                                    let colors = [];
+                                    for (let j = 0; j < data.positions.length / 3; j++) {
+                                        colors.push(1, 1, 1, 1);
+                                    }
+                                    data.colors = colors;
+                                }
                                 mesh.dispose();
                                 if (!ChunckVertexData._VertexDatas.has(name)) {
                                     ChunckVertexData._VertexDatas.set(name, data);
@@ -210,6 +217,9 @@ class ChunckVertexData {
         if (normals) {
             data.normals = normals;
         }
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
 
         return data;
     }
@@ -229,6 +239,10 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         
         return data;
     }
@@ -256,6 +270,10 @@ class ChunckVertexData {
         }
         data.indices = indices;
         
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
+        
         return data;
     }
 
@@ -282,6 +300,10 @@ class ChunckVertexData {
         }
         data.indices = indices;
         
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
+        
         return data;
     }
 
@@ -307,6 +329,10 @@ class ChunckVertexData {
             indices.push(baseData.indices[3 * i], baseData.indices[3 * i + 2], baseData.indices[3 * i + 1]);
         }
         data.indices = indices;
+        
+        if (baseData.colors) {
+            data.colors = [...baseData.colors];
+        }
         
         return data;
     }
