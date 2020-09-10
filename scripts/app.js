@@ -503,18 +503,19 @@ class BrickData {
 }
 class BrickDataManager {
     static InitializeData() {
-        BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color3.FromInts(255, 205, 3));
-        BrickDataManager.BrickColors.set("brightorange", BABYLON.Color3.FromInts(245, 125, 32));
-        BrickDataManager.BrickColors.set("brightred", BABYLON.Color3.FromInts(221, 26, 33));
-        BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color3.FromInts(233, 93, 162));
-        BrickDataManager.BrickColors.set("brightblue", BABYLON.Color3.FromInts(0, 108, 183));
-        BrickDataManager.BrickColors.set("darkazur", BABYLON.Color3.FromInts(0, 163, 218));
-        BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color3.FromInts(204, 225, 151));
-        BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color3.FromInts(0, 175, 77));
-        BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color3.FromInts(154, 202, 60));
-        BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color3.FromInts(105, 46, 20));
-        BrickDataManager.BrickColors.set("nougat", BABYLON.Color3.FromInts(222, 139, 95));
-        BrickDataManager.BrickColors.set("white", BABYLON.Color3.FromInts(244, 244, 244));
+        BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
+        BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
+        BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
+        BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
+        BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
+        BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
+        BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
+        BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
+        BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
+        BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
+        BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
+        BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
+        BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
         });
@@ -691,15 +692,20 @@ class BrickVertexData {
                 let ky = data.positions[3 * i + 1];
                 let kz = data.positions[3 * i + 2];
                 positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
-                if (color) {
-                    colors.push(color.r, color.g, color.b, color.a);
-                }
             }
             for (let i = 0; i < data.normals.length / 3; i++) {
                 let knx = data.normals[3 * i];
                 let kny = data.normals[3 * i + 1];
                 let knz = data.normals[3 * i + 2];
                 normals.push(knx, kny, knz);
+                if (color) {
+                    if (kny >= 0.9) {
+                        colors.push(color.r * BrickVertexData.knobColorFactor, color.g * BrickVertexData.knobColorFactor, color.b * BrickVertexData.knobColorFactor, color.a);
+                    }
+                    else {
+                        colors.push(color.r, color.g, color.b, color.a);
+                    }
+                }
             }
             for (let i = 0; i < data.indices.length; i++) {
                 let kn = data.indices[i];
@@ -728,14 +734,14 @@ class BrickVertexData {
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
-        let brickData = BrickDataManager.GetBrickData(brickReference);
-        for (let i = 0; i < brickData.knobs.length; i++) {
-            BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0);
-        }
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
-            colors.push(color.r, color.g, color.b, 1);
+            colors.push(color.r, color.g, color.b, color.a);
+        }
+        let brickData = BrickDataManager.GetBrickData(brickReference);
+        for (let i = 0; i < brickData.knobs.length; i++) {
+            BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
         }
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
@@ -748,6 +754,7 @@ class BrickVertexData {
 BrickVertexData._CubicTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
+BrickVertexData.knobColorFactor = 0.9;
 class Chunck extends BABYLON.Mesh {
     constructor(manager, i, j, k) {
         super("chunck_" + i + "_" + j + "_" + k);
@@ -925,12 +932,19 @@ class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < this.blocks.length; i++) {
             blockDatas.push(this.blocks[i].serialize());
         }
+        let brickDatas = [];
+        if (this instanceof Chunck_V2) {
+            for (let i = 0; i < this.bricks.length; i++) {
+                brickDatas.push(this.bricks[i].serialize());
+            }
+        }
         return {
             i: this.i,
             j: this.j,
             k: this.k,
             data: data,
-            blocks: blockDatas
+            blocks: blockDatas,
+            bricks: brickDatas
         };
     }
     deserialize(data) {
@@ -964,6 +978,13 @@ class Chunck extends BABYLON.Mesh {
                 let block = new Block();
                 block.deserialize(data.blocks[b]);
                 this.addBlock(block);
+            }
+        }
+        if (data.bricks && this instanceof Chunck_V2) {
+            for (let b = 0; b < data.bricks.length; b++) {
+                let brick = new Brick();
+                brick.deserialize(data.bricks[b]);
+                this.addBrick(brick);
             }
         }
     }
@@ -1291,11 +1312,6 @@ class ChunckManager {
                 }
                 for (let j = h - hDirt + 1; j <= h; j++) {
                     this.setCube(i, j, k, CubeType.Dirt);
-                }
-                for (let j = h + 1; j <= h + 4; j++) {
-                    if (Math.random() > 0.9) {
-                        this.setCube(i, j, k, CubeType.Sand);
-                    }
                 }
             }
         }
@@ -2211,7 +2227,13 @@ class Chunck_V2 extends Chunck {
         this.material = Main.terrainCellShadingMaterial;
         this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
         this.knobsMesh.parent = this;
-        this.knobsMesh.material = Main.terrainCellShadingMaterial;
+        this.knobsMesh.material = Main.cellShadingMaterial;
+    }
+    addBrick(brick) {
+        let i = this.bricks.indexOf(brick);
+        if (i === -1) {
+            this.bricks.push(brick);
+        }
     }
     async generate() {
         let positions = [];
@@ -2259,15 +2281,15 @@ class Chunck_V2 extends Chunck {
                     */
                     let data = ChunckVertexData.Get(ref);
                     if (c0 && !c4) {
-                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                         if (c1 && !c5) {
-                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                             if (c3 && !c7 && c2 && !c6) {
-                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                             }
                         }
                         if (c3 && !c7) {
-                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                         }
                     }
                     if (data) {
@@ -2417,7 +2439,12 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            b.material = Main.cellShadingMaterial;
+            if (brick.reference.color.indexOf("transparent") != -1) {
+                b.material = Main.cellShadingTransparentMaterial;
+            }
+            else {
+                b.material = Main.cellShadingMaterial;
+            }
             this.brickMeshes.push(b);
         }
     }
@@ -2436,8 +2463,9 @@ class Cube {
         this.i = i;
         this.j = j;
         this.k = k;
-        this.cubeType = cubeType;
         this._color = new BABYLON.Color4();
+        this._displayedColor = new BABYLON.Color4();
+        this.cubeType = cubeType;
         if (this.cubeType === undefined) {
             this.cubeType = Math.floor(Math.random() * 3);
         }
@@ -2457,17 +2485,29 @@ class Cube {
         }
         return Cube._PreviewMaterials;
     }
-    get color() {
+    get cubeType() {
+        return this._cubeType;
+    }
+    set cubeType(t) {
+        this._cubeType = t;
         if (this.cubeType === CubeType.Dirt) {
             this._color.copyFromFloats(1, 0, 0, 1);
+            this._displayedColor.copyFromFloats(71 / 255, 166 / 255, 50 / 255, 255);
         }
         else if (this.cubeType === CubeType.Rock) {
             this._color.copyFromFloats(0, 1, 0, 1);
+            this._displayedColor.copyFromFloats(140 / 255, 140 / 255, 137 / 255, 255);
         }
         else if (this.cubeType === CubeType.Sand) {
             this._color.copyFromFloats(0, 0, 1, 1);
+            this._displayedColor.copyFromFloats(219 / 255, 198 / 255, 123 / 255, 255);
         }
+    }
+    get color() {
         return this._color;
+    }
+    get displayedColor() {
+        return this._displayedColor;
     }
     addVertex(v) {
         if (v.i === this.i) {
@@ -3703,9 +3743,15 @@ class Inventory {
 class Main {
     static get cellShadingMaterial() {
         if (!Main._cellShadingMaterial) {
-            Main._cellShadingMaterial = new ToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
+            Main._cellShadingMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
         }
         return Main._cellShadingMaterial;
+    }
+    static get cellShadingTransparentMaterial() {
+        if (!Main._cellShadingTransparentMaterial) {
+            Main._cellShadingTransparentMaterial = new ToonMaterial("CellMaterial", true, Main.Scene);
+        }
+        return Main._cellShadingTransparentMaterial;
     }
     static get terrainCellShadingMaterial() {
         if (!Main._terrainCellShadingMaterial) {
@@ -4306,7 +4352,7 @@ class PlayerTest extends Main {
                 }
             }
             Main.ChunckManager.generateHeightFunction(l, (i, j) => {
-                return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 2 + 2 * Math.random();
+                return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 0.5 + Math.random();
             });
             Main.ChunckManager.foreachChunck(chunck => {
                 Main.ChunckManager.updateBuffer.push(chunck);
@@ -4380,7 +4426,7 @@ class PlayerTest extends Main {
         }
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 4);
         firstBrick = inventory.items.length;
-        inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightred"));
+        inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
@@ -4652,13 +4698,14 @@ class TerrainTileToonMaterial extends BABYLON.ShaderMaterial {
     }
 }
 class ToonMaterial extends BABYLON.ShaderMaterial {
-    constructor(name, color, scene) {
+    constructor(name, transparent, scene) {
         super(name, scene, {
             vertex: "toon",
             fragment: "toon",
         }, {
             attributes: ["position", "normal", "uv", "color"],
-            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
+            needAlphaBlending: transparent
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
     }

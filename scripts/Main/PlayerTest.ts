@@ -39,7 +39,7 @@ class PlayerTest extends Main {
 			Main.ChunckManager.generateHeightFunction(
 				l,
 				(i, j) => {
-					return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 2 + 2 * Math.random();
+					return Math.cos(i / f[0] + j / f[1]) * 0.5 + Math.sin(i / f[2] + j / f[3]) * 1 + Math.cos(i / f[4] + j / f[5]) * 1.5 - 0.5 + Math.random();
 				}
 			);
 			Main.ChunckManager.foreachChunck(
@@ -125,7 +125,7 @@ class PlayerTest extends Main {
         }
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 4);
 		firstBrick = inventory.items.length;
-		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightred"));
+		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
 		inventory.update();
 

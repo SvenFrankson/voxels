@@ -38,25 +38,42 @@ class Cube {
         public i: number,
         public j: number,
         public k: number,
-        public cubeType?: CubeType
+        cubeType?: CubeType
     ) {
+        this.cubeType = cubeType;
         if (this.cubeType === undefined) {
             this.cubeType = Math.floor(Math.random() * 3);
         }
     }
 
-    private _color: BABYLON.Color4 = new BABYLON.Color4();
-    public get color(): BABYLON.Color4 {
+    private _cubeType: CubeType;
+    public get cubeType(): CubeType {
+        return this._cubeType;
+    }
+    public set cubeType(t: CubeType) {
+        this._cubeType = t;
         if (this.cubeType === CubeType.Dirt) {
             this._color.copyFromFloats(1, 0, 0, 1);
+            this._displayedColor.copyFromFloats(71 / 255, 166 / 255, 50 / 255, 255);
         }
         else if (this.cubeType === CubeType.Rock) {
             this._color.copyFromFloats(0, 1, 0, 1);
+            this._displayedColor.copyFromFloats(140 / 255, 140 / 255, 137 / 255, 255);
         }
         else if (this.cubeType === CubeType.Sand) {
             this._color.copyFromFloats(0, 0, 1, 1);
+            this._displayedColor.copyFromFloats(219 / 255, 198 / 255, 123 / 255, 255);
         }
+    }
+
+    private _color: BABYLON.Color4 = new BABYLON.Color4();
+    public get color(): BABYLON.Color4 {
         return this._color;
+    }
+
+    private _displayedColor: BABYLON.Color4 = new BABYLON.Color4();
+    public get displayedColor(): BABYLON.Color4 {
+        return this._displayedColor;
     }
 
     public addVertex(v: Vertex): void {

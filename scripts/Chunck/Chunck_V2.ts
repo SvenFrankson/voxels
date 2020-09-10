@@ -24,7 +24,14 @@ class Chunck_V2 extends Chunck {
 
         this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
         this.knobsMesh.parent = this;
-        this.knobsMesh.material = Main.terrainCellShadingMaterial;
+        this.knobsMesh.material = Main.cellShadingMaterial;
+    }
+
+    public addBrick(brick: Brick): void {
+        let i = this.bricks.indexOf(brick);
+        if (i === -1) {
+            this.bricks.push(brick);
+        }
     }
 
     public static HasLoged: boolean = false;
@@ -80,15 +87,15 @@ class Chunck_V2 extends Chunck {
                     let data = ChunckVertexData.Get(ref);
 
                     if (c0 && !c4) {
-                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                         if (c1 && !c5) {
-                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                             if (c3 && !c7 && c2 && !c6) {
-                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                             }
                         }
                         if (c3 && !c7) {
-                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
                         }
                     }
 
@@ -250,7 +257,12 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            b.material = Main.cellShadingMaterial;
+            if (brick.reference.color.indexOf("transparent") != -1) {
+                b.material = Main.cellShadingTransparentMaterial;
+            }
+            else {
+                b.material = Main.cellShadingMaterial;
+            }
             this.brickMeshes.push(b);
         }
     }

@@ -4,6 +4,7 @@ interface ChunckData {
     k: number;
     data: string;
     blocks: BlockData[];
+    bricks: IBrickData[];
 }
 
 interface TerrainData {
@@ -225,11 +226,6 @@ class ChunckManager {
                 }
                 for (let j = h - hDirt + 1; j <= h; j++) {
                     this.setCube(i, j, k, CubeType.Dirt);
-                }
-                for (let j = h + 1; j <= h + 4; j++) {
-                    if (Math.random() > 0.9) {
-                        this.setCube(i, j, k, CubeType.Sand);
-                    }
                 }
             }
         }

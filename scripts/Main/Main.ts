@@ -15,9 +15,17 @@ class Main {
     public static _cellShadingMaterial: ToonMaterial;
 	public static get cellShadingMaterial(): ToonMaterial {
 		if (!Main._cellShadingMaterial) {
-			Main._cellShadingMaterial = new ToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
+			Main._cellShadingMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
 		}
 		return Main._cellShadingMaterial;
+	}
+	
+    public static _cellShadingTransparentMaterial: ToonMaterial;
+	public static get cellShadingTransparentMaterial(): ToonMaterial {
+		if (!Main._cellShadingTransparentMaterial) {
+			Main._cellShadingTransparentMaterial = new ToonMaterial("CellMaterial", true, Main.Scene);
+		}
+		return Main._cellShadingTransparentMaterial;
 	}
 
     public static _terrainCellShadingMaterial: TerrainToonMaterial;

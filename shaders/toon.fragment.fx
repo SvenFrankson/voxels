@@ -3,7 +3,7 @@ precision highp float;
 // Lights
 varying vec3 vPositionW;
 varying vec3 vNormalW;
-varying vec3 vColor;
+varying vec4 vColor;
 varying vec2 vUV;
 
 // Refs
@@ -29,7 +29,8 @@ void main(void) {
     // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
 
-    vec3 color = vColor;
+    float a = vColor.a;
+    vec4 color = vColor;
 
     if (ndl > ToonThresholds[0])
     {
@@ -65,5 +66,5 @@ void main(void) {
     }
     */
     
-    gl_FragColor = vec4(color, 1.);
+    gl_FragColor = vec4(color.rgb, a);
 }

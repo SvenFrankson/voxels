@@ -52,7 +52,7 @@ class TerrainTileToonMaterial extends BABYLON.ShaderMaterial {
 
 class ToonMaterial extends BABYLON.ShaderMaterial {
 
-    constructor(name: string, color: BABYLON.Color3, scene: BABYLON.Scene) {
+    constructor(name: string, transparent: boolean, scene: BABYLON.Scene) {
         super(
             name,
             scene,
@@ -62,7 +62,8 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             },
             {
                 attributes: ["position", "normal", "uv", "color"],
-                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"]
+                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
+                needAlphaBlending: transparent
             }
         );
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());

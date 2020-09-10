@@ -198,12 +198,19 @@ abstract class Chunck extends BABYLON.Mesh {
         for (let i = 0; i < this.blocks.length; i++) {
             blockDatas.push(this.blocks[i].serialize());
         }
+        let brickDatas = [];
+        if (this instanceof Chunck_V2) {
+            for (let i = 0; i < this.bricks.length; i++) {
+                brickDatas.push(this.bricks[i].serialize());
+            }
+        }
         return {
             i: this.i,
             j: this.j,
             k: this.k,
             data: data,
-            blocks: blockDatas
+            blocks: blockDatas,
+            bricks: brickDatas
         };
     }
 
@@ -238,6 +245,13 @@ abstract class Chunck extends BABYLON.Mesh {
                 let block = new Block();
                 block.deserialize(data.blocks[b]);
                 this.addBlock(block);
+            }
+        }
+        if (data.bricks && this instanceof Chunck_V2) {
+            for (let b = 0; b < data.bricks.length; b++) {
+                let brick = new Brick();
+                brick.deserialize(data.bricks[b]);
+                this.addBrick(brick);
             }
         }
     }
