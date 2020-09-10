@@ -10,6 +10,8 @@ class PlayerTest extends Main {
     public async initialize(): Promise<void> {
 		await super.initializeScene();
 		await ChunckVertexData.InitializeData();
+        await BrickVertexData.InitializeData();
+        await BrickDataManager.InitializeData();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
 		let savedTerrainString = window.localStorage.getItem("player-test");
@@ -92,6 +94,10 @@ class PlayerTest extends Main {
 		inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
 		inventory.addItem(inventoryCreateMountainLarge);
 
+		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
+		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
+		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
+
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
 		}
@@ -107,6 +113,20 @@ class PlayerTest extends Main {
 				inventory.addItem(InventoryItem.Block(reference));
 			}
 		}
+		let firstBrick = inventory.items.length;
+		for (let i = 0; i < 20; i++) {
+            let colors = BrickDataManager.BrickColorNames;
+            let color = colors[Math.floor(Math.random() * colors.length)];
+            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
+            let count = Math.floor(Math.random() * 9 + 2);
+            for (let n = 0; n < count; n++) {
+                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+            }
+        }
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 4);
+		firstBrick = inventory.items.length;
+		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightred"));
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

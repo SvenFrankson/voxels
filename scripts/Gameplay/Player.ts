@@ -14,7 +14,7 @@ class Player extends BABYLON.Mesh {
         super("player");
         this.playerActionManager = new PlayerActionManager(this);
         // debug
-        BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+        //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
     }
 
     public register(brickMode: boolean = false): void {

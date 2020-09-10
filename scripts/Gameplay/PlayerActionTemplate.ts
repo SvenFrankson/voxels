@@ -23,15 +23,26 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
 
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y, cubeType === CubeType.None);
+            let coordinates = ChunckUtils.XYScreenToChunckV2Coordinates(x, y, cubeType === CubeType.None);
             if (coordinates) {
                 if (!previewMesh) {
-                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    if (coordinates.chunck instanceof Chunck_V1) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    }
+                    else {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { width: 1.8, height: 1.16, depth: 1.8 });
+                    }
                     previewMesh.material = Cube.PreviewMaterials[cubeType];
                 }
                 previewMesh.position.copyFrom(coordinates.chunck.position);
-                previewMesh.position.addInPlace(coordinates.coordinates);
-                previewMesh.position.addInPlaceFromFloats(0.5, 0.5, 0.5);
+                if (coordinates.chunck instanceof Chunck_V1) {
+                    previewMesh.position.addInPlace(coordinates.coordinates);
+                    previewMesh.position.addInPlaceFromFloats(0.5, 0.5, 0.5);
+                }
+                else {
+                    previewMesh.position.addInPlace(coordinates.coordinates.multiplyByFloats(1.6, 0.96, 1.6));
+                    previewMesh.position.addInPlaceFromFloats(0, - 0.48, 0);
+                }
             }
             else {
                 if (previewMesh) {
@@ -45,7 +56,7 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
 
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y, cubeType === CubeType.None);
+            let coordinates = ChunckUtils.XYScreenToChunckV2Coordinates(x, y, cubeType === CubeType.None);
             if (coordinates) {
                 Main.ChunckManager.setChunckCube(coordinates.chunck, coordinates.coordinates.x, coordinates.coordinates.y, coordinates.coordinates.z, cubeType, 0, true);
             }
@@ -139,7 +150,7 @@ class PlayerActionTemplate {
 
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates_V1(world);
                 if (coordinates) {
                     coordinates.chunck.addBlock(pickedBlock);
                     pickedBlock.setCoordinates(coordinates.coordinates);
@@ -228,7 +239,7 @@ class PlayerActionTemplate {
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates_V1(world);
                 if (coordinates) {
                     let block = new Block();
                     block.setReference(blockReference);
@@ -324,17 +335,18 @@ class PlayerActionTemplate {
                 if (!hitKnob) {
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
-                let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
                     let brick = new Brick();
                     brick.reference = brickReference;
-                    brick.i = coordinates.i;
-                    brick.j = coordinates.j;
-                    brick.k = coordinates.k;
+                    brick.i = coordinates.coordinates.x;
+                    brick.j = coordinates.coordinates.y;
+                    brick.k = coordinates.coordinates.z;
                     brick.r = r;
-                    if (coordinates.tile) {
-                        coordinates.tile.bricks.push(brick);
-                        coordinates.tile.updateBricks();
+                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
+                        coordinates.chunck.bricks.push(brick);
+                        coordinates.chunck.updateBricks();
                     }
                 }
             }
@@ -359,7 +371,7 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
 
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
+            let coordinates = ChunckUtils.XYScreenToChunckV1Coordinates(x, y);
             if (coordinates) {
                 let I = coordinates.coordinates.x + coordinates.chunck.i * CHUNCK_SIZE;
                 let J = coordinates.coordinates.y + coordinates.chunck.j * CHUNCK_SIZE;

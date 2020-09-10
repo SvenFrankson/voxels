@@ -51,6 +51,32 @@ class BrickVertexData {
         );
     }
 
+    private static async _LoadVertexData(fileName: string): Promise<void> {
+        return new Promise<void>(
+            resolve => {
+                BABYLON.SceneLoader.ImportMesh(
+                    "",
+                    "./datas/meshes/" + fileName + ".babylon",
+                    "",
+                    Main.Scene,
+                    (meshes) => {
+                        for (let i = 0; i < meshes.length; i++) {
+                            let mesh = meshes[i];
+                            if (mesh instanceof BABYLON.Mesh) {
+                                let name = mesh.name.split("-")[0];
+                                let sizeString = mesh.name.split("-")[1];
+                                let lodString = mesh.name.split("-")[2];
+                                BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                                mesh.dispose();
+                            }
+                        }
+                        resolve();
+                    }
+                );
+            }
+        );
+    }
+
     private static async GenerateFromCubicTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
         if (!BrickVertexData._CubicTemplateVertexData[lod]) {
             await BrickVertexData._LoadCubicTemplateVertexData();
@@ -92,6 +118,10 @@ class BrickVertexData {
             let l = parseInt(size.split("x")[1]);
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
+        else {
+            await BrickVertexData._LoadVertexData(type);
+            return undefined;
+        }
     }
 
     public static async InitializeData(): Promise<boolean> {
@@ -99,7 +129,7 @@ class BrickVertexData {
         return true;
     }
         
-    public static AddKnob(x: number, y: number, z: number, positions: number[], indices: number[], normals: number[], lod: number): void {
+    public static AddKnob(x: number, y: number, z: number, positions: number[], indices: number[], normals: number[], lod: number, colors?: number[], color?: BABYLON.Color4): void {
         let l = positions.length / 3;
         let data = BrickVertexData._KnobVertexDatas[lod];
         if (data) {
@@ -109,6 +139,10 @@ class BrickVertexData {
                 let ky = data.positions[3 * i + 1];
                 let kz = data.positions[3 * i + 2];
                 positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
+
+                if (color) {
+                    colors.push(color.r, color.g, color.b, color.a);
+                }
             }
     
             for (let i = 0; i < data.normals.length / 3; i++) {
@@ -129,7 +163,15 @@ class BrickVertexData {
         let data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
         if (!data) {
             data = await BrickVertexData._LoadBrickVertexData(brickReference.name, lod);
-            BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+            if (data) {
+                BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+            }
+            else {
+                data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+                if (!data) {
+                    console.warn("GetBrickVertexData failed for brick " + brickReference + " at lod " + lod);
+                }
+            }
         }
         return data;
     }

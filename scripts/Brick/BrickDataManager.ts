@@ -79,6 +79,19 @@ class BrickDataManager {
                 }
             }
         }
+
+        BrickDataManager.BrickNames.push("windshield-6x2x2");
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", {
+            knobs: [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
+            covers: [],
+            blocks: []
+        });
+        BrickDataManager.BrickNames.push("windshield-6x3x2");
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", {
+            knobs: [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
+            covers: [],
+            blocks: []
+        });
     }
 
     public static GetBrickData(brickReference: IBrickReference): BrickData {

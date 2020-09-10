@@ -565,6 +565,18 @@ class BrickDataManager {
                 }
             }
         }
+        BrickDataManager.BrickNames.push("windshield-6x2x2");
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", {
+            knobs: [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
+            covers: [],
+            blocks: []
+        });
+        BrickDataManager.BrickNames.push("windshield-6x3x2");
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", {
+            knobs: [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
+            covers: [],
+            blocks: []
+        });
     }
     static GetBrickData(brickReference) {
         return BrickDataManager._BrickDatas.get(brickReference.name);
@@ -597,6 +609,23 @@ class BrickVertexData {
                     let mesh = meshes[i];
                     if (mesh instanceof BABYLON.Mesh) {
                         BrickVertexData._CubicTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                        mesh.dispose();
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+    static async _LoadVertexData(fileName) {
+        return new Promise(resolve => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/" + fileName + ".babylon", "", Main.Scene, (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        let name = mesh.name.split("-")[0];
+                        let sizeString = mesh.name.split("-")[1];
+                        let lodString = mesh.name.split("-")[2];
+                        BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
                         mesh.dispose();
                     }
                 }
@@ -644,12 +673,16 @@ class BrickVertexData {
             let l = parseInt(size.split("x")[1]);
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
+        else {
+            await BrickVertexData._LoadVertexData(type);
+            return undefined;
+        }
     }
     static async InitializeData() {
         await BrickVertexData._LoadKnobsVertexDatas();
         return true;
     }
-    static AddKnob(x, y, z, positions, indices, normals, lod) {
+    static AddKnob(x, y, z, positions, indices, normals, lod, colors, color) {
         let l = positions.length / 3;
         let data = BrickVertexData._KnobVertexDatas[lod];
         if (data) {
@@ -658,6 +691,9 @@ class BrickVertexData {
                 let ky = data.positions[3 * i + 1];
                 let kz = data.positions[3 * i + 2];
                 positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
+                if (color) {
+                    colors.push(color.r, color.g, color.b, color.a);
+                }
             }
             for (let i = 0; i < data.normals.length / 3; i++) {
                 let knx = data.normals[3 * i];
@@ -675,7 +711,15 @@ class BrickVertexData {
         let data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
         if (!data) {
             data = await BrickVertexData._LoadBrickVertexData(brickReference.name, lod);
-            BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+            if (data) {
+                BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+            }
+            else {
+                data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+                if (!data) {
+                    console.warn("GetBrickVertexData failed for brick " + brickReference + " at lod " + lod);
+                }
+            }
         }
         return data;
     }
@@ -1423,7 +1467,7 @@ class ChunckUtils {
             return "None";
         }
     }
-    static WorldPositionToChunckBlockCoordinates(world) {
+    static WorldPositionToChunckBlockCoordinates_V1(world) {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);
         let K = Math.floor(world.z / CHUNCK_SIZE);
@@ -1431,6 +1475,35 @@ class ChunckUtils {
         coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE)) / 2;
         coordinates.y = Math.floor(4 * (coordinates.y - J * CHUNCK_SIZE)) / 4;
         coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE)) / 2;
+        return {
+            chunck: Main.ChunckManager.getChunck(I, J, K),
+            coordinates: coordinates
+        };
+    }
+    static WorldPositionToChunckBlockCoordinates_V2(world) {
+        let I = Math.floor(world.x / CHUNCK_SIZE * 1.6);
+        let J = Math.floor(world.y / CHUNCK_SIZE * 0.96);
+        let K = Math.floor(world.z / CHUNCK_SIZE * 1.6);
+        let coordinates = world.clone();
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * 1.6)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * 0.96)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * 1.6)) / 2;
+        return {
+            chunck: Main.ChunckManager.getChunck(I, J, K),
+            coordinates: coordinates
+        };
+    }
+    static WorldPositionToChunckBrickCoordinates_V2(world) {
+        let I = Math.floor(world.x / CHUNCK_SIZE * 1.6);
+        let J = Math.floor(world.y / CHUNCK_SIZE * 0.96);
+        let K = Math.floor(world.z / CHUNCK_SIZE * 1.6);
+        let coordinates = world.clone();
+        coordinates.x -= I * CHUNCK_SIZE * 1.6;
+        coordinates.y -= J * CHUNCK_SIZE * 0.96;
+        coordinates.z -= K * CHUNCK_SIZE * 1.6;
+        coordinates.x = Math.round(coordinates.x / 0.8);
+        coordinates.y = Math.floor(coordinates.y / 0.32);
+        coordinates.z = Math.round(coordinates.z / 0.8);
         return {
             chunck: Main.ChunckManager.getChunck(I, J, K),
             coordinates: coordinates
@@ -1452,7 +1525,7 @@ class ChunckUtils {
             k: k
         };
     }
-    static XYScreenToChunckCoordinates(x, y, behindPickedFace = false) {
+    static XYScreenToChunckV1Coordinates(x, y, behindPickedFace = false) {
         let pickInfo = Main.Scene.pick(x, y, (m) => {
             return m instanceof Chunck_V1;
         });
@@ -1463,6 +1536,50 @@ class ChunckUtils {
             let n = pickInfo.getNormal();
             localPickedPoint.subtractInPlace(n.scale(0.5));
             let coordinates = new BABYLON.Vector3(Math.floor(localPickedPoint.x), Math.floor(localPickedPoint.y), Math.floor(localPickedPoint.z));
+            let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
+            if (!behindPickedFace) {
+                if (absN.x > absN.y && absN.x > absN.z) {
+                    if (n.x > 0) {
+                        coordinates.x++;
+                    }
+                    else {
+                        coordinates.x--;
+                    }
+                }
+                if (absN.y > absN.x && absN.y > absN.z) {
+                    if (n.y > 0) {
+                        coordinates.y++;
+                    }
+                    else {
+                        coordinates.y--;
+                    }
+                }
+                if (absN.z > absN.x && absN.z > absN.y) {
+                    if (n.z > 0) {
+                        coordinates.z++;
+                    }
+                    else {
+                        coordinates.z--;
+                    }
+                }
+            }
+            return {
+                chunck: chunck,
+                coordinates: coordinates
+            };
+        }
+    }
+    static XYScreenToChunckV2Coordinates(x, y, behindPickedFace = false) {
+        let pickInfo = Main.Scene.pick(x, y, (m) => {
+            return m instanceof Chunck_V2;
+        });
+        let pickedMesh = pickInfo.pickedMesh;
+        if (pickedMesh instanceof Chunck_V2) {
+            let chunck = pickedMesh;
+            let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
+            let n = pickInfo.getNormal();
+            localPickedPoint.subtractInPlace(n.scale(0.5));
+            let coordinates = new BABYLON.Vector3(Math.round(localPickedPoint.x / 1.6), Math.floor(localPickedPoint.y / 0.96) + 1, Math.round(localPickedPoint.z / 1.6));
             let absN = new BABYLON.Vector3(Math.abs(n.x), Math.abs(n.y), Math.abs(n.z));
             if (!behindPickedFace) {
                 if (absN.x > absN.y && absN.x > absN.z) {
@@ -2085,17 +2202,26 @@ var CHUNCK_SIZE = 8;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
+        this.bricks = [];
+        this.brickMeshes = [];
         this.name = "chunck_v2_" + i + "_" + j + "_" + k;
         this.position.x = CHUNCK_SIZE * this.i * 1.6;
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
         this.material = Main.terrainCellShadingMaterial;
+        this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
+        this.knobsMesh.parent = this;
+        this.knobsMesh.material = Main.terrainCellShadingMaterial;
     }
     async generate() {
         let positions = [];
         let indices = [];
         let normals = [];
         let colors = [];
+        let knobsPositions = [];
+        let knobsIndices = [];
+        let knobsNormals = [];
+        let knobsColors = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
@@ -2112,6 +2238,7 @@ class Chunck_V2 extends Chunck {
                         continue;
                     }
                     // debug
+                    /*
                     if (c0) {
                         let debugData = BABYLON.VertexData.CreateBox({ size: 0.3 });
                         let debugColors = [];
@@ -2129,18 +2256,28 @@ class Chunck_V2 extends Chunck {
                         debugMesh.material = Main.cellShadingMaterial;
                         debugMesh.freezeWorldMatrix();
                     }
+                    */
                     let data = ChunckVertexData.Get(ref);
+                    if (c0 && !c4) {
+                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        if (c1 && !c5) {
+                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            if (c3 && !c7 && c2 && !c6) {
+                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            }
+                        }
+                        if (c3 && !c7) {
+                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        }
+                    }
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
                             let x = data.positions[3 * n];
-                            let dx = (x + 0.8) / 1.6;
                             let y = data.positions[3 * n + 1];
-                            let dy = (y + 0.48) / 0.96;
                             let z = data.positions[3 * n + 2];
-                            let dz = (z + 0.8) / 1.6;
                             positions.push(x + i * 1.6 + 0.8);
-                            positions.push(y + j * 0.96 + 0.48);
+                            positions.push(y + j * 0.96);
                             positions.push(z + k * 1.6 + 0.8);
                             let color0 = c0 ? c0.color : undefined;
                             let color1 = c1 ? c1.color : undefined;
@@ -2150,75 +2287,95 @@ class Chunck_V2 extends Chunck {
                             let color5 = c5 ? c5.color : undefined;
                             let color6 = c6 ? c6.color : undefined;
                             let color7 = c7 ? c7.color : undefined;
-                            let color01;
-                            if (color0 && color1) {
-                                color01 = color0.scale(1 - dx).add(color1.scale(dx));
-                            }
-                            else if (color0) {
-                                color01 = color0;
-                            }
-                            else {
-                                color01 = color1;
-                            }
-                            let color23;
-                            if (color2 && color3) {
-                                color23 = color3.scale(1 - dx).add(color2.scale(dx));
-                            }
-                            else if (color2) {
-                                color23 = color2;
-                            }
-                            else {
-                                color23 = color3;
-                            }
-                            let color45;
-                            if (color4 && color5) {
-                                color45 = color4.scale(1 - dx).add(color5.scale(dx));
-                            }
-                            else if (color4) {
-                                color45 = color4;
-                            }
-                            else {
-                                color45 = color5;
-                            }
-                            let color67;
-                            if (color6 && color7) {
-                                color67 = color7.scale(1 - dx).add(color6.scale(dx));
-                            }
-                            else if (color6) {
-                                color67 = color6;
-                            }
-                            else {
-                                color67 = color7;
-                            }
-                            let color0123;
-                            if (color01 && color23) {
-                                color0123 = color01.scale(1 - dz).add(color23.scale(dz));
-                            }
-                            else if (color01) {
-                                color0123 = color01;
-                            }
-                            else {
-                                color0123 = color23;
-                            }
-                            let color4567;
-                            if (color45 && color67) {
-                                color4567 = color45.scale(1 - dz).add(color67.scale(dz));
-                            }
-                            else if (color45) {
-                                color4567 = color45;
-                            }
-                            else {
-                                color4567 = color67;
-                            }
+                            let d = Infinity;
                             let color;
-                            if (color0123 && color4567) {
-                                color = color0123.scale(1 - dy).add(color4567.scale(dy));
+                            if (color0) {
+                                if (x < 0 && y < 0 && z < 0) {
+                                    colors.push(color0.r, color0.g, color0.b, color0.a);
+                                    continue;
+                                }
+                                let dd = x + 0.8 + y + 0.48 + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color0;
+                                }
                             }
-                            else if (color0123) {
-                                color = color0123;
+                            if (color1) {
+                                if (x > 0 && y < 0 && z < 0) {
+                                    colors.push(color1.r, color1.g, color1.b, color1.a);
+                                    continue;
+                                }
+                                let dd = 0.8 - x + y + 0.48 + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color1;
+                                }
                             }
-                            else {
-                                color = color4567;
+                            if (color3) {
+                                if (x < 0 && y < 0 && z > 0) {
+                                    colors.push(color3.r, color3.g, color3.b, color3.a);
+                                    continue;
+                                }
+                                let dd = x + 0.8 + y + 0.48 + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color3;
+                                }
+                            }
+                            if (color2) {
+                                if (x > 0 && y < 0 && z > 0) {
+                                    colors.push(color2.r, color2.g, color2.b, color2.a);
+                                    continue;
+                                }
+                                let dd = 0.8 - x + y + 0.48 + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color2;
+                                }
+                            }
+                            if (color4) {
+                                if (x < 0 && y > 0 && z < 0) {
+                                    colors.push(color4.r, color4.g, color4.b, color4.a);
+                                    continue;
+                                }
+                                let dd = x + 0.8 + 0.48 - y + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color4;
+                                }
+                            }
+                            if (color5) {
+                                if (x > 0 && y > 0 && z < 0) {
+                                    colors.push(color5.r, color5.g, color5.b, color5.a);
+                                    continue;
+                                }
+                                let dd = 0.8 - x + 0.48 - y + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color5;
+                                }
+                            }
+                            if (color7) {
+                                if (x < 0 && y > 0 && z > 0) {
+                                    colors.push(color7.r, color7.g, color7.b, color7.a);
+                                    continue;
+                                }
+                                let dd = x + 0.8 + 0.48 - y + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color7;
+                                }
+                            }
+                            if (color6) {
+                                if (x > 0 && y > 0 && z > 0) {
+                                    colors.push(color6.r, color6.g, color6.b, color6.a);
+                                    continue;
+                                }
+                                let dd = 0.8 - x + 0.48 - y + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color6;
+                                }
                             }
                             colors.push(color.r, color.g, color.b, color.a);
                         }
@@ -2240,6 +2397,29 @@ class Chunck_V2 extends Chunck {
         vertexData.normals = normals;
         vertexData.colors = colors;
         vertexData.applyToMesh(this);
+        let knobsVertexData = new BABYLON.VertexData();
+        knobsVertexData.positions = knobsPositions;
+        knobsVertexData.indices = knobsIndices;
+        knobsVertexData.normals = knobsNormals;
+        knobsVertexData.colors = knobsColors;
+        knobsVertexData.applyToMesh(this.knobsMesh);
+        this.updateBricks();
+    }
+    async updateBricks() {
+        while (this.brickMeshes.length > 1) {
+            this.brickMeshes.pop().dispose();
+        }
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let b = new BABYLON.Mesh("brick-" + i);
+            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            data.applyToMesh(b);
+            b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
+            b.rotation.y = Math.PI / 2 * brick.r;
+            b.parent = this;
+            b.material = Main.cellShadingMaterial;
+            this.brickMeshes.push(b);
+        }
     }
 }
 Chunck_V2.HasLoged = false;
@@ -2851,7 +3031,7 @@ class Player extends BABYLON.Mesh {
         };
         this.playerActionManager = new PlayerActionManager(this);
         // debug
-        BABYLON.VertexData.CreateSphere({ diameter: 1 }).applyToMesh(this);
+        //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
     }
     register(brickMode = false) {
         this.playerActionManager.register();
@@ -2942,15 +3122,26 @@ class PlayerActionTemplate {
         action.onUpdate = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y, cubeType === CubeType.None);
+            let coordinates = ChunckUtils.XYScreenToChunckV2Coordinates(x, y, cubeType === CubeType.None);
             if (coordinates) {
                 if (!previewMesh) {
-                    previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    if (coordinates.chunck instanceof Chunck_V1) {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: 1.2 });
+                    }
+                    else {
+                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { width: 1.8, height: 1.16, depth: 1.8 });
+                    }
                     previewMesh.material = Cube.PreviewMaterials[cubeType];
                 }
                 previewMesh.position.copyFrom(coordinates.chunck.position);
-                previewMesh.position.addInPlace(coordinates.coordinates);
-                previewMesh.position.addInPlaceFromFloats(0.5, 0.5, 0.5);
+                if (coordinates.chunck instanceof Chunck_V1) {
+                    previewMesh.position.addInPlace(coordinates.coordinates);
+                    previewMesh.position.addInPlaceFromFloats(0.5, 0.5, 0.5);
+                }
+                else {
+                    previewMesh.position.addInPlace(coordinates.coordinates.multiplyByFloats(1.6, 0.96, 1.6));
+                    previewMesh.position.addInPlaceFromFloats(0, -0.48, 0);
+                }
             }
             else {
                 if (previewMesh) {
@@ -2962,7 +3153,7 @@ class PlayerActionTemplate {
         action.onClick = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y, cubeType === CubeType.None);
+            let coordinates = ChunckUtils.XYScreenToChunckV2Coordinates(x, y, cubeType === CubeType.None);
             if (coordinates) {
                 Main.ChunckManager.setChunckCube(coordinates.chunck, coordinates.coordinates.x, coordinates.coordinates.y, coordinates.coordinates.z, cubeType, 0, true);
             }
@@ -3039,7 +3230,7 @@ class PlayerActionTemplate {
                 });
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates_V1(world);
                 if (coordinates) {
                     coordinates.chunck.addBlock(pickedBlock);
                     pickedBlock.setCoordinates(coordinates.coordinates);
@@ -3108,7 +3299,7 @@ class PlayerActionTemplate {
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(0.25, 0.125, 0.25)));
-                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBlockCoordinates_V1(world);
                 if (coordinates) {
                     let block = new Block();
                     block.setReference(blockReference);
@@ -3185,17 +3376,18 @@ class PlayerActionTemplate {
                 if (!hitKnob) {
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
-                let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
                     let brick = new Brick();
                     brick.reference = brickReference;
-                    brick.i = coordinates.i;
-                    brick.j = coordinates.j;
-                    brick.k = coordinates.k;
+                    brick.i = coordinates.coordinates.x;
+                    brick.j = coordinates.coordinates.y;
+                    brick.k = coordinates.coordinates.z;
                     brick.r = r;
-                    if (coordinates.tile) {
-                        coordinates.tile.bricks.push(brick);
-                        coordinates.tile.updateBricks();
+                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
+                        coordinates.chunck.bricks.push(brick);
+                        coordinates.chunck.updateBricks();
                     }
                 }
             }
@@ -3214,7 +3406,7 @@ class PlayerActionTemplate {
         action.onClick = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let coordinates = ChunckUtils.XYScreenToChunckCoordinates(x, y);
+            let coordinates = ChunckUtils.XYScreenToChunckV1Coordinates(x, y);
             if (coordinates) {
                 let I = coordinates.coordinates.x + coordinates.chunck.i * CHUNCK_SIZE;
                 let J = coordinates.coordinates.y + coordinates.chunck.j * CHUNCK_SIZE;
@@ -4090,6 +4282,8 @@ class PlayerTest extends Main {
     async initialize() {
         await super.initializeScene();
         await ChunckVertexData.InitializeData();
+        await BrickVertexData.InitializeData();
+        await BrickDataManager.InitializeData();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
         let savedTerrainString = window.localStorage.getItem("player-test");
@@ -4156,6 +4350,9 @@ class PlayerTest extends Main {
         inventoryCreateMountainLarge.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
         inventory.addItem(inventoryCreateMountainLarge);
+        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
+        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
+        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
         }
@@ -4171,6 +4368,20 @@ class PlayerTest extends Main {
                 inventory.addItem(InventoryItem.Block(reference));
             }
         }
+        let firstBrick = inventory.items.length;
+        for (let i = 0; i < 20; i++) {
+            let colors = BrickDataManager.BrickColorNames;
+            let color = colors[Math.floor(Math.random() * colors.length)];
+            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
+            let count = Math.floor(Math.random() * 9 + 2);
+            for (let n = 0; n < count; n++) {
+                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+            }
+        }
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 4);
+        firstBrick = inventory.items.length;
+        inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightred"));
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
@@ -4544,7 +4755,7 @@ class Intersections3D {
                     for (let j = min.y; j <= max.y; j += 1) {
                         for (let k = min.z; k <= max.z; k += 1) {
                             if (chunck.getCube(i, j, k)) {
-                                let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i * 1.6 - 0.8, j * 0.96 - 0.48, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, (j + 1) * 0.96 - 0.48, (k + 1) * 1.6 - 0.8));
+                                let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8));
                                 if (intersection) {
                                     intersection.point.addInPlace(chunck.position);
                                     intersections.push(intersection);
@@ -5585,13 +5796,11 @@ var KNOB_RADIUS_SQUARED = 0.24 * 0.24;
 class TileUtils {
     static IsKnobHit(worldPosition, normal) {
         if (normal.y === 0) {
-            console.log("a");
             let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
             if (dy < 0.17) {
                 let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
                 let dz = worldPosition.z - Math.round(worldPosition.z / DX) * DX;
                 let dd = dx * dx + dz * dz;
-                console.log(Math.sqrt(dd));
                 if (dd <= KNOB_RADIUS_SQUARED) {
                     if (dd >= KNOB_RADIUS_SQUARED * 0.6) {
                         return true;

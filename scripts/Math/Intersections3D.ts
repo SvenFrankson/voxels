@@ -106,8 +106,8 @@ class Intersections3D {
                                 let intersection = Intersections3D.SphereCube(
                                     center,
                                     radius,
-                                    new BABYLON.Vector3(i * 1.6 - 0.8, j * 0.96 - 0.48, k * 1.6 - 0.8),
-                                    new BABYLON.Vector3((i + 1) * 1.6 - 0.8, (j + 1) * 0.96 - 0.48, (k + 1) * 1.6 - 0.8)
+                                    new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8),
+                                    new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8)
                                 );
                                 if (intersection) {
                                     intersection.point.addInPlace(chunck.position);

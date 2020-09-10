@@ -4,6 +4,11 @@ var CHUNCK_SIZE = 8;
 
 class Chunck_V2 extends Chunck {
 
+    public knobsMesh: BABYLON.Mesh;
+
+    public bricks: Brick[] = [];
+    public brickMeshes: BABYLON.Mesh[] = [];
+
     constructor(
         manager: ChunckManager,
         i: number,
@@ -16,6 +21,10 @@ class Chunck_V2 extends Chunck {
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
         this.material = Main.terrainCellShadingMaterial;
+
+        this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
+        this.knobsMesh.parent = this;
+        this.knobsMesh.material = Main.terrainCellShadingMaterial;
     }
 
     public static HasLoged: boolean = false;
@@ -24,6 +33,11 @@ class Chunck_V2 extends Chunck {
         let indices: number[] = [];
         let normals: number[] = [];
         let colors: number[] = [];
+
+        let knobsPositions: number[] = [];
+        let knobsIndices: number[] = [];
+        let knobsNormals: number[] = [];
+        let knobsColors: number[] = [];
 
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
@@ -43,6 +57,7 @@ class Chunck_V2 extends Chunck {
                     }
 
                     // debug
+                    /*
                     if (c0) {
                         let debugData = BABYLON.VertexData.CreateBox({ size: 0.3 });
                         let debugColors = [];
@@ -60,20 +75,32 @@ class Chunck_V2 extends Chunck {
                         debugMesh.material = Main.cellShadingMaterial;
                         debugMesh.freezeWorldMatrix();
                     }
+                    */
 
                     let data = ChunckVertexData.Get(ref);
+
+                    if (c0 && !c4) {
+                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        if (c1 && !c5) {
+                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            if (c3 && !c7 && c2 && !c6) {
+                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                            }
+                        }
+                        if (c3 && !c7) {
+                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.color);
+                        }
+                    }
 
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
                             let x = data.positions[3 * n];
-                            let dx = (x + 0.8) / 1.6;
                             let y = data.positions[3 * n + 1];
-                            let dy = (y + 0.48) / 0.96;
                             let z = data.positions[3 * n + 2];
-                            let dz = (z + 0.8) / 1.6;
+                            
                             positions.push(x + i * 1.6 + 0.8);
-                            positions.push(y + j * 0.96 + 0.48);
+                            positions.push(y + j * 0.96);
                             positions.push(z + k * 1.6 + 0.8);
                             
                             let color0: BABYLON.Color4 = c0 ? c0.color : undefined;
@@ -85,84 +112,98 @@ class Chunck_V2 extends Chunck {
                             let color6: BABYLON.Color4 = c6 ? c6.color : undefined;
                             let color7: BABYLON.Color4 = c7 ? c7.color : undefined;
 
-                            let color01: BABYLON.Color4;
-                            if (color0 && color1) {
-                                color01 = color0.scale(1 - dx).add(color1.scale(dx));
-                            }
-                            else if (color0) {
-                                color01 = color0;
-                            }
-                            else {
-                                color01 = color1;
-                            }
-
-                            let color23: BABYLON.Color4;
-                            if (color2 && color3) {
-                                color23 = color3.scale(1 - dx).add(color2.scale(dx));
-                            }
-                            else if (color2) {
-                                color23 = color2;
-                            }
-                            else {
-                                color23 = color3;
-                            }
-
-                            let color45: BABYLON.Color4;
-                            if (color4 && color5) {
-                                color45 = color4.scale(1 - dx).add(color5.scale(dx));
-                            }
-                            else if (color4) {
-                                color45 = color4;
-                            }
-                            else {
-                                color45 = color5;
-                            }
-                            
-                            let color67: BABYLON.Color4;
-                            if (color6 && color7) {
-                                color67 = color7.scale(1 - dx).add(color6.scale(dx));
-                            }
-                            else if (color6) {
-                                color67 = color6;
-                            }
-                            else {
-                                color67 = color7;
-                            }
-
-                            let color0123: BABYLON.Color4;
-                            if (color01 && color23) {
-                                color0123 = color01.scale(1 - dz).add(color23.scale(dz));
-                            }
-                            else if (color01) {
-                                color0123 = color01;
-                            }
-                            else {
-                                color0123 = color23;
-                            }
-
-                            let color4567: BABYLON.Color4;
-                            if (color45 && color67) {
-                                color4567 = color45.scale(1 - dz).add(color67.scale(dz));
-                            }
-                            else if (color45) {
-                                color4567 = color45;
-                            }
-                            else {
-                                color4567 = color67;
-                            }
-
+                            let d = Infinity;
                             let color: BABYLON.Color4;
-                            if (color0123 && color4567) {
-                                color = color0123.scale(1 - dy).add(color4567.scale(dy));
+                            if (color0) {
+                                if (x < 0 && y < 0 && z < 0) {
+                                    colors.push(color0.r, color0.g, color0.b, color0.a);
+                                    continue;  
+                                }
+                                let dd = x + 0.8 + y + 0.48 + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color0;
+                                }
                             }
-                            else if (color0123) {
-                                color = color0123;
+                            if (color1) {
+                                if (x > 0 && y < 0 && z < 0) {
+                                    colors.push(color1.r, color1.g, color1.b, color1.a);
+                                    continue;  
+                                }
+                                let dd = 0.8 - x + y + 0.48 + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color1;
+                                }
                             }
-                            else {
-                                color = color4567;
+                            if (color3) {
+                                if (x < 0 && y < 0 && z > 0) {
+                                    colors.push(color3.r, color3.g, color3.b, color3.a);
+                                    continue;  
+                                }
+                                let dd = x + 0.8 + y + 0.48 + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color3;
+                                }
+                            }
+                            if (color2) {
+                                if (x > 0 && y < 0 && z > 0) {
+                                    colors.push(color2.r, color2.g, color2.b, color2.a);
+                                    continue;  
+                                }
+                                let dd = 0.8 - x + y + 0.48 + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color2;
+                                }
+                            }
+                            if (color4) {
+                                if (x < 0 && y > 0 && z < 0) {
+                                    colors.push(color4.r, color4.g, color4.b, color4.a);
+                                    continue;  
+                                }
+                                let dd = x + 0.8 + 0.48 - y + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color4;
+                                }
+                            }
+                            if (color5) {
+                                if (x > 0 && y > 0 && z < 0) {
+                                    colors.push(color5.r, color5.g, color5.b, color5.a);
+                                    continue;  
+                                }
+                                let dd = 0.8 - x + 0.48 - y + z + 0.8;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color5;
+                                }
+                            }
+                            if (color7) {
+                                if (x < 0 && y > 0 && z > 0) {
+                                    colors.push(color7.r, color7.g, color7.b, color7.a);
+                                    continue;  
+                                }
+                                let dd = x + 0.8 + 0.48 - y + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color7;
+                                }
+                            }
+                            if (color6) {
+                                if (x > 0 && y > 0 && z > 0) {
+                                    colors.push(color6.r, color6.g, color6.b, color6.a);
+                                    continue;  
+                                }
+                                let dd = 0.8 - x + 0.48 - y + 0.8 - z;
+                                if (dd < d) {
+                                    d = dd;
+                                    color = color6;
+                                }
                             }
 
-                            colors.push(color.r, color.g, color.b, color.a);                            
+                            colors.push(color.r, color.g, color.b, color.a);
                         }
                         normals.push(...data.normals);
                         for (let n = 0; n < data.indices.length; n++) {
@@ -185,5 +226,32 @@ class Chunck_V2 extends Chunck {
         vertexData.colors = colors;
 
         vertexData.applyToMesh(this);
+
+        let knobsVertexData = new BABYLON.VertexData();
+        knobsVertexData.positions = knobsPositions;
+        knobsVertexData.indices = knobsIndices;
+        knobsVertexData.normals = knobsNormals;
+        knobsVertexData.colors = knobsColors;
+
+        knobsVertexData.applyToMesh(this.knobsMesh);
+
+        this.updateBricks();
+    }
+
+    public async updateBricks(): Promise<void> {
+        while (this.brickMeshes.length > 1) {
+            this.brickMeshes.pop().dispose();
+        }
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let b = new BABYLON.Mesh("brick-" + i);
+            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            data.applyToMesh(b);
+            b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
+            b.rotation.y = Math.PI / 2 * brick.r;
+            b.parent = this;
+            b.material = Main.cellShadingMaterial;
+            this.brickMeshes.push(b);
+        }
     }
 }
