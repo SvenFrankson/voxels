@@ -25,6 +25,15 @@ html, body {
     padding: 10px;
 }
 
+.debug-text-3d {
+    position: fixed;
+    z-index: 42;
+    color: lime;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: rgba(0, 0, 0, 30%);
+    padding: 10px;
+}
+
 #chunck-editor {
     position: fixed;
     top: 10px;

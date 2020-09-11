@@ -495,10 +495,52 @@ class Brick {
     }
 }
 class BrickData {
-    constructor() {
-        this.knobs = [];
-        this.covers = [];
-        this.blocks = [];
+    constructor(knobs = [], covers = [], blocks = []) {
+        this.knobs = knobs;
+        this.covers = covers;
+        this.blocks = blocks;
+    }
+    get minBlockX() {
+        let min = Infinity;
+        for (let i = 0; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        }
+        return min;
+    }
+    get maxBlockX() {
+        let max = -Infinity;
+        for (let i = 0; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        }
+        return max;
+    }
+    get minBlockY() {
+        let min = Infinity;
+        for (let i = 1; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        }
+        return min;
+    }
+    get maxBlockY() {
+        let max = -Infinity;
+        for (let i = 1; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        }
+        return max;
+    }
+    get minBlockZ() {
+        let min = Infinity;
+        for (let i = 2; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        }
+        return min;
+    }
+    get maxBlockZ() {
+        let max = -Infinity;
+        for (let i = 2; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        }
+        return max;
     }
 }
 class BrickDataManager {
@@ -532,7 +574,7 @@ class BrickDataManager {
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
                             brickData.knobs.push(w, 3, l);
-                            for (let h = 0; h < 0; h++) {
+                            for (let h = 0; h < 3; h++) {
                                 brickData.covers.push(w, h, l);
                                 brickData.blocks.push(w, h, l);
                             }
@@ -567,17 +609,9 @@ class BrickDataManager {
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
-        BrickDataManager._BrickDatas.set("windshield-6x2x2", {
-            knobs: [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
-            covers: [],
-            blocks: []
-        });
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData([0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0], [], []));
         BrickDataManager.BrickNames.push("windshield-6x3x2");
-        BrickDataManager._BrickDatas.set("windshield-6x3x2", {
-            knobs: [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
-            covers: [],
-            blocks: []
-        });
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData([0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0], [], []));
     }
     static GetBrickData(brickReference) {
         return BrickDataManager._BrickDatas.get(brickReference.name);
@@ -3000,6 +3034,40 @@ class Walker extends BABYLON.Mesh {
         });
     }
 }
+class DebugText3D {
+    constructor() {
+        this.creationTime = 0;
+        this.duration = -1;
+        this._update = () => {
+            let screenPos = BABYLON.Vector3.Project(this.position, BABYLON.Matrix.Identity(), Main.Scene.getTransformMatrix(), Main.Camera.viewport.toGlobal(1, 1));
+            this.element.style.left = (screenPos.x * Main.Canvas.width) + "px";
+            this.element.style.bottom = ((1 - screenPos.y) * Main.Canvas.height - this.element.clientHeight * 0.5) + "px";
+            if (this.duration > 0) {
+                if (performance.now() - this.creationTime > this.duration) {
+                    this.dispose();
+                }
+            }
+        };
+    }
+    static CreateText(text, position, duration = -1) {
+        let debugText = new DebugText3D();
+        debugText.element = document.createElement("div");
+        debugText.element.classList.add("debug-text-3d");
+        debugText.element.innerHTML = text;
+        document.body.appendChild(debugText.element);
+        debugText.position = position;
+        debugText.duration = duration;
+        Main.Scene.onBeforeRenderObservable.add(debugText._update);
+        return debugText;
+    }
+    setText(text) {
+        this.element.innerHTML = text;
+    }
+    dispose() {
+        document.body.removeChild(this.element);
+        Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+    }
+}
 class Player extends BABYLON.Mesh {
     constructor() {
         super("player");
@@ -3112,6 +3180,11 @@ class Player extends BABYLON.Mesh {
             }
         });
         Main.Canvas.addEventListener("keydown", (e) => {
+            if (this.currentAction) {
+                if (this.currentAction.onKeyDown) {
+                    this.currentAction.onKeyDown(e);
+                }
+            }
             if (e.keyCode === 81) {
                 this._inputLeft = true;
             }
@@ -3146,9 +3219,18 @@ class Player extends BABYLON.Mesh {
                 }
             }
         });
+        Main.Canvas.onwheel = (e) => {
+            console.log(".");
+            if (this.currentAction) {
+                if (this.currentAction.onWheel) {
+                    this.currentAction.onWheel(e);
+                }
+            }
+        };
         document.getElementById("player-actions").style.display = "block";
     }
 }
+var ACTIVE_PLAYER_ACTION_DEBUG = true;
 class PlayerActionTemplate {
     static CreateCubeAction(cubeType) {
         let action = new PlayerAction();
@@ -3367,14 +3449,57 @@ class PlayerActionTemplate {
     }
     static CreateBrickAction(brickReferenceStr) {
         let brickReference = Brick.ParseReference(brickReferenceStr);
+        let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh;
+        let debugText;
         let r = 0;
+        let ctrlDown = false;
+        let anchorX = 0;
+        let anchorZ = 0;
         action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
+        action.onKeyDown = (e) => {
+            if (e.code === "ControlLeft") {
+                ctrlDown = true;
+            }
+        };
         action.onKeyUp = (e) => {
-            if (e.keyCode === 82) {
+            if (e.code === "KeyR") {
                 r = (r + 1) % 4;
                 previewMesh.rotation.y = Math.PI / 2 * r;
+                let az = anchorZ;
+                anchorZ = -anchorX;
+                anchorX = az;
+            }
+            else if (e.code === "ControlLeft") {
+                ctrlDown = false;
+            }
+        };
+        action.onWheel = (e) => {
+            e.preventDefault();
+            let forward = Main.Camera.getDirection(BABYLON.Axis.Z);
+            if ((Math.abs(forward.x) > Math.abs(forward.z) && !ctrlDown) ||
+                (Math.abs(forward.x) < Math.abs(forward.z) && ctrlDown)) {
+                anchorX += Math.sign(forward.x) * Math.sign(e.deltaY);
+            }
+            else {
+                anchorZ += Math.sign(forward.z) * Math.sign(e.deltaY);
+            }
+            if (r === 0) {
+                anchorX = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorX));
+                anchorZ = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorZ));
+            }
+            else if (r === 1) {
+                anchorX = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorX));
+                anchorZ = Math.max(-data.maxBlockX, Math.min(-data.minBlockX, anchorZ));
+            }
+            else if (r === 2) {
+                anchorX = Math.max(-data.maxBlockX, Math.min(-data.minBlockX, anchorX));
+                anchorZ = Math.max(-data.maxBlockZ, Math.min(-data.minBlockZ, anchorZ));
+            }
+            else if (r === 3) {
+                anchorX = Math.max(-data.maxBlockZ, Math.min(-data.minBlockZ, anchorX));
+                anchorZ = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorZ));
             }
         };
         action.onUpdate = () => {
@@ -3390,9 +3515,9 @@ class PlayerActionTemplate {
                 if (!hitKnob) {
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
-                world.x = Math.round(world.x / DX) * DX;
+                world.x = (Math.round(world.x / DX) - anchorX) * DX;
                 world.y = Math.floor(world.y / DY) * DY;
-                world.z = Math.round(world.z / DX) * DX;
+                world.z = (Math.round(world.z / DX) - anchorZ) * DX;
                 if (world) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
@@ -3409,6 +3534,16 @@ class PlayerActionTemplate {
                         previewMesh = undefined;
                     }
                 }
+            }
+            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+                if (!debugText) {
+                    debugText = DebugText3D.CreateText("", previewMesh.position);
+                }
+                let text = "";
+                text += "r = " + r + "<br>";
+                text += "anchorX = " + anchorX + "<br>";
+                text += "anchorZ = " + anchorZ + "<br>";
+                debugText.setText(text);
             }
         };
         action.onClick = () => {
@@ -3429,9 +3564,9 @@ class PlayerActionTemplate {
                 if (coordinates) {
                     let brick = new Brick();
                     brick.reference = brickReference;
-                    brick.i = coordinates.coordinates.x;
+                    brick.i = coordinates.coordinates.x - anchorX;
                     brick.j = coordinates.coordinates.y;
-                    brick.k = coordinates.coordinates.z;
+                    brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
                         coordinates.chunck.bricks.push(brick);
@@ -3444,6 +3579,11 @@ class PlayerActionTemplate {
             if (previewMesh) {
                 previewMesh.dispose();
                 previewMesh = undefined;
+            }
+            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+                if (debugText) {
+                    debugText.dispose();
+                }
             }
         };
         return action;
@@ -4439,6 +4579,9 @@ class PlayerTest extends Main {
         firstBrick = inventory.items.length;
         inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 6);
+        firstBrick = inventory.items.length;
+        inventory.addItem(InventoryItem.Brick("brick-2x4-brightred"));
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 7);
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;

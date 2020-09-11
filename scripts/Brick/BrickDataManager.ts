@@ -1,8 +1,60 @@
 class BrickData {
 
-    public knobs: number[] = [];
-    public covers: number[] = [];
-    public blocks: number[] = [];
+    constructor(
+        public knobs: number[] = [],
+        public covers: number[] = [],
+        public blocks: number[] = []
+    ) {
+
+    }
+
+    public get minBlockX(): number {
+        let min = Infinity;
+        for (let i = 0; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        } 
+        return min;
+    }
+
+    public get maxBlockX(): number {
+        let max = - Infinity;
+        for (let i = 0; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        } 
+        return max;
+    }
+
+    public get minBlockY(): number {
+        let min = Infinity;
+        for (let i = 1; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        } 
+        return min;
+    }
+
+    public get maxBlockY(): number {
+        let max = - Infinity;
+        for (let i = 1; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        } 
+        return max;
+    }
+
+    public get minBlockZ(): number {
+        let min = Infinity;
+        for (let i = 2; i < this.blocks.length; i += 3) {
+            min = Math.min(this.blocks[i], min);
+        } 
+        return min;
+    }
+
+    public get maxBlockZ(): number {
+        let max = - Infinity;
+        for (let i = 2; i < this.blocks.length; i += 3) {
+            max = Math.max(this.blocks[i], max);
+        } 
+        return max;
+    }
 }
 
 class BrickDataManager {
@@ -44,7 +96,7 @@ class BrickDataManager {
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
                             brickData.knobs.push(w, 3, l);
-                            for (let h = 0; h < 0; h++) {
+                            for (let h = 0; h < 3; h++) {
                                 brickData.covers.push(w, h, l);
                                 brickData.blocks.push(w, h, l);
                             }
@@ -82,17 +134,17 @@ class BrickDataManager {
         }
 
         BrickDataManager.BrickNames.push("windshield-6x2x2");
-        BrickDataManager._BrickDatas.set("windshield-6x2x2", {
-            knobs: [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
-            covers: [],
-            blocks: []
-        });
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(
+            [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
+            [],
+            []
+        ));
         BrickDataManager.BrickNames.push("windshield-6x3x2");
-        BrickDataManager._BrickDatas.set("windshield-6x3x2", {
-            knobs: [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
-            covers: [],
-            blocks: []
-        });
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(
+            [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
+            [],
+            []
+        ));
     }
 
     public static GetBrickData(brickReference: IBrickReference): BrickData {

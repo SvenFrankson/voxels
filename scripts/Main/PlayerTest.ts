@@ -128,6 +128,9 @@ class PlayerTest extends Main {
 		firstBrick = inventory.items.length;
 		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 6);
+		firstBrick = inventory.items.length;
+		inventory.addItem(InventoryItem.Brick("brick-2x4-brightred"));
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 7);
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

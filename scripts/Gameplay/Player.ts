@@ -52,6 +52,12 @@ class Player extends BABYLON.Mesh {
         });
         
         Main.Canvas.addEventListener("keydown", (e) => {
+            if (this.currentAction) {
+                if (this.currentAction.onKeyDown) {
+                    this.currentAction.onKeyDown(e);
+                }
+            }
+
             if (e.keyCode === 81) {
                 this._inputLeft = true;
             }
@@ -90,6 +96,15 @@ class Player extends BABYLON.Mesh {
                 }
             }
         });
+
+        Main.Canvas.onwheel = (e: WheelEvent) => {
+            console.log(".");
+            if (this.currentAction) {
+                if (this.currentAction.onWheel) {
+                    this.currentAction.onWheel(e);
+                }
+            }
+        };
 
         document.getElementById("player-actions").style.display = "block";
     }
