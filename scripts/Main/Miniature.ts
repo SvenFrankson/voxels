@@ -39,7 +39,8 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						this.runAllScreenShots()
+						//this.runAllScreenShots()
+						await this.createBrick("windshield-6x2x2-brightbluetransparent");
 					},
 					100
 				);

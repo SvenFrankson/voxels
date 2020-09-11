@@ -20,12 +20,14 @@ void main(void) {
     ToonThresholds[0] = 0.8;
     ToonThresholds[1] = 0.5;
     ToonThresholds[2] = 0.1;
+    ToonThresholds[3] = -0.5;
 
     float ToonBrightnessLevels[5];
     ToonBrightnessLevels[0] = 1.0;
     ToonBrightnessLevels[1] = 0.84;
     ToonBrightnessLevels[2] = 0.68;
     ToonBrightnessLevels[3] = 0.52;
+    ToonBrightnessLevels[4] = 0.36;
 
     // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
@@ -70,12 +72,16 @@ void main(void) {
     {
         index = 2;
     }
-    else
+    else if (ndl > ToonThresholds[3])
     {
         index = 3;
     }
-    float hLeft = vPositionW.y - floor(vPositionW.y);
-    if (hLeft > 0.06 && hLeft < 0.14 && index < 3) {
+    else
+    {
+        index = 4;
+    }
+    float hLeft = vPositionW.y - floor(vPositionW.y / 0.96) * 0.96;
+    if (hLeft > 0.06 && hLeft < 0.14 && index < 4) {
         index++;
     }
     color *= ToonBrightnessLevels[index];

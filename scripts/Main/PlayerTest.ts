@@ -97,6 +97,7 @@ class PlayerTest extends Main {
 		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
 		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
 		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
+		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.None), 4);
 
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
@@ -123,10 +124,10 @@ class PlayerTest extends Main {
                 inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
             }
         }
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 4);
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
 		firstBrick = inventory.items.length;
 		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 6);
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

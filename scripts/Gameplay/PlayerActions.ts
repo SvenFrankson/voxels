@@ -60,6 +60,7 @@ class PlayerActionManager {
     public linkAction(action: PlayerAction, index: number): void {
         if (index >= 0 && index <= 9) {
             this.linkedActions[index] = action;
+            console.log(index + " " + action.iconUrl);
             document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "url(" + action.iconUrl + ")";
         }
     }

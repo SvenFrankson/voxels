@@ -156,16 +156,25 @@ class ChunckUtils {
             let chunck = pickedMesh as Chunck_V2;
             let localPickedPoint = pickInfo.pickedPoint.subtract(chunck.position);
             let n = pickInfo.getNormal();
-            localPickedPoint.subtractInPlace(n.scale(0.5));
-            let coordinates = new BABYLON.Vector3(
-                Math.round(localPickedPoint.x / 1.6),
-                Math.floor(localPickedPoint.y / 0.96) + 1,
-                Math.round(localPickedPoint.z / 1.6)
-            );
             let absN = new BABYLON.Vector3(
                 Math.abs(n.x),
                 Math.abs(n.y),
                 Math.abs(n.z)
+            );
+            if (absN.x > absN.y && absN.x > absN.z) {
+                localPickedPoint.x -= Math.sign(n.x) * DX;
+            }
+            if (absN.y > absN.x && absN.y > absN.z) {
+                localPickedPoint.y -= Math.sign(n.y) * DY * 1.5;
+            }
+            if (absN.z > absN.x && absN.z > absN.y) {
+                
+                localPickedPoint.z -= Math.sign(n.z) * DX;
+            }
+            let coordinates = new BABYLON.Vector3(
+                Math.round(localPickedPoint.x / 1.6),
+                Math.floor(localPickedPoint.y / 0.96) + 1,
+                Math.round(localPickedPoint.z / 1.6)
             );
             if (!behindPickedFace) {
                 if (absN.x > absN.y && absN.x > absN.z) {
