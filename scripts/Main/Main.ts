@@ -44,6 +44,49 @@ class Main {
 		return Main._toonRampTexture;
 	}
 
+	private static _debugRedMaterial: BABYLON.StandardMaterial;
+	public static get DebugRedMaterial(): BABYLON.StandardMaterial {
+		if (!Main._debugRedMaterial) {
+			Main._debugRedMaterial = new BABYLON.StandardMaterial("DebugRedMaterial", Main.Scene);
+			Main._debugRedMaterial.diffuseColor.copyFromFloats(1, 0.2, 0.2);
+			Main._debugRedMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+		}
+		return Main._debugRedMaterial;
+	}
+
+	private static _debugGreenMaterial: BABYLON.StandardMaterial;
+	public static get DebugGreenMaterial(): BABYLON.StandardMaterial {
+		if (!Main._debugGreenMaterial) {
+			Main._debugGreenMaterial = new BABYLON.StandardMaterial("DebugGreenMaterial", Main.Scene);
+			Main._debugGreenMaterial.diffuseColor.copyFromFloats(0.2, 1, 0.2);
+			Main._debugGreenMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+		}
+		return Main._debugGreenMaterial;
+	}
+
+	private static _debugBlueMaterial: BABYLON.StandardMaterial;
+	public static get DebugBlueMaterial(): BABYLON.StandardMaterial {
+		if (!Main._debugBlueMaterial) {
+			Main._debugBlueMaterial = new BABYLON.StandardMaterial("DebugBlueMaterial", Main.Scene);
+			Main._debugBlueMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 1);
+			Main._debugBlueMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+		}
+		return Main._debugBlueMaterial;
+	}
+
+	private static _OnUpdateDebugCallbacks: (() => void)[] = [];
+	public static AddOnUpdateDebugCallback(callback: () => void): void {
+		if (this._OnUpdateDebugCallbacks.indexOf(callback) === -1) {
+			this._OnUpdateDebugCallbacks.push(callback);
+		}
+	}
+	public static RemoveOnUpdateDebugCallback(callback: () => void): void {
+		let index = this._OnUpdateDebugCallbacks.indexOf(callback);
+		if (index != -1) {
+			this._OnUpdateDebugCallbacks.splice(index, 1);
+		}
+	}
+
     constructor(canvasElement: string) {
         Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
@@ -183,6 +226,11 @@ class Main {
     public animate(): void {
 		let fpsValues = [];
         Main.Engine.runRenderLoop(() => {
+			for (let i = 0; i < Main._OnUpdateDebugCallbacks.length; i++) {
+				if (Main._OnUpdateDebugCallbacks[i]) {
+					Main._OnUpdateDebugCallbacks[i]();
+				}
+			}
 			Main.Scene.render();
 			let dt = Main.Engine.getDeltaTime();
 			let fps = 1000 / dt;

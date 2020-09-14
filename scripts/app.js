@@ -445,8 +445,14 @@ class Brick {
     get tile() {
         return this._tile;
     }
-    set tile(c) {
-        this._tile = c;
+    set tile(t) {
+        this._tile = t;
+    }
+    get chunck() {
+        return this._chunck;
+    }
+    set chunck(c) {
+        this._chunck = c;
     }
     get i() {
         return this._i;
@@ -493,52 +499,101 @@ class Brick {
         this.r = data.r;
         this.reference = Brick.ParseReference(data.reference);
     }
+    showDebug() {
+        if (this.mesh) {
+            if (!this._debugText) {
+                this._debugText = DebugText3D.CreateText("", this.mesh.absolutePosition);
+            }
+            let text = "";
+            text += "Chunck : " + this.chunck.i + " " + this.chunck.j + " " + this.chunck.k + "<br>";
+            text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
+            this._debugText.setText(text);
+            if (!this._debugOrigin) {
+                this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Green(), this.mesh.absolutePosition);
+            }
+        }
+    }
+    hideDebug() {
+        if (this._debugText) {
+            this._debugText.dispose();
+            this._debugText = undefined;
+        }
+        if (this._debugOrigin) {
+            this._debugOrigin.dispose();
+            this._debugOrigin = undefined;
+        }
+    }
 }
 class BrickData {
-    constructor(knobs = [], covers = [], blocks = []) {
+    constructor(knobs = [], covers = [], locks = []) {
         this.knobs = knobs;
         this.covers = covers;
-        this.blocks = blocks;
+        this.locks = locks;
+        this.computeRotatedLocks();
+    }
+    computeRotatedLocks() {
+        this._rotatedLocks = [[], [], [], []];
+        for (let i = 0; i < this.locks.length; i++) {
+            this._rotatedLocks[0][i] = this.locks[i];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[1][3 * i] = this.locks[3 * i + 2];
+            this._rotatedLocks[1][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[1][3 * i + 2] = -this.locks[3 * i];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[2][3 * i] = -this.locks[3 * i];
+            this._rotatedLocks[2][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[2][3 * i + 2] = -this.locks[3 * i + 2];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[3][3 * i] = -this.locks[3 * i + 2];
+            this._rotatedLocks[3][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[3][3 * i + 2] = this.locks[3 * i];
+        }
+    }
+    getLocks(direction) {
+        return this._rotatedLocks[direction];
     }
     get minBlockX() {
         let min = Infinity;
-        for (let i = 0; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 0; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         }
         return min;
     }
     get maxBlockX() {
         let max = -Infinity;
-        for (let i = 0; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 0; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         }
         return max;
     }
     get minBlockY() {
         let min = Infinity;
-        for (let i = 1; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 1; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         }
         return min;
     }
     get maxBlockY() {
         let max = -Infinity;
-        for (let i = 1; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 1; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         }
         return max;
     }
     get minBlockZ() {
         let min = Infinity;
-        for (let i = 2; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 2; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         }
         return min;
     }
     get maxBlockZ() {
         let max = -Infinity;
-        for (let i = 2; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 2; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         }
         return max;
     }
@@ -576,10 +631,11 @@ class BrickDataManager {
                             brickData.knobs.push(w, 3, l);
                             for (let h = 0; h < 3; h++) {
                                 brickData.covers.push(w, h, l);
-                                brickData.blocks.push(w, h, l);
+                                brickData.locks.push(w, h, l);
                             }
                         }
                     }
+                    brickData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(brickName, brickData);
                     BrickDataManager.BrickNames.push(brickName);
                     // Tile
@@ -588,9 +644,10 @@ class BrickDataManager {
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
                             tileData.covers.push(w, 0, l);
-                            tileData.blocks.push(w, 0, l);
+                            tileData.locks.push(w, 0, l);
                         }
                     }
+                    tileData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(tileName, tileData);
                     BrickDataManager.BrickNames.push(tileName);
                     // Plate
@@ -600,9 +657,10 @@ class BrickDataManager {
                         for (let l = 0; l < L; l++) {
                             plateData.knobs.push(w, 1, l);
                             plateData.covers.push(w, 0, l);
-                            plateData.blocks.push(w, 0, l);
+                            plateData.locks.push(w, 0, l);
                         }
                     }
+                    plateData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(plateName, plateData);
                     BrickDataManager.BrickNames.push(plateName);
                 }
@@ -1425,6 +1483,67 @@ class ChunckManager {
             }
         }
     }
+    getChunckLock(chunck, i, j, k) {
+        if (!chunck) {
+            debugger;
+            return true;
+        }
+        if (i < 0) {
+            chunck = this.getChunck(chunck.i - 1, chunck.j, chunck.k);
+            return this.getChunckLock(chunck, i + DX_PER_CHUNCK, j, k);
+        }
+        if (i >= DX_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i + 1, chunck.j, chunck.k);
+            return this.getChunckLock(chunck, i - DX_PER_CHUNCK, j, k);
+        }
+        if (j < 0) {
+            chunck = this.getChunck(chunck.i, chunck.j - 1, chunck.k);
+            return this.getChunckLock(chunck, i, j + DX_PER_CHUNCK, k);
+        }
+        if (j >= DY_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i, chunck.j + 1, chunck.k);
+            return this.getChunckLock(chunck, i, j - DY_PER_CHUNCK, k);
+        }
+        if (k < 0) {
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k - 1);
+            return this.getChunckLock(chunck, i, j, k + DX_PER_CHUNCK);
+        }
+        if (k >= DX_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k + 1);
+            return this.getChunckLock(chunck, i, j, k - DX_PER_CHUNCK);
+        }
+        return chunck.getLock(i, j, k);
+    }
+    setChunckLock(chunck, i, j, k, lock = true) {
+        if (!chunck) {
+            return;
+        }
+        if (i < 0) {
+            chunck = this.getChunck(chunck.i - 1, j, k);
+            return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, lock);
+        }
+        if (i >= DX_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i + 1, j, k);
+            return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, lock);
+        }
+        if (j < 0) {
+            chunck = this.getChunck(chunck.i, j - 1, k);
+            return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, lock);
+        }
+        if (j >= DY_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i, j + 1, k);
+            return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, lock);
+        }
+        if (k < 0) {
+            chunck = this.getChunck(chunck.i, j, k - 1);
+            return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, lock);
+        }
+        if (k >= DX_PER_CHUNCK) {
+            chunck = this.getChunck(chunck.i, j, k + 1);
+            return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, lock);
+        }
+        return chunck.setLock(i, j, k, lock);
+    }
     redrawZone(IMin, JMin, KMin, IMax, JMax, KMax) {
         let iChunckMin = Math.floor(IMin / CHUNCK_SIZE);
         let jChunckMin = Math.floor(JMin / CHUNCK_SIZE);
@@ -1544,9 +1663,9 @@ class ChunckUtils {
         };
     }
     static WorldPositionToChunckBrickCoordinates_V2(world) {
-        let I = Math.floor(world.x / CHUNCK_SIZE * 1.6);
-        let J = Math.floor(world.y / CHUNCK_SIZE * 0.96);
-        let K = Math.floor(world.z / CHUNCK_SIZE * 1.6);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
         let coordinates = world.clone();
         coordinates.x -= I * CHUNCK_SIZE * 1.6;
         coordinates.y -= J * CHUNCK_SIZE * 0.96;
@@ -2257,25 +2376,138 @@ class Chunck_V1 extends Chunck {
 }
 /// <reference path="./Chunck.ts"/>
 var CHUNCK_SIZE = 8;
+var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
+var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
+var ACTIVE_DEBUG_CHUNCK = true;
+var ACTIVE_DEBUG_CHUNCK_LOCK = true;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
+        this._barycenter = BABYLON.Vector3.Zero();
         this.bricks = [];
         this.brickMeshes = [];
+        this._locks = [];
+        this._updateDebug = () => {
+            if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+                if (!this._debugText) {
+                    this._debugText = DebugText3D.CreateText("", this.position);
+                }
+                let text = "";
+                text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
+                this._debugText.setText(text);
+                if (!this._debugOrigin) {
+                    this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Red(), this.position);
+                }
+                if (!this._debugBox) {
+                    this._debugBox = DebugBox.CreateBox(CHUNCK_SIZE * 1.6 - 0.05, CHUNCK_SIZE * 0.96 - 0.05, CHUNCK_SIZE * 1.6 - 0.05, new BABYLON.Color4(0, 0, 1, 0.2), this.barycenter);
+                }
+            }
+            else {
+                if (this._debugText) {
+                    this._debugText.dispose();
+                    this._debugText = undefined;
+                }
+                if (this._debugOrigin) {
+                    this._debugOrigin.dispose();
+                    this._debugOrigin = undefined;
+                }
+                if (this._debugBox) {
+                    this._debugBox.dispose();
+                    this._debugBox = undefined;
+                }
+            }
+        };
+        this._updateDebugLock = () => {
+            if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+                if (!this._debugLocks) {
+                    let positions = [];
+                    for (let i = 0; i < this._locks.length; i++) {
+                        if (this._locks[i]) {
+                            for (let j = 0; j < this._locks[i].length; j++) {
+                                if (this._locks[i][j]) {
+                                    for (let k = 0; k < this._locks[i][j].length; k++) {
+                                        if (this._locks[i][j][k]) {
+                                            positions.push(new BABYLON.Vector3(this.position.x + i * DX, this.position.y + j * DY + DY * 0.5, this.position.z + k * DX));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
+                }
+            }
+            else {
+                if (this._debugLocks) {
+                    this._debugLocks.dispose();
+                    this._debugLocks = undefined;
+                }
+            }
+        };
         this.name = "chunck_v2_" + i + "_" + j + "_" + k;
         this.position.x = CHUNCK_SIZE * this.i * 1.6;
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
+        this._barycenter.copyFrom(this.position);
+        this._barycenter.x += CHUNCK_SIZE * 1.6 * 0.5;
+        this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
+        this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
         this.material = Main.terrainCellShadingMaterial;
         this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
         this.knobsMesh.parent = this;
         this.knobsMesh.material = Main.cellShadingMaterial;
     }
+    get barycenter() {
+        return this._barycenter;
+    }
     addBrick(brick) {
         let i = this.bricks.indexOf(brick);
         if (i === -1) {
+            let data = BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                if (this.getLockSafe(brick.i + ii, brick.j + jj, brick.k + kk)) {
+                    return false;
+                }
+            }
             this.bricks.push(brick);
+            brick.chunck = this;
+            return true;
         }
+    }
+    getLock(i, j, k) {
+        if (this._locks[i]) {
+            if (this._locks[i][j]) {
+                return this._locks[i][j][k];
+            }
+        }
+    }
+    getLockSafe(i, j, k) {
+        return this.manager.getChunckLock(this, i, j, k);
+    }
+    setLock(i, j, k, lock = true) {
+        if (lock) {
+            if (!this._locks[i]) {
+                this._locks[i] = [];
+            }
+            if (!this._locks[i][j]) {
+                this._locks[i][j] = [];
+            }
+            this._locks[i][j][k] = true;
+        }
+        else {
+            if (this._locks[i]) {
+                if (this._locks[j]) {
+                    this._locks[i][j][k] = false;
+                }
+            }
+        }
+    }
+    setLockSafe(i, j, k, lock = true) {
+        return this.manager.setChunckLock(this, i, j, k, lock);
     }
     async generate() {
         let positions = [];
@@ -2468,6 +2700,12 @@ class Chunck_V2 extends Chunck {
         knobsVertexData.colors = knobsColors;
         knobsVertexData.applyToMesh(this.knobsMesh);
         this.updateBricks();
+        if (ACTIVE_DEBUG_CHUNCK) {
+            Main.AddOnUpdateDebugCallback(this._updateDebug);
+        }
+        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
+            Main.AddOnUpdateDebugCallback(this._updateDebugLock);
+        }
     }
     async updateBricks() {
         while (this.brickMeshes.length > 1) {
@@ -2476,8 +2714,9 @@ class Chunck_V2 extends Chunck {
         for (let i = 0; i < this.bricks.length; i++) {
             let brick = this.bricks[i];
             let b = new BABYLON.Mesh("brick-" + i);
-            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
-            data.applyToMesh(b);
+            brick.mesh = b;
+            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            vertexData.applyToMesh(b);
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
@@ -2488,6 +2727,28 @@ class Chunck_V2 extends Chunck {
                 b.material = Main.cellShadingMaterial;
             }
             this.brickMeshes.push(b);
+        }
+        this.updateLocks();
+    }
+    updateLocks() {
+        this._locks = [];
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let data = BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            console.log(locks);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk);
+            }
+        }
+        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
+            if (this._debugLocks) {
+                this._debugLocks.dispose();
+                this._debugLocks = undefined;
+            }
         }
     }
 }
@@ -3034,6 +3295,101 @@ class Walker extends BABYLON.Mesh {
         });
     }
 }
+class DebugMesh {
+    constructor() {
+        this.creationTime = 0;
+        this.duration = -1;
+        this._update = () => {
+            if (this.duration > 0) {
+                if (performance.now() - this.creationTime > this.duration) {
+                    this.dispose();
+                }
+            }
+        };
+    }
+    dispose() {
+        if (this.mesh) {
+            this.mesh.dispose();
+        }
+        Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+    }
+}
+class DebugCross extends DebugMesh {
+    static CreateCross(size, color, position, duration = -1) {
+        let debugCross = new DebugCross();
+        debugCross.mesh = new BABYLON.LinesMesh("DebugCross");
+        debugCross.mesh.isPickable = false;
+        let s = size * 0.5;
+        let lines = [
+            [new BABYLON.Vector3(-s, 0, 0), new BABYLON.Vector3(s, 0, 0)],
+            [new BABYLON.Vector3(0, -s, 0), new BABYLON.Vector3(0, s, 0)],
+            [new BABYLON.Vector3(0, 0, -s), new BABYLON.Vector3(0, 0, s)]
+        ];
+        let c;
+        if (color instanceof BABYLON.Color4) {
+            c = color;
+        }
+        else {
+            c = new BABYLON.Color4(color.r, color.g, color.b, 1);
+        }
+        let colors = [
+            [c, c],
+            [c, c],
+            [c, c]
+        ];
+        BABYLON.VertexData.CreateLineSystem({ lines: lines, colors: colors }).applyToMesh(debugCross.mesh);
+        debugCross.mesh.position = position;
+        debugCross.duration = duration;
+        Main.Scene.onBeforeRenderObservable.add(debugCross._update);
+        return debugCross;
+    }
+}
+class DebugCrosses extends DebugMesh {
+    static CreateCrosses(size, height, color, positions, duration = -1) {
+        let debugCrosses = new DebugCrosses();
+        debugCrosses.mesh = new BABYLON.LinesMesh("DebugCrosses");
+        debugCrosses.mesh.isPickable = false;
+        let s = size * 0.5;
+        let h = height * 0.5;
+        let c;
+        if (color instanceof BABYLON.Color4) {
+            c = color;
+        }
+        else {
+            c = new BABYLON.Color4(color.r, color.g, color.b, 1);
+        }
+        let lines = [];
+        let colors = [];
+        for (let i = 0; i < positions.length; i++) {
+            let p = positions[i];
+            lines.push([new BABYLON.Vector3(-s + p.x, 0 + p.y, 0 + p.z), new BABYLON.Vector3(s + p.x, 0 + p.y, 0 + p.z)], [new BABYLON.Vector3(0 + p.x, -h + p.y, 0 + p.z), new BABYLON.Vector3(0 + p.x, h + p.y, 0 + p.z)], [new BABYLON.Vector3(0 + p.x, 0 + p.y, -s + p.z), new BABYLON.Vector3(0 + p.x, 0 + p.y, s + p.z)]);
+            colors.push([c, c], [c, c], [c, c]);
+        }
+        BABYLON.VertexData.CreateLineSystem({ lines: lines, colors: colors }).applyToMesh(debugCrosses.mesh);
+        debugCrosses.duration = duration;
+        Main.Scene.onBeforeRenderObservable.add(debugCrosses._update);
+        return debugCrosses;
+    }
+}
+class DebugBox extends DebugMesh {
+    static CreateBox(width, height, depth, color, position, duration = -1) {
+        let debugBox = new DebugBox();
+        debugBox.mesh = new BABYLON.Mesh("DebugMesh");
+        debugBox.mesh.isPickable = false;
+        BABYLON.VertexData.CreateBox({ width: width, height: height, depth: depth, sideOrientation: BABYLON.Mesh.DOUBLESIDE }).applyToMesh(debugBox.mesh);
+        debugBox.mesh.position = position;
+        debugBox.duration = duration;
+        let material = new BABYLON.StandardMaterial("StandardMaterial", Main.Scene);
+        material.diffuseColor.copyFromFloats(color.r, color.g, color.b);
+        if (color instanceof BABYLON.Color4) {
+            material.alpha = color.a;
+        }
+        material.specularColor.copyFromFloats(0, 0, 0);
+        debugBox.mesh.material = material;
+        Main.Scene.onBeforeRenderObservable.add(debugBox._update);
+        return debugBox;
+    }
+}
 class DebugText3D {
     constructor() {
         this.creationTime = 0;
@@ -3064,10 +3420,13 @@ class DebugText3D {
         this.element.innerHTML = text;
     }
     dispose() {
-        document.body.removeChild(this.element);
-        Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+        if (this.element.parentElement === document.body) {
+            document.body.removeChild(this.element);
+            Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+        }
     }
 }
+var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
     constructor() {
         super("player");
@@ -3114,6 +3473,25 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onUpdate();
                 }
             }
+            else {
+                let aimed;
+                let x = Main.Engine.getRenderWidth() * 0.5;
+                let y = Main.Engine.getRenderHeight() * 0.5;
+                let pickInfo = Main.Scene.pick(x, y, (m) => {
+                    return m && m.parent && m.parent instanceof Chunck_V2;
+                });
+                let pickedMesh = pickInfo.pickedMesh;
+                if (pickedMesh) {
+                    let chunck = pickedMesh.parent;
+                    if (chunck instanceof Chunck_V2) {
+                        let brick = chunck.bricks.find(b => { return b.mesh === pickedMesh; });
+                        if (brick) {
+                            aimed = brick;
+                        }
+                    }
+                }
+                this.setAimedObject(aimed);
+            }
         };
         this.updateBrickMode = () => {
             let right = this.getDirection(BABYLON.Axis.X);
@@ -3148,6 +3526,25 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager = new PlayerActionManager(this);
         // debug
         //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+    }
+    get aimedObject() {
+        return this._aimedObject;
+    }
+    setAimedObject(b) {
+        if (b === this._aimedObject) {
+            return;
+        }
+        if (this._aimedObject) {
+            if (ACTIVE_DEBUG_BRICK) {
+                this._aimedObject.hideDebug();
+            }
+        }
+        this._aimedObject = b;
+        if (this._aimedObject) {
+            if (ACTIVE_DEBUG_BRICK) {
+                this._aimedObject.showDebug();
+            }
+        }
     }
     register(brickMode = false) {
         this.playerActionManager.register();
@@ -3230,7 +3627,7 @@ class Player extends BABYLON.Mesh {
         document.getElementById("player-actions").style.display = "block";
     }
 }
-var ACTIVE_PLAYER_ACTION_DEBUG = true;
+var ACTIVE_DEBUG_PLAYER_ACTION = true;
 class PlayerActionTemplate {
     static CreateCubeAction(cubeType) {
         let action = new PlayerAction();
@@ -3506,13 +3903,16 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = Main.Scene.pick(x, y, (m) => {
-                return m !== previewMesh;
+                return m.isPickable;
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
                 if (!hitKnob) {
+                    if (!pickInfo.getNormal(true)) {
+                        debugger;
+                    }
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
                 world.x = (Math.round(world.x / DX) - anchorX) * DX;
@@ -3521,6 +3921,7 @@ class PlayerActionTemplate {
                 if (world) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                        previewMesh.isPickable = false;
                         BrickVertexData.GetFullBrickVertexData(brickReference).then(data => {
                             data.applyToMesh(previewMesh);
                         });
@@ -3535,7 +3936,7 @@ class PlayerActionTemplate {
                     }
                 }
             }
-            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (!debugText) {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
@@ -3550,7 +3951,7 @@ class PlayerActionTemplate {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = Main.Scene.pick(x, y, (m) => {
-                return m !== previewMesh;
+                return m.isPickable;
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
@@ -3569,7 +3970,7 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        coordinates.chunck.bricks.push(brick);
+                        coordinates.chunck.addBrick(brick);
                         coordinates.chunck.updateBricks();
                     }
                 }
@@ -3580,7 +3981,7 @@ class PlayerActionTemplate {
                 previewMesh.dispose();
                 previewMesh = undefined;
             }
-            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (debugText) {
                     debugText.dispose();
                 }
@@ -3890,6 +4291,10 @@ class Inventory {
 }
 /// <reference path="../../lib/babylon.d.ts"/>
 class Main {
+    constructor(canvasElement) {
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    }
     static get cellShadingMaterial() {
         if (!Main._cellShadingMaterial) {
             Main._cellShadingMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
@@ -3914,9 +4319,40 @@ class Main {
         }
         return Main._toonRampTexture;
     }
-    constructor(canvasElement) {
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    static get DebugRedMaterial() {
+        if (!Main._debugRedMaterial) {
+            Main._debugRedMaterial = new BABYLON.StandardMaterial("DebugRedMaterial", Main.Scene);
+            Main._debugRedMaterial.diffuseColor.copyFromFloats(1, 0.2, 0.2);
+            Main._debugRedMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        }
+        return Main._debugRedMaterial;
+    }
+    static get DebugGreenMaterial() {
+        if (!Main._debugGreenMaterial) {
+            Main._debugGreenMaterial = new BABYLON.StandardMaterial("DebugGreenMaterial", Main.Scene);
+            Main._debugGreenMaterial.diffuseColor.copyFromFloats(0.2, 1, 0.2);
+            Main._debugGreenMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        }
+        return Main._debugGreenMaterial;
+    }
+    static get DebugBlueMaterial() {
+        if (!Main._debugBlueMaterial) {
+            Main._debugBlueMaterial = new BABYLON.StandardMaterial("DebugBlueMaterial", Main.Scene);
+            Main._debugBlueMaterial.diffuseColor.copyFromFloats(0.2, 0.2, 1);
+            Main._debugBlueMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+        }
+        return Main._debugBlueMaterial;
+    }
+    static AddOnUpdateDebugCallback(callback) {
+        if (this._OnUpdateDebugCallbacks.indexOf(callback) === -1) {
+            this._OnUpdateDebugCallbacks.push(callback);
+        }
+    }
+    static RemoveOnUpdateDebugCallback(callback) {
+        let index = this._OnUpdateDebugCallbacks.indexOf(callback);
+        if (index != -1) {
+            this._OnUpdateDebugCallbacks.splice(index, 1);
+        }
     }
     initializeCamera() {
         let camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
@@ -4034,6 +4470,11 @@ class Main {
     animate() {
         let fpsValues = [];
         Main.Engine.runRenderLoop(() => {
+            for (let i = 0; i < Main._OnUpdateDebugCallbacks.length; i++) {
+                if (Main._OnUpdateDebugCallbacks[i]) {
+                    Main._OnUpdateDebugCallbacks[i]();
+                }
+            }
             Main.Scene.render();
             let dt = Main.Engine.getDeltaTime();
             let fps = 1000 / dt;
@@ -4058,6 +4499,7 @@ class Main {
         });
     }
 }
+Main._OnUpdateDebugCallbacks = [];
 window.addEventListener("load", async () => {
     let main;
     let url = window.location.href;
@@ -5996,7 +6438,7 @@ class TileManager {
 var KNOB_RADIUS_SQUARED = 0.24 * 0.24;
 class TileUtils {
     static IsKnobHit(worldPosition, normal) {
-        if (normal.y === 0) {
+        if (normal && normal.y === 0) {
             let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
             if (dy < 0.17) {
                 let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
@@ -6009,7 +6451,7 @@ class TileUtils {
                 }
             }
         }
-        else if (normal.y === 1) {
+        else if (normal && normal.y === 1) {
             let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
             if (Math.abs(dy - 0.17) < 0.001) {
                 let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;

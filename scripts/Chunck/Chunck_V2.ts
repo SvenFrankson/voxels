@@ -1,13 +1,27 @@
 /// <reference path="./Chunck.ts"/>
 
 var CHUNCK_SIZE = 8;
+var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
+var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
+
+var ACTIVE_DEBUG_CHUNCK = true;
+var ACTIVE_DEBUG_CHUNCK_LOCK = true;
 
 class Chunck_V2 extends Chunck {
+
+    private _barycenter: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
     public knobsMesh: BABYLON.Mesh;
 
     public bricks: Brick[] = [];
     public brickMeshes: BABYLON.Mesh[] = [];
+
+    private _locks: boolean[][][] = [];
+
+    private _debugText: DebugText3D;
+    private _debugOrigin: DebugCross;
+    private _debugBox: DebugBox;
+    private _debugLocks: DebugCrosses;
 
     constructor(
         manager: ChunckManager,
@@ -17,9 +31,16 @@ class Chunck_V2 extends Chunck {
     ) {
         super(manager, i, j, k);
         this.name = "chunck_v2_" + i + "_" + j + "_" + k;
+
         this.position.x = CHUNCK_SIZE * this.i * 1.6;
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
         this.position.z = CHUNCK_SIZE * this.k * 1.6;
+
+        this._barycenter.copyFrom(this.position);
+        this._barycenter.x += CHUNCK_SIZE * 1.6 * 0.5;
+        this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
+        this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
+
         this.material = Main.terrainCellShadingMaterial;
 
         this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
@@ -27,11 +48,62 @@ class Chunck_V2 extends Chunck {
         this.knobsMesh.material = Main.cellShadingMaterial;
     }
 
-    public addBrick(brick: Brick): void {
+    public get barycenter(): BABYLON.Vector3 {
+        return this._barycenter;
+    }
+
+    public addBrick(brick: Brick): boolean {
         let i = this.bricks.indexOf(brick);
         if (i === -1) {
+            let data = BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                if (this.getLockSafe(brick.i + ii, brick.j + jj, brick.k + kk)) {
+                    return false;
+                }
+            }
             this.bricks.push(brick);
+            brick.chunck = this;
+            return true;
         }
+    }
+
+    public getLock(i: number, j: number, k: number): boolean {
+        if (this._locks[i]) {
+            if (this._locks[i][j]) {
+                return this._locks[i][j][k];
+            }
+        }
+    }
+
+    public getLockSafe(i: number, j: number, k: number): boolean {
+        return this.manager.getChunckLock(this, i, j, k);
+    }
+
+    public setLock(i: number, j: number, k: number, lock: boolean = true): void {
+        if (lock) {
+            if (!this._locks[i]) {
+                this._locks[i] = [];
+            } 
+            if (!this._locks[i][j]) {
+                this._locks[i][j] = [];
+            } 
+            this._locks[i][j][k] = true;
+        }
+        else {
+            if (this._locks[i]) {
+                if (this._locks[j]) {
+                    this._locks[i][j][k] = false;
+                }
+            }
+        }
+    }
+
+    public setLockSafe(i: number, j: number, k: number, lock: boolean = true): void {
+        return this.manager.setChunckLock(this, i, j, k, lock);
     }
 
     public static HasLoged: boolean = false;
@@ -243,6 +315,78 @@ class Chunck_V2 extends Chunck {
         knobsVertexData.applyToMesh(this.knobsMesh);
 
         this.updateBricks();
+
+        if (ACTIVE_DEBUG_CHUNCK) {
+            Main.AddOnUpdateDebugCallback(this._updateDebug);
+        }
+        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
+            Main.AddOnUpdateDebugCallback(this._updateDebugLock);
+        }
+    }
+
+    private _updateDebug = () => {
+        if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+            if (!this._debugText) {
+                this._debugText = DebugText3D.CreateText("", this.position);
+            }
+            let text = "";
+            text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
+            this._debugText.setText(text);
+
+            if (!this._debugOrigin) {
+                this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Red(), this.position);
+            }
+
+            if (!this._debugBox) {
+                this._debugBox = DebugBox.CreateBox(CHUNCK_SIZE * 1.6 - 0.05, CHUNCK_SIZE * 0.96 - 0.05, CHUNCK_SIZE * 1.6 - 0.05, new BABYLON.Color4(0, 0, 1, 0.2), this.barycenter);
+            }
+        }
+        else {
+            if (this._debugText) {
+                this._debugText.dispose();
+                this._debugText = undefined;
+            }
+            if (this._debugOrigin) {
+                this._debugOrigin.dispose();
+                this._debugOrigin = undefined;
+            }
+            if (this._debugBox) {
+                this._debugBox.dispose();
+                this._debugBox = undefined;
+            }
+        }
+    }
+    
+    private _updateDebugLock = () => {
+        if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+            if (!this._debugLocks) {
+                let positions: BABYLON.Vector3[] = [];
+                for (let i = 0; i < this._locks.length; i++) {
+                    if (this._locks[i]) {
+                        for (let j = 0; j < this._locks[i].length; j++) {
+                            if (this._locks[i][j]) {
+                                for (let k = 0; k < this._locks[i][j].length; k++) {
+                                    if (this._locks[i][j][k]) {
+                                        positions.push(new BABYLON.Vector3(
+                                            this.position.x + i * DX,
+                                            this.position.y + j * DY + DY * 0.5,
+                                            this.position.z + k * DX
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
+            }
+        }
+        else {
+            if (this._debugLocks) {
+                this._debugLocks.dispose();
+                this._debugLocks = undefined;
+            }
+        }
     }
 
     public async updateBricks(): Promise<void> {
@@ -252,8 +396,9 @@ class Chunck_V2 extends Chunck {
         for (let i = 0; i < this.bricks.length; i++) {
             let brick = this.bricks[i];
             let b = new BABYLON.Mesh("brick-" + i);
-            let data = await BrickVertexData.GetFullBrickVertexData(brick.reference);
-            data.applyToMesh(b);
+            brick.mesh = b;
+            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            vertexData.applyToMesh(b);
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
@@ -264,6 +409,29 @@ class Chunck_V2 extends Chunck {
                 b.material = Main.cellShadingMaterial;
             }
             this.brickMeshes.push(b);
+        }
+        this.updateLocks();
+    }
+
+    public updateLocks(): void {
+        this._locks = [];
+        for (let i = 0; i < this.bricks.length; i++) {
+            let brick = this.bricks[i];
+            let data = BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            console.log(locks);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk);
+            }
+        }
+        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
+            if (this._debugLocks) {
+                this._debugLocks.dispose();
+                this._debugLocks = undefined;
+            }
         }
     }
 }

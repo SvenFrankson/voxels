@@ -1,4 +1,4 @@
-var ACTIVE_PLAYER_ACTION_DEBUG = true;
+var ACTIVE_DEBUG_PLAYER_ACTION = true;
 
 class PlayerActionTemplate {
 
@@ -332,7 +332,7 @@ class PlayerActionTemplate {
                 x,
                 y,
                 (m) => {
-                    return m !== previewMesh;
+                    return m.isPickable;
                 }
             );
             if (pickInfo.hit) {
@@ -340,6 +340,9 @@ class PlayerActionTemplate {
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
                 if (!hitKnob) {
+                    if (!pickInfo.getNormal(true)) {
+                        debugger;
+                    }
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
                 world.x = (Math.round(world.x / DX) - anchorX) * DX;
@@ -348,6 +351,7 @@ class PlayerActionTemplate {
                 if (world) {
                     if (!previewMesh) {
                         previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                        previewMesh.isPickable = false;
                         BrickVertexData.GetFullBrickVertexData(brickReference).then(
                             data => {
                                 data.applyToMesh(previewMesh);
@@ -365,7 +369,7 @@ class PlayerActionTemplate {
                 }
             }
 
-            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (!debugText) {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
@@ -385,7 +389,7 @@ class PlayerActionTemplate {
                 x,
                 y,
                 (m) => {
-                    return m !== previewMesh;
+                    return m.isPickable;
                 }
             );
             if (pickInfo.hit) {
@@ -405,7 +409,7 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        coordinates.chunck.bricks.push(brick);
+                        coordinates.chunck.addBrick(brick);
                         coordinates.chunck.updateBricks();
                     }
                 }
@@ -417,7 +421,7 @@ class PlayerActionTemplate {
                 previewMesh.dispose();
                 previewMesh = undefined;
             }
-            if (ACTIVE_PLAYER_ACTION_DEBUG) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (debugText) {
                     debugText.dispose();
                 }

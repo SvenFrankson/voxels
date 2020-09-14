@@ -1,3 +1,5 @@
+var ACTIVE_DEBUG_BRICK = true;
+
 class Player extends BABYLON.Mesh {
 
     private _inputLeft: boolean = false;
@@ -10,11 +12,34 @@ class Player extends BABYLON.Mesh {
     public playerActionManager: PlayerActionManager;
     public currentAction: PlayerAction;
 
+    private _aimedObject: Brick;
+
     constructor() {
         super("player");
         this.playerActionManager = new PlayerActionManager(this);
         // debug
         //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+    }
+
+    public get aimedObject(): Brick {
+        return this._aimedObject;
+    }
+
+    public setAimedObject(b: Brick) {
+        if (b === this._aimedObject) {
+            return;
+        }
+        if (this._aimedObject) {
+            if (ACTIVE_DEBUG_BRICK) {
+                this._aimedObject.hideDebug();
+            }
+        }
+        this._aimedObject = b;
+        if (this._aimedObject) {
+            if (ACTIVE_DEBUG_BRICK) {
+                this._aimedObject.showDebug();
+            }
+        }
     }
 
     public register(brickMode: boolean = false): void {
@@ -143,6 +168,28 @@ class Player extends BABYLON.Mesh {
             if (this.currentAction.onUpdate) {
                 this.currentAction.onUpdate();
             }
+        }
+        else {
+            let aimed: Brick;
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = Main.Scene.pick(
+                x, y,
+                (m) => {
+                    return m && m.parent && m.parent instanceof Chunck_V2;
+                }
+            );
+            let pickedMesh = pickInfo.pickedMesh;
+            if (pickedMesh) {
+                let chunck = pickedMesh.parent;
+                if (chunck instanceof Chunck_V2) {
+                    let brick = chunck.bricks.find(b => { return b.mesh === pickedMesh });
+                    if (brick) {
+                        aimed = brick;
+                    }
+                }
+            }
+            this.setAimedObject(aimed);
         }
     }
 

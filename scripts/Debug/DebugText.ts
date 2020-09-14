@@ -45,7 +45,9 @@ class DebugText3D {
     }
 
     public dispose(): void {
-        document.body.removeChild(this.element);
-        Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+        if (this.element.parentElement === document.body) {
+            document.body.removeChild(this.element);
+            Main.Scene.onBeforeRenderObservable.removeCallback(this._update);
+        }
     }
 }

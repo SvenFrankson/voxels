@@ -3,7 +3,7 @@ var KNOB_RADIUS_SQUARED = 0.24 * 0.24;
 class TileUtils {
 
     public static IsKnobHit(worldPosition: BABYLON.Vector3, normal: BABYLON.Vector3): boolean {
-        if (normal.y === 0) {
+        if (normal && normal.y === 0) {
             let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
             if (dy < 0.17) {
                 let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
@@ -16,7 +16,7 @@ class TileUtils {
                 }
             }
         }
-        else if (normal.y === 1) {
+        else if (normal && normal.y === 1) {
             let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
             if (Math.abs(dy - 0.17) < 0.001) {
                 let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;

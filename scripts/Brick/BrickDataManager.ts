@@ -1,57 +1,85 @@
 class BrickData {
 
+    private _rotatedLocks: number[][];
+
     constructor(
         public knobs: number[] = [],
         public covers: number[] = [],
-        public blocks: number[] = []
+        public locks: number[] = []
     ) {
+        this.computeRotatedLocks();
+    }
 
+    public computeRotatedLocks(): void {
+        this._rotatedLocks = [[], [], [], []];
+        for (let i = 0; i < this.locks.length; i++) {
+            this._rotatedLocks[0][i] = this.locks[i];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[1][3 * i] = this.locks[3 * i + 2];
+            this._rotatedLocks[1][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[1][3 * i + 2] = - this.locks[3 * i];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[2][3 * i] = - this.locks[3 * i];
+            this._rotatedLocks[2][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[2][3 * i + 2] = - this.locks[3 * i + 2];
+        }
+        for (let i = 0; i < this.locks.length / 3; i++) {
+            this._rotatedLocks[3][3 * i] = - this.locks[3 * i + 2];
+            this._rotatedLocks[3][3 * i + 1] = this.locks[3 * i + 1];
+            this._rotatedLocks[3][3 * i + 2] = this.locks[3 * i];
+        }
+    }
+
+    public getLocks(direction: number): number[] {
+        return this._rotatedLocks[direction];
     }
 
     public get minBlockX(): number {
         let min = Infinity;
-        for (let i = 0; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 0; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         } 
         return min;
     }
 
     public get maxBlockX(): number {
         let max = - Infinity;
-        for (let i = 0; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 0; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         } 
         return max;
     }
 
     public get minBlockY(): number {
         let min = Infinity;
-        for (let i = 1; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 1; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         } 
         return min;
     }
 
     public get maxBlockY(): number {
         let max = - Infinity;
-        for (let i = 1; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 1; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         } 
         return max;
     }
 
     public get minBlockZ(): number {
         let min = Infinity;
-        for (let i = 2; i < this.blocks.length; i += 3) {
-            min = Math.min(this.blocks[i], min);
+        for (let i = 2; i < this.locks.length; i += 3) {
+            min = Math.min(this.locks[i], min);
         } 
         return min;
     }
 
     public get maxBlockZ(): number {
         let max = - Infinity;
-        for (let i = 2; i < this.blocks.length; i += 3) {
-            max = Math.max(this.blocks[i], max);
+        for (let i = 2; i < this.locks.length; i += 3) {
+            max = Math.max(this.locks[i], max);
         } 
         return max;
     }
@@ -98,10 +126,11 @@ class BrickDataManager {
                             brickData.knobs.push(w, 3, l);
                             for (let h = 0; h < 3; h++) {
                                 brickData.covers.push(w, h, l);
-                                brickData.blocks.push(w, h, l);
+                                brickData.locks.push(w, h, l);
                             }
                         }
                     }
+                    brickData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(brickName, brickData);
                     BrickDataManager.BrickNames.push(brickName);
     
@@ -111,9 +140,10 @@ class BrickDataManager {
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
                             tileData.covers.push(w, 0, l);
-                            tileData.blocks.push(w, 0, l);
+                            tileData.locks.push(w, 0, l);
                         }
                     }
+                    tileData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(tileName, tileData);
                     BrickDataManager.BrickNames.push(tileName);
     
@@ -124,9 +154,10 @@ class BrickDataManager {
                         for (let l = 0; l < L; l++) {
                             plateData.knobs.push(w, 1, l);
                             plateData.covers.push(w, 0, l);
-                            plateData.blocks.push(w, 0, l);
+                            plateData.locks.push(w, 0, l);
                         }
                     }
+                    plateData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(plateName, plateData);
                     BrickDataManager.BrickNames.push(plateName);
                 }

@@ -48,9 +48,9 @@ class ChunckUtils {
     }
 
     public static WorldPositionToChunckBrickCoordinates_V2(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
-        let I = Math.floor(world.x / CHUNCK_SIZE * 1.6);
-        let J = Math.floor(world.y / CHUNCK_SIZE * 0.96);
-        let K = Math.floor(world.z / CHUNCK_SIZE * 1.6);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
 
         let coordinates = world.clone();
         coordinates.x -= I * CHUNCK_SIZE * 1.6;

@@ -29,9 +29,18 @@ class Brick {
     public get tile(): Tile {
         return this._tile;
     }
-    public set tile(c: Tile) {
-        this._tile = c;
+    public set tile(t: Tile) {
+        this._tile = t;
     }
+
+    private _chunck: Chunck;
+    public get chunck(): Chunck {
+        return this._chunck;
+    }
+    public set chunck(c: Chunck) {
+        this._chunck = c;
+    }
+
     private _i: number = 0;
     public get i(): number {
         return this._i;
@@ -60,6 +69,11 @@ class Brick {
     public set r(v: number) {
         this._r = v;
     }
+
+    private _debugText: DebugText3D;
+    private _debugOrigin: DebugCross;
+
+    public mesh: BABYLON.Mesh;
     
     public setCoordinates(coordinates: BABYLON.Vector3) {
         this.i = coordinates.x;
@@ -83,5 +97,32 @@ class Brick {
         this.k = data.k;
         this.r = data.r;
         this.reference = Brick.ParseReference(data.reference);
+    }
+
+    public showDebug(): void {
+        if (this.mesh) {
+            if (!this._debugText) {
+                this._debugText = DebugText3D.CreateText("", this.mesh.absolutePosition);
+            }
+            let text = "";
+            text += "Chunck : " + this.chunck.i + " " + this.chunck.j + " " + this.chunck.k + "<br>";
+            text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
+            this._debugText.setText(text);
+
+            if (!this._debugOrigin) {
+                this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Green(), this.mesh.absolutePosition);
+            }
+        }
+    }
+
+    public hideDebug(): void {
+        if (this._debugText) {
+            this._debugText.dispose();
+            this._debugText = undefined;
+        }
+        if (this._debugOrigin) {
+            this._debugOrigin.dispose();
+            this._debugOrigin = undefined;
+        }
     }
 }
