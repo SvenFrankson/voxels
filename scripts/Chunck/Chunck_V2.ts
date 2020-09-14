@@ -52,23 +52,47 @@ class Chunck_V2 extends Chunck {
         return this._barycenter;
     }
 
-    public addBrick(brick: Brick): boolean {
+    public canAddBrick(brick: Brick): boolean {
+        let data = BrickDataManager.GetBrickData(brick.reference);
+        let locks = data.getLocks(brick.r);
+        for (let n = 0; n < locks.length / 3; n++) {
+            let ii = locks[3 * n];
+            let jj = locks[3 * n + 1];
+            let kk = locks[3 * n + 2];
+            if (this.getLockSafe(brick.i + ii, brick.j + jj, brick.k + kk)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public canAddBrickDataAt(data: BrickData, i: number, j: number, k: number, r: number): boolean {
+        let locks = data.getLocks(r);
+        for (let n = 0; n < locks.length / 3; n++) {
+            let ii = locks[3 * n];
+            let jj = locks[3 * n + 1];
+            let kk = locks[3 * n + 2];
+            if (this.getLockSafe(i + ii, j + jj, k + kk)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public addBrick(brick: Brick): void {
         let i = this.bricks.indexOf(brick);
         if (i === -1) {
-            let data = BrickDataManager.GetBrickData(brick.reference);
-            let locks = data.getLocks(brick.r);
-            for (let n = 0; n < locks.length / 3; n++) {
-                let ii = locks[3 * n];
-                let jj = locks[3 * n + 1];
-                let kk = locks[3 * n + 2];
-                if (this.getLockSafe(brick.i + ii, brick.j + jj, brick.k + kk)) {
-                    return false;
-                }
-            }
             this.bricks.push(brick);
             brick.chunck = this;
+        }
+    }
+
+    public addBrickSafe(brick: Brick): boolean {
+        if (this.canAddBrick(brick)) {
+            this.addBrick(brick);
             return true;
         }
+        return false;
     }
 
     public getLock(i: number, j: number, k: number): boolean {

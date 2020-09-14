@@ -1,5 +1,7 @@
 var ACTIVE_DEBUG_PLAYER_ACTION = true;
 
+var ADD_BRICK_ANIMATION_DURATION = 1000;
+
 class PlayerActionTemplate {
 
     public static CreateCubeAction(cubeType: CubeType): PlayerAction {
@@ -262,16 +264,42 @@ class PlayerActionTemplate {
         return action;
     }
 
+    private static _animationCanAddBrick(t: number, offsetRef: BABYLON.Vector3): void {
+        if (t > ADD_BRICK_ANIMATION_DURATION * 0.7) {
+            offsetRef.x = 0;
+            offsetRef.z = 0;
+            return;
+        }
+        let q = 0;
+        let d = 70;
+        let max = 0.05;
+        let a = t - Math.floor(t / (2 * d)) * 2 * d;
+        if (a < d) {
+            q = max - 2 * a * max / d;
+        }
+        else {
+            a -= d;
+            q = - max + 2 * a * max / d;
+        }
+        q *= (1 - Math.sqrt(t / (ADD_BRICK_ANIMATION_DURATION * 0.7)));
+        offsetRef.x = Math.cos(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
+        offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
+    }
+
     public static CreateBrickAction(brickReferenceStr: string): PlayerAction {
         let brickReference = Brick.ParseReference(brickReferenceStr);
         let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
+        let previewMeshOffset: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+
         let debugText: DebugText3D;
         let r = 0;
         let ctrlDown = false;
         let anchorX = 0;
         let anchorZ = 0;
+
+        let t = 0;
 
         action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
 
@@ -325,6 +353,11 @@ class PlayerActionTemplate {
         }
 
         action.onUpdate = () => {
+            t += Main.Engine.getDeltaTime();
+            if (t >= ADD_BRICK_ANIMATION_DURATION) {
+                t = 0;
+            }
+
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
 
@@ -340,32 +373,53 @@ class PlayerActionTemplate {
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
                 if (!hitKnob) {
-                    if (!pickInfo.getNormal(true)) {
-                        debugger;
-                    }
                     world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 }
-                world.x = (Math.round(world.x / DX) - anchorX) * DX;
-                world.y = Math.floor(world.y / DY) * DY;
-                world.z = (Math.round(world.z / DX) - anchorZ) * DX;
-                if (world) {
-                    if (!previewMesh) {
-                        previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
-                        previewMesh.isPickable = false;
-                        BrickVertexData.GetFullBrickVertexData(brickReference).then(
-                            data => {
-                                data.applyToMesh(previewMesh);
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                if (coordinates) {
+                    let i = coordinates.coordinates.x - anchorX;
+                    let j = coordinates.coordinates.y;
+                    let k = coordinates.coordinates.z - anchorZ;
+                    if (coordinates.chunck instanceof Chunck_V2) {
+                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, r)) {
+                            PlayerActionTemplate._animationCanAddBrick(t, previewMeshOffset);
+                        }
+                        else {
+                            previewMeshOffset.copyFromFloats(0, 0, 0);
+                        }
+                        if (!previewMesh) {
+                            previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                            previewMesh.isPickable = false;
+                            BrickVertexData.GetFullBrickVertexData(brickReference).then(
+                                data => {
+                                    data.applyToMesh(previewMesh);
+                                }
+                            );
+                            if (brickReference.color.indexOf("transparent") != -1) {
+                                previewMesh.material = Main.cellShadingTransparentMaterial;
                             }
-                        )
+                            else {
+                                previewMesh.material = Main.cellShadingMaterial;
+                            }
+                        }
+                        previewMesh.position.copyFrom(coordinates.chunck.position);
+                        previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
+                        previewMesh.position.addInPlace(previewMeshOffset);
+                        previewMesh.rotation.y = Math.PI / 2 * r;
                     }
-                    previewMesh.position.copyFrom(world);
-                    previewMesh.rotation.y = Math.PI / 2 * r;
                 }
                 else {
                     if (previewMesh) {
                         previewMesh.dispose();
                         previewMesh = undefined;
                     }
+                }
+            }
+            else {
+                if (previewMesh) {
+                    previewMesh.dispose();
+                    previewMesh = undefined;
                 }
             }
 
@@ -409,7 +463,7 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        coordinates.chunck.addBrick(brick);
+                        coordinates.chunck.addBrickSafe(brick);
                         coordinates.chunck.updateBricks();
                     }
                 }
