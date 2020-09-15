@@ -108,29 +108,47 @@ class PlayerTest extends Main {
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Sand));
 		}
-		for (let i = 0; i < BlockList.References.length; i++) {
-			let reference = BlockList.References[i];
-			for (let n = 0; n <= Math.random() * 100; n++) {
-				inventory.addItem(InventoryItem.Block(reference));
+
+		let colors = [
+			"brightyellow",
+			"brightred",
+			"brightblue",
+			"brightgreen",
+			"white",
+			"black"
+		];
+		
+		let bricks = [
+			"brick-1x1",
+			"brick-2x2",
+			"brick-1x4",
+			"brick-2x4",
+			"brick-1x8",
+			"brick-2x8",
+			"plate-1x1",
+			"plate-2x2",
+			"plate-1x4",
+			"plate-2x4",
+			"plate-1x8",
+			"plate-2x8",
+			"plate-4x4"
+		];
+
+		
+		let firstBrick = inventory.items.length;
+		inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
+		player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
+		
+		for (let i = 0; i < colors.length; i++) {
+			let color = colors[i];
+			for (let j = 0; j < bricks.length; j++) {
+				let brickName = bricks[j];
+				let count = Math.floor(Math.random() * 9 + 2);
+				for (let n = 0; n < count; n++) {
+					inventory.addItem(InventoryItem.Brick({ name: brickName, color : color }));
+				}
 			}
 		}
-		let firstBrick = inventory.items.length;
-		for (let i = 0; i < 20; i++) {
-            let colors = BrickDataManager.BrickColorNames;
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
-            let count = Math.floor(Math.random() * 9 + 2);
-            for (let n = 0; n < count; n++) {
-                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
-            }
-        }
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
-		firstBrick = inventory.items.length;
-		inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 6);
-		firstBrick = inventory.items.length;
-		inventory.addItem(InventoryItem.Brick("brick-2x4-brightred"));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 7);
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {

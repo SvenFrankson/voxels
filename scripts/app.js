@@ -613,6 +613,7 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
         BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
         });
@@ -663,13 +664,41 @@ class BrickDataManager {
                     plateData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(plateName, plateData);
                     BrickDataManager.BrickNames.push(plateName);
+                    plateData = new BrickData();
+                    plateName = "plate-4x4";
+                    for (let w = 0; w < 4; w++) {
+                        for (let l = 0; l < 4; l++) {
+                            plateData.knobs.push(w, 1, l);
+                            plateData.covers.push(w, 0, l);
+                            plateData.locks.push(w, 0, l);
+                        }
+                    }
+                    plateData.computeRotatedLocks();
+                    BrickDataManager._BrickDatas.set(plateName, plateData);
+                    BrickDataManager.BrickNames.push(plateName);
+                }
+            }
+        }
+        let locks = [];
+        for (let w = 0; w < 6; w++) {
+            for (let l = 0; l < 2; l++) {
+                for (let h = 0; h < 6; h++) {
+                    locks.push(w, h, l);
                 }
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
-        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData([0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0], [], []));
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData([0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0], [], locks));
+        locks = [];
+        for (let w = 0; w < 6; w++) {
+            for (let l = 0; l < 2; l++) {
+                for (let h = 0; h < 9; h++) {
+                    locks.push(w, h, l);
+                }
+            }
+        }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
-        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData([0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0], [], []));
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData([0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0], [], locks));
     }
     static GetBrickData(brickReference) {
         return BrickDataManager._BrickDatas.get(brickReference.name);
@@ -2378,8 +2407,8 @@ class Chunck_V1 extends Chunck {
 var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
-var ACTIVE_DEBUG_CHUNCK = true;
-var ACTIVE_DEBUG_CHUNCK_LOCK = true;
+var ACTIVE_DEBUG_CHUNCK = false;
+var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
@@ -3887,8 +3916,7 @@ class PlayerActionTemplate {
         offsetRef.x = Math.cos(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
-    static CreateBrickAction(brickReferenceStr) {
-        let brickReference = Brick.ParseReference(brickReferenceStr);
+    static CreateBrickAction(brickReference) {
         let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh;
@@ -3899,7 +3927,7 @@ class PlayerActionTemplate {
         let anchorX = 0;
         let anchorZ = 0;
         let t = 0;
-        action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + brickReference.name + "-" + brickReference.color + "-miniature.png";
         action.onKeyDown = (e) => {
             if (e.code === "ControlLeft") {
                 ctrlDown = true;
@@ -4179,11 +4207,13 @@ var InventorySection;
 class InventoryItem {
     constructor() {
         this.count = 1;
+        this.size = 1;
     }
     static Block(reference) {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
         it.name = reference;
+        it.size = 27;
         it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
@@ -4191,9 +4221,12 @@ class InventoryItem {
     static Brick(reference) {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
-        it.name = reference;
+        it.name = reference.name + "-" + reference.color;
+        it.brickReference = reference;
+        let data = BrickDataManager.GetBrickData(reference);
+        it.size = data.locks.length / 3;
         it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
-        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
+        it.iconUrl = "./datas/textures/miniatures/" + it.name + "-miniature.png";
         return it;
     }
     static Cube(cubeType) {
@@ -4205,10 +4238,21 @@ class InventoryItem {
         return it;
     }
 }
+var BrickSortingOrder;
+(function (BrickSortingOrder) {
+    BrickSortingOrder[BrickSortingOrder["Recent"] = 0] = "Recent";
+    BrickSortingOrder[BrickSortingOrder["TypeAsc"] = 1] = "TypeAsc";
+    BrickSortingOrder[BrickSortingOrder["TypeDesc"] = 2] = "TypeDesc";
+    BrickSortingOrder[BrickSortingOrder["SizeAsc"] = 3] = "SizeAsc";
+    BrickSortingOrder[BrickSortingOrder["SizeDesc"] = 4] = "SizeDesc";
+    BrickSortingOrder[BrickSortingOrder["ColorAsc"] = 5] = "ColorAsc";
+    BrickSortingOrder[BrickSortingOrder["ColorDesc"] = 6] = "ColorDesc";
+})(BrickSortingOrder || (BrickSortingOrder = {}));
 class Inventory {
     constructor(player) {
         this.player = player;
         this.items = [];
+        this._brickSorting = BrickSortingOrder.TypeAsc;
     }
     initialize() {
         Main.MenuManager.inventory = this;
@@ -4254,7 +4298,50 @@ class Inventory {
                 this.update();
             });
         }
-        this._subSections = document.getElementById("sub-sections");
+        this._sortBrick = document.getElementById("sort-brick");
+        this._sortBrickMostRecent = document.getElementById("sort-brick-most-recent");
+        if (this._sortBrickMostRecent) {
+            this._sortBrickMostRecent.addEventListener("pointerup", () => {
+                this._brickSorting = BrickSortingOrder.Recent;
+                this.update();
+            });
+        }
+        this._sortBrickType = document.getElementById("sort-brick-type");
+        if (this._sortBrickType) {
+            this._sortBrickType.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.TypeAsc) {
+                    this._brickSorting = BrickSortingOrder.TypeDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.TypeAsc;
+                }
+                this.update();
+            });
+        }
+        this._sortBrickSize = document.getElementById("sort-brick-size");
+        if (this._sortBrickSize) {
+            this._sortBrickSize.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.SizeAsc) {
+                    this._brickSorting = BrickSortingOrder.SizeDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.SizeAsc;
+                }
+                this.update();
+            });
+        }
+        this._sortBrickColor = document.getElementById("sort-brick-color");
+        if (this._sortBrickColor) {
+            this._sortBrickColor.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.ColorAsc) {
+                    this._brickSorting = BrickSortingOrder.ColorDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.ColorAsc;
+                }
+                this.update();
+            });
+        }
         this._items = document.getElementById("items");
         document.getElementById("inventory-close").addEventListener("pointerup", () => {
             delete Main.MenuManager.currentMenu;
@@ -4328,9 +4415,54 @@ class Inventory {
                 this._sectionBricks.style.color = "white";
             }
         }
-        this.clearSubsections();
         this.clearItems();
         let currentSectionItems = this.getCurrentSectionItems();
+        if (this.currentSection === InventorySection.Brick) {
+            this._sortBrick.style.display = "block";
+            this.unlitButton(this._sortBrickMostRecent);
+            this.unlitButton(this._sortBrickType);
+            this.unlitButton(this._sortBrickSize);
+            this.unlitButton(this._sortBrickColor);
+            if (this._brickSorting === BrickSortingOrder.TypeAsc) {
+                this.hightlightButton(this._sortBrickType);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return a.brickReference.name.localeCompare(b.brickReference.name);
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.TypeDesc) {
+                this.hightlightButton(this._sortBrickType);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return -a.brickReference.name.localeCompare(b.brickReference.name);
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.SizeAsc) {
+                this.hightlightButton(this._sortBrickSize);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return a.size - b.size;
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.SizeDesc) {
+                this.hightlightButton(this._sortBrickSize);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return b.size - a.size;
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.ColorAsc) {
+                this.hightlightButton(this._sortBrickColor);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return a.brickReference.color.localeCompare(b.brickReference.color);
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.ColorDesc) {
+                this.hightlightButton(this._sortBrickColor);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return -a.brickReference.color.localeCompare(b.brickReference.color);
+                });
+            }
+        }
+        else {
+            this._sortBrick.style.display = "none";
+        }
         for (let i = 0; i < currentSectionItems.length; i++) {
             let it = currentSectionItems[i];
             let itemDiv = document.createElement("div");
@@ -4352,11 +4484,16 @@ class Inventory {
             this._items.appendChild(itemDiv);
         }
     }
-    clearSubsections() {
-        this._subSections.innerHTML = "";
-    }
     clearItems() {
         this._items.innerHTML = "";
+    }
+    hightlightButton(button) {
+        button.style.background = "white";
+        button.style.color = "black";
+    }
+    unlitButton(button) {
+        button.style.background = "black";
+        button.style.color = "white";
     }
 }
 /// <reference path="../../lib/babylon.d.ts"/>
@@ -4811,8 +4948,9 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    //this.runAllScreenShots()
-                    await this.createBrick("windshield-6x2x2-brightbluetransparent");
+                    this.runManyScreenShots();
+                    //this.runAllScreenShots();
+                    //await this.createBrick("windshield-6x2x2-brightbluetransparent");
                 }, 100);
             }
             else {
@@ -4820,6 +4958,38 @@ class Miniature extends Main {
             }
         };
         loop();
+    }
+    async runManyScreenShots() {
+        let colors = [
+            "brightyellow",
+            "brightred",
+            "brightblue",
+            "brightgreen",
+            "white",
+            "black"
+        ];
+        let bricks = [
+            "brick-1x1",
+            "brick-2x2",
+            "brick-1x4",
+            "brick-2x4",
+            "brick-1x8",
+            "brick-2x8",
+            "plate-1x1",
+            "plate-2x2",
+            "plate-1x4",
+            "plate-2x4",
+            "plate-1x8",
+            "plate-2x8",
+            "plate-4x4"
+        ];
+        for (let i = 0; i < bricks.length; i++) {
+            let name = bricks[i];
+            for (let j = 0; j < colors.length; j++) {
+                let color = colors[j];
+                await this.createBrick(name + "-" + color);
+            }
+        }
     }
     async runAllScreenShots() {
         let colors = BrickDataManager.BrickColorNames;
@@ -5071,29 +5241,42 @@ class PlayerTest extends Main {
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Sand));
         }
-        for (let i = 0; i < BlockList.References.length; i++) {
-            let reference = BlockList.References[i];
-            for (let n = 0; n <= Math.random() * 100; n++) {
-                inventory.addItem(InventoryItem.Block(reference));
-            }
-        }
+        let colors = [
+            "brightyellow",
+            "brightred",
+            "brightblue",
+            "brightgreen",
+            "white",
+            "black"
+        ];
+        let bricks = [
+            "brick-1x1",
+            "brick-2x2",
+            "brick-1x4",
+            "brick-2x4",
+            "brick-1x8",
+            "brick-2x8",
+            "plate-1x1",
+            "plate-2x2",
+            "plate-1x4",
+            "plate-2x4",
+            "plate-1x8",
+            "plate-2x8",
+            "plate-4x4"
+        ];
         let firstBrick = inventory.items.length;
-        for (let i = 0; i < 20; i++) {
-            let colors = BrickDataManager.BrickColorNames;
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
-            let count = Math.floor(Math.random() * 9 + 2);
-            for (let n = 0; n < count; n++) {
-                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+        inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
+        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
+        for (let i = 0; i < colors.length; i++) {
+            let color = colors[i];
+            for (let j = 0; j < bricks.length; j++) {
+                let brickName = bricks[j];
+                let count = Math.floor(Math.random() * 9 + 2);
+                for (let n = 0; n < count; n++) {
+                    inventory.addItem(InventoryItem.Brick({ name: brickName, color: color }));
+                }
             }
         }
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 5);
-        firstBrick = inventory.items.length;
-        inventory.addItem(InventoryItem.Brick("windshield-6x2x2-brightbluetransparent"));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 6);
-        firstBrick = inventory.items.length;
-        inventory.addItem(InventoryItem.Brick("brick-2x4-brightred"));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 7);
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
@@ -5269,7 +5452,7 @@ class TileTest extends Main {
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {
-                inventory.addItem(InventoryItem.Brick(brickName + "-" + color));
+                inventory.addItem(InventoryItem.Brick({ name: brickName, color: color }));
             }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);

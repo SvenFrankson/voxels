@@ -11,6 +11,8 @@ class InventoryItem {
     public subSection: string;
     public count: number = 1;
     public name: string;
+    public brickReference: IBrickReference;
+    public size: number = 1;
     public playerAction: PlayerAction;
     public iconUrl: string;
 
@@ -18,17 +20,21 @@ class InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
         it.name = reference;
+        it.size = 27;
         it.playerAction = PlayerActionTemplate.CreateBlockAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
 
-    public static Brick(reference: string): InventoryItem {
+    public static Brick(reference: IBrickReference): InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
-        it.name = reference;
+        it.name = reference.name + "-" + reference.color;
+        it.brickReference = reference;
+        let data = BrickDataManager.GetBrickData(reference);
+        it.size = data.locks.length / 3;
         it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
-        it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
+        it.iconUrl = "./datas/textures/miniatures/" + it.name + "-miniature.png";
         return it;
     }
 
@@ -40,6 +46,16 @@ class InventoryItem {
         it.iconUrl = "./datas/textures/miniatures/" + ChunckUtils.CubeTypeToString(cubeType) + "-miniature.png";
         return it;
     }
+}
+
+enum BrickSortingOrder {
+    Recent,
+    TypeAsc,
+    TypeDesc,
+    SizeAsc,
+    SizeDesc,
+    ColorAsc,
+    ColorDesc
 }
 
 class Inventory {
@@ -54,7 +70,14 @@ class Inventory {
     private _sectionBlocks: HTMLButtonElement;
     private _sectionBricks: HTMLButtonElement;
 
-    private _subSections: HTMLDivElement;
+    private _brickSorting: BrickSortingOrder = BrickSortingOrder.TypeAsc;
+
+    private _sortBrick: HTMLDivElement;
+    private _sortBrickMostRecent: HTMLButtonElement;
+    private _sortBrickType: HTMLButtonElement;
+    private _sortBrickSize: HTMLButtonElement;
+    private _sortBrickColor: HTMLButtonElement;
+
     private _items: HTMLDivElement;
 
     private _draggedItem: InventoryItem;
@@ -112,7 +135,52 @@ class Inventory {
                 this.update();
             });
         }
-        this._subSections = document.getElementById("sub-sections") as HTMLDivElement;
+
+        this._sortBrick = document.getElementById("sort-brick") as HTMLDivElement;
+        this._sortBrickMostRecent = document.getElementById("sort-brick-most-recent") as HTMLButtonElement;
+        if (this._sortBrickMostRecent) {
+            this._sortBrickMostRecent.addEventListener("pointerup", () => {
+                this._brickSorting = BrickSortingOrder.Recent;
+                this.update();
+            });
+        }
+        this._sortBrickType = document.getElementById("sort-brick-type") as HTMLButtonElement;
+        if (this._sortBrickType) {
+            this._sortBrickType.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.TypeAsc) {
+                    this._brickSorting = BrickSortingOrder.TypeDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.TypeAsc;
+                }
+                this.update();
+            });
+        }
+        this._sortBrickSize = document.getElementById("sort-brick-size") as HTMLButtonElement;
+        if (this._sortBrickSize) {
+            this._sortBrickSize.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.SizeAsc) {
+                    this._brickSorting = BrickSortingOrder.SizeDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.SizeAsc;
+                }
+                this.update();
+            });
+        }
+        this._sortBrickColor = document.getElementById("sort-brick-color") as HTMLButtonElement;
+        if (this._sortBrickColor) {
+            this._sortBrickColor.addEventListener("pointerup", () => {
+                if (this._brickSorting === BrickSortingOrder.ColorAsc) {
+                    this._brickSorting = BrickSortingOrder.ColorDesc;
+                }
+                else {
+                    this._brickSorting = BrickSortingOrder.ColorAsc;
+                }
+                this.update();
+            });
+        }
+
         this._items = document.getElementById("items") as HTMLDivElement;
         document.getElementById("inventory-close").addEventListener("pointerup", () => {
             delete Main.MenuManager.currentMenu;
@@ -145,6 +213,7 @@ class Inventory {
                 sectionItems.push(this.items[i]);
             }
         }
+
         return sectionItems;
     }
 
@@ -190,9 +259,68 @@ class Inventory {
             }
         }
 
-        this.clearSubsections();
         this.clearItems();
         let currentSectionItems = this.getCurrentSectionItems();
+
+        if (this.currentSection === InventorySection.Brick) {
+            this._sortBrick.style.display = "block";
+            this.unlitButton(this._sortBrickMostRecent);
+            this.unlitButton(this._sortBrickType);
+            this.unlitButton(this._sortBrickSize);
+            this.unlitButton(this._sortBrickColor);
+            if (this._brickSorting === BrickSortingOrder.TypeAsc) {
+                this.hightlightButton(this._sortBrickType);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return a.brickReference.name.localeCompare(b.brickReference.name);
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.TypeDesc) {
+                this.hightlightButton(this._sortBrickType);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return - a.brickReference.name.localeCompare(b.brickReference.name);
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.SizeAsc) {
+                this.hightlightButton(this._sortBrickSize);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return a.size - b.size;
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.SizeDesc) {
+                this.hightlightButton(this._sortBrickSize);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return b.size - a.size;
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.ColorAsc) {
+                this.hightlightButton(this._sortBrickColor);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return a.brickReference.color.localeCompare(b.brickReference.color);
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.ColorDesc) {
+                this.hightlightButton(this._sortBrickColor);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return - a.brickReference.color.localeCompare(b.brickReference.color);
+                    }
+                )
+            }
+        }
+        else {
+            this._sortBrick.style.display = "none";
+        }
+
         for (let i = 0; i < currentSectionItems.length; i++) {
             let it = currentSectionItems[i];
             let itemDiv = document.createElement("div");
@@ -217,11 +345,17 @@ class Inventory {
         }
     }
 
-    public clearSubsections(): void {
-        this._subSections.innerHTML = "";
-    }
-
     public clearItems(): void {
         this._items.innerHTML = "";
+    }
+
+    public hightlightButton(button: HTMLButtonElement): void {
+        button.style.background = "white";
+        button.style.color = "black";
+    }
+
+    public unlitButton(button: HTMLButtonElement): void {
+        button.style.background = "black";
+        button.style.color = "white";
     }
 }

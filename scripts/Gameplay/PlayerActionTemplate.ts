@@ -286,8 +286,7 @@ class PlayerActionTemplate {
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
 
-    public static CreateBrickAction(brickReferenceStr: string): PlayerAction {
-        let brickReference = Brick.ParseReference(brickReferenceStr);
+    public static CreateBrickAction(brickReference: IBrickReference): PlayerAction {
         let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
@@ -301,7 +300,7 @@ class PlayerActionTemplate {
 
         let t = 0;
 
-        action.iconUrl = "./datas/textures/miniatures/" + brickReferenceStr + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + brickReference.name + "-" + brickReference.color + "-miniature.png";
 
         action.onKeyDown = (e: KeyboardEvent) => {
             if (e.code === "ControlLeft") {

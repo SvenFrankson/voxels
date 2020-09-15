@@ -106,6 +106,7 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
         BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
 
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
@@ -160,21 +161,51 @@ class BrickDataManager {
                     plateData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(plateName, plateData);
                     BrickDataManager.BrickNames.push(plateName);
+                    
+                    plateData = new BrickData();
+                    plateName = "plate-4x4";
+                    for (let w = 0; w < 4; w++) {
+                        for (let l = 0; l < 4; l++) {
+                            plateData.knobs.push(w, 1, l);
+                            plateData.covers.push(w, 0, l);
+                            plateData.locks.push(w, 0, l);
+                        }
+                    }
+                    plateData.computeRotatedLocks();
+                    BrickDataManager._BrickDatas.set(plateName, plateData);
+                    BrickDataManager.BrickNames.push(plateName);
                 }
             }
         }
 
+        let locks = [];
+        for (let w = 0; w < 6; w++) {
+            for (let l = 0; l < 2; l++) {
+                for (let h = 0; h < 6; h++) {
+                    locks.push(w, h, l);
+                }
+            }
+        }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
         BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(
             [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
             [],
-            []
+            locks
         ));
+
+        locks = [];
+        for (let w = 0; w < 6; w++) {
+            for (let l = 0; l < 2; l++) {
+                for (let h = 0; h < 9; h++) {
+                    locks.push(w, h, l);
+                }
+            }
+        }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
         BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(
             [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
             [],
-            []
+            locks
         ));
     }
 

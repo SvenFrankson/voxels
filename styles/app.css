@@ -15,8 +15,8 @@ html, body {
 
 #debug-layer {
     position: fixed;
-    top: 50px;
-    left: 150px;
+    top: 10px;
+    left: 350px;
     z-index: 42;
     color: magenta;
     font-weight: bold;
@@ -121,8 +121,8 @@ a {
     text-align: right;
     position: absolute;
     width: 300px;
-    bottom: 10px;
-    right: 10px;
+    top: 10px;
+    left: 10px;
     padding: 10px;
     color: white;
     font-family: "Arial";
@@ -141,9 +141,11 @@ a {
 
 #player-actions {
     position: fixed;
-    left: 10px;
-    top: 10px;
-    background-color: rgba(0, 0, 0, 30%);
+    left: 0px;
+    bottom: 0px;
+    padding-bottom: 20px;
+    padding-left: 10px;
+    background-color: rgba(0, 0, 0, 50%);
     z-index: 2;
 }
 
@@ -166,8 +168,8 @@ a {
     display: inline-block;
     vertical-align: middle;
     border: 1px solid white;
-    width: 40px;
-    height: 40px;
+    width: 64px;
+    height: 64px;
     margin: 0px 0px 0px 10px;
     background-size: cover;
 }
