@@ -443,7 +443,6 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let data = BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
-            console.log(locks);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
                 let jj = locks[3 * n + 1];

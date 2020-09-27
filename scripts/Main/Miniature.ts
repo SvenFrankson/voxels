@@ -29,7 +29,8 @@ class Miniature extends Main {
     public async initialize(): Promise<void> {
         super.initialize();
         await BrickVertexData.InitializeData();
-        await BrickDataManager.InitializeData();
+        BrickDataManager.InitializeProceduralData();
+        await BrickDataManager.InitializeDataFromFile();
 
 		Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
 
@@ -63,12 +64,23 @@ class Miniature extends Main {
 			"black"
 		];
 		
+		/*
 		let bricks = [];
 		BrickDataManager.BrickNames.forEach(n => {
 			if (n.indexOf("slope") != -1) {
 				bricks.push(n);
 			}
-		})
+		});
+		*/
+
+		let bricks = [
+			"cone-1x1",
+			"plateRound-1x1",
+			"brickRound-1x1",
+			"brickRound-2x2",
+			"plateRound-2x2",
+			"tileRound-2x2"
+		];
 
 		for (let i = 0; i < bricks.length; i++) {
 			let name = bricks[i];

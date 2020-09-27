@@ -67,6 +67,9 @@ class BrickVertexData {
                                 let sizeString = mesh.name.split("-")[1];
                                 let lodString = mesh.name.split("-")[2];
                                 BrickVertexData._BrickVertexDatas.set(mesh.name, BABYLON.VertexData.ExtractFromMesh(mesh));
+                                if (name === "tileRound") {
+                                    BrickVertexData._BrickVertexDatas.set("plateRound-" + sizeString + "-" + lodString, BABYLON.VertexData.ExtractFromMesh(mesh));
+                                }
                                 mesh.dispose();
                             }
                         }
@@ -125,6 +128,13 @@ class BrickVertexData {
         return data;
     }
 
+    private static _GetFileNameFromType(type: string): string {
+        if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "cone") {
+            return "round";
+        }
+        return type;
+    }
+
     private static async _LoadBrickVertexData(brickName: string, lod: number): Promise<BABYLON.VertexData> {
         let type = brickName.split("-")[0];
         let size = brickName.split("-")[1];
@@ -151,7 +161,8 @@ class BrickVertexData {
             }
         }
         else {
-            await BrickVertexData._LoadVertexData(type);
+            let fileName = BrickVertexData._GetFileNameFromType(type);
+            await BrickVertexData._LoadVertexData(fileName);
             return undefined;
         }
     }

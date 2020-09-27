@@ -1,3 +1,5 @@
+var ACTIVE_DEBUG_CHUNCK_INTERSECTION = false;
+
 class RayIntersection {
 
     constructor(
@@ -102,13 +104,13 @@ class Intersections3D {
             if (Intersections3D.SphereCube(centerWorld, radius, chunckMin, chunckMax)) {
                 let center = centerWorld.subtract(chunck.position);
                 let min = center.clone();
-                min.x = Math.floor(min.x / 1.6 - radius);
-                min.y = Math.floor(min.y / 0.96 - radius);
-                min.z = Math.floor(min.z / 1.6 - radius);
+                min.x = Math.floor((min.x - radius) / 1.6);
+                min.y = Math.floor((min.y - radius) / 0.96);
+                min.z = Math.floor((min.z - radius) / 1.6);
                 let max = center.clone();
-                max.x = Math.ceil(max.x / 1.6 + radius);
-                max.y = Math.ceil(max.y / 0.96 + radius);
-                max.z = Math.ceil(max.z / 1.6 + radius);
+                max.x = Math.ceil((max.x + radius) / 1.6);
+                max.y = Math.ceil((max.y + radius) / 0.96);
+                max.z = Math.ceil((max.z + radius) / 1.6);
                 for (let i = min.x; i <= max.x; i += 1) {
                     for (let j = min.y; j <= max.y; j += 1) {
                         for (let k = min.z; k <= max.z; k += 1) {
@@ -120,33 +122,43 @@ class Intersections3D {
                                     new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8)
                                 );
                                 if (intersection) {
-                                    //let debugBox = DebugBox.CreateBoxP0P1(new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8), BABYLON.Color3.Purple(), 100);
-                                    //debugBox.mesh.position.addInPlace(chunck.position);
-                                    //debugBox.mesh.scaling.scaleInPlace(1.01);
+                                    if (ACTIVE_DEBUG_CHUNCK_INTERSECTION) {
+                                        DebugCross.CreateCross(0.5, BABYLON.Color3.Red(), intersection.point, 100);
+                                    }
                                     intersection.point.addInPlace(chunck.position);
-                                    let debugPoint = DebugCross.CreateCross(0.5, BABYLON.Color3.Red(), intersection.point, 100);
                                     intersections.push(intersection);
                                 }
                             }
                         }
                     }
                 }
-                for (let i = 0; i < chunck.bricks.length; i++) {
-                    let debugPointCenterWorld = DebugCross.CreateCross(1.5, BABYLON.Color3.Yellow(), centerWorld, 30);
-                    let brick = chunck.bricks[i];
-                    if (brick.mesh) {
-                        let bbox = brick.mesh.getBoundingInfo();
-                        let intersection = Intersections3D.SphereCube(
-                            centerWorld,
-                            radius,
-                            bbox.boundingBox.minimumWorld,
-                            bbox.boundingBox.maximumWorld
-                        );
-                        if (intersection) {
-                            let debugBox = DebugBox.CreateBoxP0P1(bbox.boundingBox.minimumWorld, bbox.boundingBox.maximumWorld, BABYLON.Color3.Purple(), 30);
-                            debugBox.mesh.scaling.scaleInPlace(1);
-                            let debugPoint = DebugCross.CreateCross(1.5, BABYLON.Color3.Red(), intersection.point, 100);
-                            intersections.push(intersection);
+
+                min.copyFrom(center);
+                min.x = Math.floor((min.x - radius) / DX);
+                min.y = Math.floor((min.y - radius) / DY);
+                min.z = Math.floor((min.z - radius) / DX);
+                max.copyFrom(center);
+                max.x = Math.ceil((max.x + radius) / DX);
+                max.y = Math.ceil((max.y + radius) / DY);
+                max.z = Math.ceil((max.z + radius) / DX);
+                for (let i = min.x; i <= max.x; i += 1) {
+                    for (let j = min.y; j <= max.y; j += 1) {
+                        for (let k = min.z; k <= max.z; k += 1) {
+                            if (chunck.getLockSafe(i, j, k)) {
+                                let intersection = Intersections3D.SphereCube(
+                                    center,
+                                    radius,
+                                    new BABYLON.Vector3(i * DX - DX05, j * DY, k * DX - DX05),
+                                    new BABYLON.Vector3((i + 1) * DX - DX05, (j + 1) * DY, (k + 1) * DX - DX05)
+                                );
+                                if (intersection) {
+                                    if (ACTIVE_DEBUG_CHUNCK_INTERSECTION) {
+                                        DebugCross.CreateCross(0.5, BABYLON.Color3.Red(), intersection.point, 100);
+                                    }
+                                    intersection.point.addInPlace(chunck.position);
+                                    intersections.push(intersection);
+                                }
+                            }
                         }
                     }
                 }

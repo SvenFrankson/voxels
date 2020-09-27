@@ -1,0 +1,88 @@
+Exporter version: 6.4.3, Blender version: 2.82 (sub 7)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		Inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		Keep Z-up r-handed  :  no
+		Texture directory   :  C:\Users\staton\Documents\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  brickRound-1x1-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  146
+		num normals        :  146
+		num tangents       :  0
+		num uvs            :  292
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  144
+	processing begun of mesh:  knob-lod1
+		WARNING: No materials have been assigned: 
+		num positions      :  25
+		num normals        :  25
+		num tangents       :  0
+		num uvs            :  50
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  24
+	processing begun of mesh:  knob-lod2
+		WARNING: No materials have been assigned: 
+		num positions      :  12
+		num normals        :  12
+		num tangents       :  0
+		num uvs            :  24
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  10
+	processing begun of mesh:  cone-1x1-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  146
+		num normals        :  146
+		num tangents       :  0
+		num uvs            :  292
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  144
+	processing begun of mesh:  brickRound-2x2-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  98
+		num normals        :  98
+		num tangents       :  0
+		num uvs            :  196
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  96
+	processing begun of mesh:  tileRound-1x1-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  146
+		num normals        :  146
+		num tangents       :  0
+		num uvs            :  292
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  144
+	processing begun of mesh:  tileRound-2x2-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  98
+		num normals        :  98
+		num tangents       :  0
+		num uvs            :  196
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  96
+========= Writing of JSON file started =========
+	writing mesh:  brickRound-1x1-lod0
+	writing mesh:  knob-lod1
+	writing mesh:  knob-lod2
+	writing mesh:  cone-1x1-lod0
+	writing mesh:  brickRound-2x2-lod0
+	writing mesh:  tileRound-1x1-lod0
+	writing mesh:  tileRound-2x2-lod0
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.064 secs

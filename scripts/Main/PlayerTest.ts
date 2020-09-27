@@ -11,7 +11,8 @@ class PlayerTest extends Main {
 		await super.initializeScene();
 		await ChunckVertexData.InitializeData();
         await BrickVertexData.InitializeData();
-        await BrickDataManager.InitializeData();
+        BrickDataManager.InitializeProceduralData();
+        await BrickDataManager.InitializeDataFromFile();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
 		let savedTerrainString = window.localStorage.getItem("player-test");
@@ -131,7 +132,13 @@ class PlayerTest extends Main {
 			"plate-2x4",
 			"plate-1x8",
 			"plate-2x8",
-			"plate-4x4"
+			"plate-4x4",
+			"cone-1x1",
+			"plateRound-1x1",
+			"brickRound-1x1",
+			"brickRound-2x2",
+			"plateRound-2x2",
+			"tileRound-2x2"
 		];
 		BrickDataManager.BrickNames.forEach(n => {
 			if (n.indexOf("slope") != -1) {
@@ -158,7 +165,7 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
-            Main.Camera.position.z = - 3;
+            //Main.Camera.position.z = - 3;
 		}
 		return;
 		setTimeout(

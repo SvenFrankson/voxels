@@ -1,7 +1,11 @@
 var TILE_VERTEX_SIZE = 9;
 var TILE_SIZE = 8;
 var DX = 0.8;
+var DX05 = DX / 2;
+var DX2 = DX * 2;
 var DY = 0.32;
+var DY05 = DY / 2;
+var DY2 = DY * 2;
 var TILE_LENGTH = TILE_SIZE * DX * 2;
 
 interface TileData {

@@ -11,7 +11,8 @@ class TileTest extends Main {
         await super.initializeScene();
         await TerrainTileVertexData.InitializeData();
         await BrickVertexData.InitializeData();
-        await BrickDataManager.InitializeData();
+        BrickDataManager.InitializeProceduralData();
+        await BrickDataManager.InitializeDataFromFile();
 
         let player = new Player();
         player.position.y = 30;
