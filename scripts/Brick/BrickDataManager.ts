@@ -207,6 +207,34 @@ class BrickDataManager {
             [],
             locks
         ));
+
+        let slopeLValues = [1, 2, 4, 6, 8];
+        let slopeWValues = [2, 4];
+        let slopeHValues = [1, 2, 4];
+        for (let i = 0; i < slopeLValues.length; i++) {
+            let L = slopeLValues[i];
+            for (let j = 0; j < slopeWValues.length; j++) {
+                let W = slopeWValues[j];
+                for (let k = 0; k < slopeHValues.length; k++) {
+                    let H = slopeHValues[k];
+                    // Slope
+                    let brickData = new BrickData();
+                    let brickName = "slope" + H + "-" + W + "x" + L;
+                    for (let l = 0; l < L; l++) {
+                        brickData.knobs.push(W - 1, H * 3, l);
+                        for (let w = 0; w < W; w++) {
+                            for (let h = 0; h < H * 3; h++) {
+                                brickData.covers.push(w, h, l);
+                                brickData.locks.push(w, h, l);
+                            }
+                        }
+                    }
+                    brickData.computeRotatedLocks();
+                    BrickDataManager._BrickDatas.set(brickName, brickData);
+                    BrickDataManager.BrickNames.push(brickName);
+                }
+            }
+        }
     }
 
     public static GetBrickData(brickReference: IBrickReference): BrickData {

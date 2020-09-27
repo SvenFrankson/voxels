@@ -699,6 +699,33 @@ class BrickDataManager {
         }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
         BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData([0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0], [], locks));
+        let slopeLValues = [1, 2, 4, 6, 8];
+        let slopeWValues = [2, 4];
+        let slopeHValues = [1, 2, 4];
+        for (let i = 0; i < slopeLValues.length; i++) {
+            let L = slopeLValues[i];
+            for (let j = 0; j < slopeWValues.length; j++) {
+                let W = slopeWValues[j];
+                for (let k = 0; k < slopeHValues.length; k++) {
+                    let H = slopeHValues[k];
+                    // Slope
+                    let brickData = new BrickData();
+                    let brickName = "slope" + H + "-" + W + "x" + L;
+                    for (let l = 0; l < L; l++) {
+                        brickData.knobs.push(W - 1, H * 3, l);
+                        for (let w = 0; w < W; w++) {
+                            for (let h = 0; h < H * 3; h++) {
+                                brickData.covers.push(w, h, l);
+                                brickData.locks.push(w, h, l);
+                            }
+                        }
+                    }
+                    brickData.computeRotatedLocks();
+                    BrickDataManager._BrickDatas.set(brickName, brickData);
+                    BrickDataManager.BrickNames.push(brickName);
+                }
+            }
+        }
     }
     static GetBrickData(brickReference) {
         return BrickDataManager._BrickDatas.get(brickReference.name);
@@ -782,6 +809,25 @@ class BrickVertexData {
         data.normals = normals;
         return data;
     }
+    static async GenerateFromSlopeTemplate(w, h, l, lod) {
+        let baseData;
+        let baseBrickName = "slope" + h + "-" + w + "x1";
+        baseData = await BrickVertexData.GetBrickVertexData(baseBrickName, lod);
+        let data = new BABYLON.VertexData();
+        let positions = [...baseData.positions];
+        let indices = [...baseData.indices];
+        let normals = [...baseData.normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let z = positions[3 * i + 2];
+            if (z > 0) {
+                positions[3 * i + 2] = z + (l - 1) * DX;
+            }
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
     static async _LoadBrickVertexData(brickName, lod) {
         let type = brickName.split("-")[0];
         let size = brickName.split("-")[1];
@@ -794,6 +840,18 @@ class BrickVertexData {
             let w = parseInt(size.split("x")[0]);
             let l = parseInt(size.split("x")[1]);
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
+        }
+        else if (type.indexOf("slope") != -1) {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            if (l === 1) {
+                await BrickVertexData._LoadVertexData("slope-template");
+                return undefined;
+            }
+            else {
+                let h = parseInt(type.replace("slope", ""));
+                return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
+            }
         }
         else {
             await BrickVertexData._LoadVertexData(type);
@@ -834,24 +892,24 @@ class BrickVertexData {
             }
         }
     }
-    static async GetBrickVertexData(brickReference, lod) {
-        let data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+    static async GetBrickVertexData(brickName, lod) {
+        let data = BrickVertexData._BrickVertexDatas.get(brickName + "-lod" + lod);
         if (!data) {
-            data = await BrickVertexData._LoadBrickVertexData(brickReference.name, lod);
+            data = await BrickVertexData._LoadBrickVertexData(brickName, lod);
             if (data) {
-                BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+                BrickVertexData._BrickVertexDatas.set(brickName + "-lod" + lod, data);
             }
             else {
-                data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+                data = BrickVertexData._BrickVertexDatas.get(brickName + "-lod" + lod);
                 if (!data) {
-                    console.warn("GetBrickVertexData failed for brick " + brickReference + " at lod " + lod);
+                    console.warn("GetBrickVertexData failed for brick " + brickName + " at lod " + lod);
                 }
             }
         }
         return data;
     }
     static async GetFullBrickVertexData(brickReference) {
-        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference, 0);
+        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
@@ -3356,6 +3414,7 @@ class DebugMesh {
                 }
             }
         };
+        this.creationTime = performance.now();
     }
     dispose() {
         if (this.mesh) {
@@ -3422,6 +3481,13 @@ class DebugCrosses extends DebugMesh {
     }
 }
 class DebugBox extends DebugMesh {
+    static CreateBoxP0P1(p0, p1, color, duration = -1) {
+        let width = Math.abs(p0.x - p1.x);
+        let height = Math.abs(p0.y - p1.y);
+        let depth = Math.abs(p0.z - p1.z);
+        let position = p0.add(p1).scaleInPlace(0.5);
+        return DebugBox.CreateBox(width, height, depth, color, position, duration);
+    }
     static CreateBox(width, height, depth, color, position, duration = -1) {
         let debugBox = new DebugBox();
         debugBox.mesh = new BABYLON.Mesh("DebugMesh");
@@ -3575,7 +3641,7 @@ class Player extends BABYLON.Mesh {
         };
         this.playerActionManager = new PlayerActionManager(this);
         // debug
-        //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+        BABYLON.VertexData.CreateSphere({ diameter: 1 }).applyToMesh(this);
     }
     get aimedObject() {
         return this._aimedObject;
@@ -4968,21 +5034,12 @@ class Miniature extends Main {
             "white",
             "black"
         ];
-        let bricks = [
-            "brick-1x1",
-            "brick-2x2",
-            "brick-1x4",
-            "brick-2x4",
-            "brick-1x8",
-            "brick-2x8",
-            "plate-1x1",
-            "plate-2x2",
-            "plate-1x4",
-            "plate-2x4",
-            "plate-1x8",
-            "plate-2x8",
-            "plate-4x4"
-        ];
+        let bricks = [];
+        BrickDataManager.BrickNames.forEach(n => {
+            if (n.indexOf("slope") != -1) {
+                bricks.push(n);
+            }
+        });
         for (let i = 0; i < bricks.length; i++) {
             let name = bricks[i];
             for (let j = 0; j < colors.length; j++) {
@@ -5264,6 +5321,11 @@ class PlayerTest extends Main {
             "plate-2x8",
             "plate-4x4"
         ];
+        BrickDataManager.BrickNames.forEach(n => {
+            if (n.indexOf("slope") != -1) {
+                bricks.push(n);
+            }
+        });
         let firstBrick = inventory.items.length;
         inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
@@ -5281,6 +5343,7 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
+            Main.Camera.position.z = -3;
         }
         return;
         setTimeout(async () => {
@@ -5634,11 +5697,13 @@ class Intersections3D {
         }
         return intersections;
     }
-    static SphereChunck_V2(center, radius, chunck) {
+    static SphereChunck_V2(centerWorld, radius, chunck) {
         let intersections = [];
         if (!chunck.isEmpty) {
-            center = center.subtract(chunck.position);
-            if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
+            let chunckMin = new BABYLON.Vector3(chunck.barycenter.x - CHUNCK_SIZE * 1.6 * 0.5, chunck.barycenter.y - CHUNCK_SIZE * 0.96 * 0.5, chunck.barycenter.z - CHUNCK_SIZE * 1.6 * 0.5);
+            let chunckMax = new BABYLON.Vector3(chunck.barycenter.x + CHUNCK_SIZE * 1.6 * 0.5, chunck.barycenter.y + (CHUNCK_SIZE + 1) * 0.96 * 0.5, chunck.barycenter.z + CHUNCK_SIZE * 1.6 * 0.5);
+            if (Intersections3D.SphereCube(centerWorld, radius, chunckMin, chunckMax)) {
+                let center = centerWorld.subtract(chunck.position);
                 let min = center.clone();
                 min.x = Math.floor(min.x / 1.6 - radius);
                 min.y = Math.floor(min.y / 0.96 - radius);
@@ -5653,10 +5718,28 @@ class Intersections3D {
                             if (chunck.getCube(i, j, k)) {
                                 let intersection = Intersections3D.SphereCube(center, radius, new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8));
                                 if (intersection) {
+                                    //let debugBox = DebugBox.CreateBoxP0P1(new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8), BABYLON.Color3.Purple(), 100);
+                                    //debugBox.mesh.position.addInPlace(chunck.position);
+                                    //debugBox.mesh.scaling.scaleInPlace(1.01);
                                     intersection.point.addInPlace(chunck.position);
+                                    let debugPoint = DebugCross.CreateCross(0.5, BABYLON.Color3.Red(), intersection.point, 100);
                                     intersections.push(intersection);
                                 }
                             }
+                        }
+                    }
+                }
+                for (let i = 0; i < chunck.bricks.length; i++) {
+                    let debugPointCenterWorld = DebugCross.CreateCross(1.5, BABYLON.Color3.Yellow(), centerWorld, 30);
+                    let brick = chunck.bricks[i];
+                    if (brick.mesh) {
+                        let bbox = brick.mesh.getBoundingInfo();
+                        let intersection = Intersections3D.SphereCube(centerWorld, radius, bbox.boundingBox.minimumWorld, bbox.boundingBox.maximumWorld);
+                        if (intersection) {
+                            let debugBox = DebugBox.CreateBoxP0P1(bbox.boundingBox.minimumWorld, bbox.boundingBox.maximumWorld, BABYLON.Color3.Purple(), 30);
+                            debugBox.mesh.scaling.scaleInPlace(1);
+                            let debugPoint = DebugCross.CreateCross(1.5, BABYLON.Color3.Red(), intersection.point, 100);
+                            intersections.push(intersection);
                         }
                     }
                 }

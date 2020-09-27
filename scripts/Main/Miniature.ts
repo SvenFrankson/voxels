@@ -63,21 +63,12 @@ class Miniature extends Main {
 			"black"
 		];
 		
-		let bricks = [
-			"brick-1x1",
-			"brick-2x2",
-			"brick-1x4",
-			"brick-2x4",
-			"brick-1x8",
-			"brick-2x8",
-			"plate-1x1",
-			"plate-2x2",
-			"plate-1x4",
-			"plate-2x4",
-			"plate-1x8",
-			"plate-2x8",
-			"plate-4x4"
-		];
+		let bricks = [];
+		BrickDataManager.BrickNames.forEach(n => {
+			if (n.indexOf("slope") != -1) {
+				bricks.push(n);
+			}
+		})
 
 		for (let i = 0; i < bricks.length; i++) {
 			let name = bricks[i];

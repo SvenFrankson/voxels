@@ -133,7 +133,11 @@ class PlayerTest extends Main {
 			"plate-2x8",
 			"plate-4x4"
 		];
-
+		BrickDataManager.BrickNames.forEach(n => {
+			if (n.indexOf("slope") != -1) {
+				bricks.push(n);
+			}
+		});
 		
 		let firstBrick = inventory.items.length;
 		inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
@@ -154,6 +158,7 @@ class PlayerTest extends Main {
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
             Main.Camera.position.y = 1.25;
+            Main.Camera.position.z = - 3;
 		}
 		return;
 		setTimeout(

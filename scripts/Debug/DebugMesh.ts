@@ -5,6 +5,10 @@ class DebugMesh {
     public creationTime: number = 0;
     public duration: number = - 1;
 
+    constructor() {
+        this.creationTime = performance.now();
+    }
+
     protected _update = () => {
         if (this.duration > 0) {
             if (performance.now() - this.creationTime > this.duration) {
@@ -108,6 +112,19 @@ class DebugCrosses extends DebugMesh {
 
 class DebugBox extends DebugMesh {
     
+    public static CreateBoxP0P1(
+        p0: BABYLON.Vector3,
+        p1: BABYLON.Vector3,
+        color: BABYLON.Color3 | BABYLON.Color4,
+        duration: number = - 1
+    ): DebugBox {
+        let width = Math.abs(p0.x - p1.x);
+        let height = Math.abs(p0.y - p1.y);
+        let depth = Math.abs(p0.z - p1.z);
+        let position = p0.add(p1).scaleInPlace(0.5);
+        return DebugBox.CreateBox(width, height, depth, color, position, duration);
+    }
+
     public static CreateBox(
         width: number,
         height: number,

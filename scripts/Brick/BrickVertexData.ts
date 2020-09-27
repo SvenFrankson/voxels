@@ -13,7 +13,7 @@ class BrickVertexData {
                     "",
                     Main.Scene,
                     (meshes) => {
-                        for (let i = 0; i < meshes.length; i++) {
+                        for (let i = 0; i < meshes.length; i++) {   
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh) {
                                 let lod = parseInt(mesh.name.replace("knob-lod", ""));
@@ -105,6 +105,26 @@ class BrickVertexData {
         return data;
     }
 
+    private static async GenerateFromSlopeTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
+        let baseData: BABYLON.VertexData;
+        let baseBrickName = "slope" + h + "-" + w + "x1";
+        baseData = await BrickVertexData.GetBrickVertexData(baseBrickName, lod);
+        let data = new BABYLON.VertexData();
+        let positions = [...baseData.positions];
+        let indices = [...baseData.indices];
+        let normals = [...baseData.normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let z = positions[3 * i + 2];
+            if (z > 0) {
+                positions[3 * i + 2] = z + (l - 1) * DX;
+            }
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
+
     private static async _LoadBrickVertexData(brickName: string, lod: number): Promise<BABYLON.VertexData> {
         let type = brickName.split("-")[0];
         let size = brickName.split("-")[1];
@@ -117,6 +137,18 @@ class BrickVertexData {
             let w = parseInt(size.split("x")[0]);
             let l = parseInt(size.split("x")[1]);
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
+        }
+        else if (type.indexOf("slope") != -1) {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            if (l === 1) {
+                await BrickVertexData._LoadVertexData("slope-template");
+                return undefined;
+            }
+            else {
+                let h = parseInt(type.replace("slope", ""));
+                return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
+            }
         }
         else {
             await BrickVertexData._LoadVertexData(type);
@@ -165,17 +197,17 @@ class BrickVertexData {
         }
     }
 
-    public static async GetBrickVertexData(brickReference: IBrickReference, lod: number): Promise<BABYLON.VertexData> {
-        let data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+    public static async GetBrickVertexData(brickName: string, lod: number): Promise<BABYLON.VertexData> {
+        let data = BrickVertexData._BrickVertexDatas.get(brickName + "-lod" + lod);
         if (!data) {
-            data = await BrickVertexData._LoadBrickVertexData(brickReference.name, lod);
+            data = await BrickVertexData._LoadBrickVertexData(brickName, lod);
             if (data) {
-                BrickVertexData._BrickVertexDatas.set(brickReference.name + "-lod" + lod, data);
+                BrickVertexData._BrickVertexDatas.set(brickName + "-lod" + lod, data);
             }
             else {
-                data = BrickVertexData._BrickVertexDatas.get(brickReference.name + "-lod" + lod);
+                data = BrickVertexData._BrickVertexDatas.get(brickName + "-lod" + lod);
                 if (!data) {
-                    console.warn("GetBrickVertexData failed for brick " + brickReference + " at lod " + lod);
+                    console.warn("GetBrickVertexData failed for brick " + brickName + " at lod " + lod);
                 }
             }
         }
@@ -183,7 +215,7 @@ class BrickVertexData {
     }
     
     public static async GetFullBrickVertexData(brickReference: IBrickReference): Promise<BABYLON.VertexData> {
-        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference, 0);
+        let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];

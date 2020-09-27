@@ -1,0 +1,149 @@
+Exporter version: 6.4.3, Blender version: 2.82 (sub 7)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used :
+		Inline textures     :  false
+		Material Type       :  PBR
+		Positions Precision :  4
+		Normals Precision   :  3
+		UVs Precision       :  3
+		Vert Color Precision:  3
+		Mat Weight Precision:  2
+		Keep Z-up r-handed  :  no
+		Texture directory   :  C:\Users\staton\Documents\voxels\datas\meshes\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  slope1-4x1-lod1
+		processing begun of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope2-4x1-lod1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope4-4x1-lod1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope1-2x1-lod1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope2-2x1-lod1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope4-2x1-lod1
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  48
+		num normals        :  48
+		num tangents       :  0
+		num uvs            :  96
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  20
+	processing begun of mesh:  slope1-4x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  156
+		num normals        :  156
+		num tangents       :  0
+		num uvs            :  312
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  60
+	processing begun of mesh:  slope2-4x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  168
+		num normals        :  168
+		num tangents       :  0
+		num uvs            :  336
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  64
+	processing begun of mesh:  slope4-4x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  168
+		num normals        :  168
+		num tangents       :  0
+		num uvs            :  336
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  64
+	processing begun of mesh:  slope1-2x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  168
+		num normals        :  168
+		num tangents       :  0
+		num uvs            :  336
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  64
+	processing begun of mesh:  slope2-2x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  156
+		num normals        :  156
+		num tangents       :  0
+		num uvs            :  312
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  60
+	processing begun of mesh:  slope4-2x1-lod0
+		processing begun of material:  Material
+		registered as also a user of material:  Material
+		num positions      :  159
+		num normals        :  159
+		num tangents       :  0
+		num uvs            :  318
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  60
+========= Writing of JSON file started =========
+	writing mesh:  slope1-4x1-lod1
+	writing mesh:  slope2-4x1-lod1
+	writing mesh:  slope4-4x1-lod1
+	writing mesh:  slope1-2x1-lod1
+	writing mesh:  slope2-2x1-lod1
+	writing mesh:  slope4-2x1-lod1
+	writing mesh:  slope1-4x1-lod0
+	writing mesh:  slope2-4x1-lod0
+	writing mesh:  slope4-4x1-lod0
+	writing mesh:  slope1-2x1-lod0
+	writing mesh:  slope2-2x1-lod0
+	writing mesh:  slope4-2x1-lod0
+========= Writing of JSON file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.3011 secs

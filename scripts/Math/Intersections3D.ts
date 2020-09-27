@@ -86,11 +86,21 @@ class Intersections3D {
         return intersections;
     }
 
-    public static SphereChunck_V2(center: BABYLON.Vector3, radius: number, chunck: Chunck_V2): SphereIntersection[] {
+    public static SphereChunck_V2(centerWorld: BABYLON.Vector3, radius: number, chunck: Chunck_V2): SphereIntersection[] {
         let intersections: SphereIntersection[] = [];
         if (!chunck.isEmpty) {
-            center = center.subtract(chunck.position);
-            if (Intersections3D.SphereCube(center, radius, chunck.getBoundingInfo().minimum, chunck.getBoundingInfo().maximum)) {
+            let chunckMin = new BABYLON.Vector3(
+                chunck.barycenter.x - CHUNCK_SIZE * 1.6 * 0.5,
+                chunck.barycenter.y - CHUNCK_SIZE * 0.96 * 0.5,
+                chunck.barycenter.z - CHUNCK_SIZE * 1.6 * 0.5,
+            );
+            let chunckMax = new BABYLON.Vector3(
+                chunck.barycenter.x + CHUNCK_SIZE * 1.6 * 0.5,
+                chunck.barycenter.y + (CHUNCK_SIZE + 1) * 0.96 * 0.5,
+                chunck.barycenter.z + CHUNCK_SIZE * 1.6 * 0.5,
+            )
+            if (Intersections3D.SphereCube(centerWorld, radius, chunckMin, chunckMax)) {
+                let center = centerWorld.subtract(chunck.position);
                 let min = center.clone();
                 min.x = Math.floor(min.x / 1.6 - radius);
                 min.y = Math.floor(min.y / 0.96 - radius);
@@ -110,10 +120,33 @@ class Intersections3D {
                                     new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8)
                                 );
                                 if (intersection) {
+                                    //let debugBox = DebugBox.CreateBoxP0P1(new BABYLON.Vector3(i * 1.6 - 0.8, (j - 1) * 0.96, k * 1.6 - 0.8), new BABYLON.Vector3((i + 1) * 1.6 - 0.8, j * 0.96, (k + 1) * 1.6 - 0.8), BABYLON.Color3.Purple(), 100);
+                                    //debugBox.mesh.position.addInPlace(chunck.position);
+                                    //debugBox.mesh.scaling.scaleInPlace(1.01);
                                     intersection.point.addInPlace(chunck.position);
+                                    let debugPoint = DebugCross.CreateCross(0.5, BABYLON.Color3.Red(), intersection.point, 100);
                                     intersections.push(intersection);
                                 }
                             }
+                        }
+                    }
+                }
+                for (let i = 0; i < chunck.bricks.length; i++) {
+                    let debugPointCenterWorld = DebugCross.CreateCross(1.5, BABYLON.Color3.Yellow(), centerWorld, 30);
+                    let brick = chunck.bricks[i];
+                    if (brick.mesh) {
+                        let bbox = brick.mesh.getBoundingInfo();
+                        let intersection = Intersections3D.SphereCube(
+                            centerWorld,
+                            radius,
+                            bbox.boundingBox.minimumWorld,
+                            bbox.boundingBox.maximumWorld
+                        );
+                        if (intersection) {
+                            let debugBox = DebugBox.CreateBoxP0P1(bbox.boundingBox.minimumWorld, bbox.boundingBox.maximumWorld, BABYLON.Color3.Purple(), 30);
+                            debugBox.mesh.scaling.scaleInPlace(1);
+                            let debugPoint = DebugCross.CreateCross(1.5, BABYLON.Color3.Red(), intersection.point, 100);
+                            intersections.push(intersection);
                         }
                     }
                 }
