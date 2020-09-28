@@ -40,9 +40,9 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						this.runManyScreenShots();
+						//this.runManyScreenShots();
 						//this.runAllScreenShots();
-						//await this.createBrick("windshield-6x2x2-brightbluetransparent");
+						await this.createBrick("construct_barStoolRed");
 					},
 					100
 				);

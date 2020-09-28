@@ -146,8 +146,9 @@ class PlayerTest extends Main {
 			}
 		});
 		
+		inventory.addItem(await InventoryItem.Brick({ name: "construct_barStoolRed", color : "default" }));
 		let firstBrick = inventory.items.length;
-		inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
+		inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
 		player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
 		
 		for (let i = 0; i < colors.length; i++) {
@@ -156,7 +157,7 @@ class PlayerTest extends Main {
 				let brickName = bricks[j];
 				let count = Math.floor(Math.random() * 9 + 2);
 				for (let n = 0; n < count; n++) {
-					inventory.addItem(InventoryItem.Brick({ name: brickName, color : color }));
+					inventory.addItem(await InventoryItem.Brick({ name: brickName, color : color }));
 				}
 			}
 		}
@@ -164,7 +165,7 @@ class PlayerTest extends Main {
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
-            Main.Camera.position.y = 1.25;
+            Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
 		}
 		return;

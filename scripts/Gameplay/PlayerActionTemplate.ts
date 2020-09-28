@@ -264,7 +264,7 @@ class PlayerActionTemplate {
         return action;
     }
 
-    private static _animationCanAddBrick(t: number, offsetRef: BABYLON.Vector3): void {
+    private static _animationCannotAddBrick(t: number, offsetRef: BABYLON.Vector3): void {
         if (t > ADD_BRICK_ANIMATION_DURATION * 0.7) {
             offsetRef.x = 0;
             offsetRef.z = 0;
@@ -286,8 +286,8 @@ class PlayerActionTemplate {
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
 
-    public static CreateBrickAction(brickReference: IBrickReference, onBrickAddedCallback = () => {}): PlayerAction {
-        let data = BrickDataManager.GetBrickData(brickReference);
+    public static async CreateBrickAction(brickReference: IBrickReference, onBrickAddedCallback = () => {}): Promise<PlayerAction> {
+        let data = await BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
         let previewMeshOffset: BABYLON.Vector3 = BABYLON.Vector3.Zero();
@@ -382,7 +382,7 @@ class PlayerActionTemplate {
                     let k = coordinates.coordinates.z - anchorZ;
                     if (coordinates.chunck instanceof Chunck_V2) {
                         if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, r)) {
-                            PlayerActionTemplate._animationCanAddBrick(t, previewMeshOffset);
+                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
                         }
                         else {
                             previewMeshOffset.copyFromFloats(0, 0, 0);
@@ -401,7 +401,6 @@ class PlayerActionTemplate {
                             else {
                                 previewMesh.material = Main.cellShadingMaterial;
                             }
-                            previewMesh.material = Main.DebugGreenMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -435,7 +434,7 @@ class PlayerActionTemplate {
             }
         }
 
-        action.onClick = () => {
+        action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
 
@@ -455,7 +454,10 @@ class PlayerActionTemplate {
                 }
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                console.log(coordinates.chunck);
+                console.log(coordinates.coordinates);
                 if (coordinates) {
+                    console.log("alpha");
                     let brick = new Brick();
                     brick.reference = brickReference;
                     brick.i = coordinates.coordinates.x - anchorX;
@@ -463,8 +465,10 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        if (coordinates.chunck.addBrickSafe(brick)) {
-                            coordinates.chunck.updateBricks();
+                        console.log("bravo");
+                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                            console.log("charly");
+                            await coordinates.chunck.updateBricks();
                             onBrickAddedCallback();
                         }
                     }

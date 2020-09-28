@@ -80,6 +80,63 @@ class BrickVertexData {
         );
     }
 
+    private static async _LoadConstructVertexData(constructName: string, lod: number): Promise<BABYLON.VertexData> {
+        console.log("_LoadConstructVertexData for " + constructName);
+        return new Promise<BABYLON.VertexData>(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "datas/constructs/" + constructName + ".json");
+            xhr.onload = async () => {
+                let data = JSON.parse(xhr.responseText);
+                
+                let bricks = data.bricks;
+                let vertexData = new BABYLON.VertexData();
+                let positions = [];
+                let indices = [];
+                let normals = [];
+                let colors = [];
+
+                for (let i = 0; i < bricks.length; i++) {
+                    let brick = bricks[i];
+                    
+                    let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.brickReference);
+                    let l = positions.length / 3;
+                    for (let n = 0; n < vertexData.positions.length / 3; n++) {
+                        positions.push(
+                            vertexData.positions[3 * n] + brick.position[0],
+                            vertexData.positions[3 * n + 1] + brick.position[1],
+                            vertexData.positions[3 * n + 2] + brick.position[2]
+                        );
+                    }
+                    for (let n = 0; n < vertexData.indices.length; n++) {
+                        indices.push(vertexData.indices[n] + l);
+                    }
+                    for (let n = 0; n < vertexData.normals.length / 3; n++) {
+                        normals.push(
+                            vertexData.normals[3 * n],
+                            vertexData.normals[3 * n + 1],
+                            vertexData.normals[3 * n + 2]
+                        );
+                    }
+                    for (let n = 0; n < vertexData.colors.length / 4; n++) {
+                        colors.push(
+                            vertexData.colors[4 * n],
+                            vertexData.colors[4 * n + 1],
+                            vertexData.colors[4 * n + 2],
+                            vertexData.colors[4 * n + 3]
+                        );
+                    }
+                }
+                vertexData.positions = positions;
+                vertexData.indices = indices;
+                vertexData.normals = normals;
+                vertexData.colors = colors;
+
+                resolve(vertexData);
+            }
+            xhr.send();
+        });
+    }
+
     private static async GenerateFromCubicTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
         if (!BrickVertexData._CubicTemplateVertexData[lod]) {
             await BrickVertexData._LoadCubicTemplateVertexData();
@@ -160,6 +217,10 @@ class BrickVertexData {
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
         }
+        else if (type.startsWith("construct_")) {
+            let constructName = type.replace("construct_", "");
+            return BrickVertexData._LoadConstructVertexData(constructName, lod);
+        }
         else {
             let fileName = BrickVertexData._GetFileNameFromType(type);
             await BrickVertexData._LoadVertexData(fileName);
@@ -227,6 +288,9 @@ class BrickVertexData {
     
     public static async GetFullBrickVertexData(brickReference: IBrickReference): Promise<BABYLON.VertexData> {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
+        if (brickReference.name.startsWith("construct_")) {
+            return vertexData;
+        }
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
@@ -235,7 +299,7 @@ class BrickVertexData {
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(color.r, color.g, color.b, color.a);
         }
-        let brickData = BrickDataManager.GetBrickData(brickReference);
+        let brickData = await BrickDataManager.GetBrickData(brickReference);
         for (let i = 0; i < brickData.knobs.length; i++) {
             BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
         }

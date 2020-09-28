@@ -92,6 +92,69 @@ class BrickDataManager {
     public static BrickNames: string[] = [];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
+    private static async _LoadConstructBrickData(constructName: string): Promise<BrickData> {
+        return new Promise<BrickData>(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "datas/constructs/" + constructName + ".json");
+            xhr.onload = () => {
+                let data = JSON.parse(xhr.responseText);
+                
+                let knobs = [];
+                let locks = [];
+                let covers = [];
+                if (data.knobs) {
+                    if (data.knobs.min && data.knobs.max) {
+                        for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
+                            for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
+                                for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
+                                    knobs.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        knobs = data.knobs;
+                    }
+                }
+                if (data.locks) {
+                    if (data.locks.min && data.locks.max) {
+                        for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
+                            for (let j = data.locks.min[1]; j <= data.locks.max[1]; j++) {
+                                for (let k = data.locks.min[2]; k <= data.locks.max[2]; k++) {
+                                    locks.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        locks = data.locks;
+                    }
+                }
+                if (data.covers) {
+                    if (data.covers === "locks") {
+                        covers = locks;
+                    }
+                    if (data.covers.min && data.covers.max) {
+                        for (let i = data.covers.min[0]; i <= data.covers.max[0]; i++) {
+                            for (let j = data.covers.min[1]; j <= data.covers.max[1]; j++) {
+                                for (let k = data.covers.min[2]; k <= data.covers.max[2]; k++) {
+                                    covers.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        covers = data.covers;
+                    }
+                }
+                let brickData = new BrickData(knobs, locks, covers);
+                
+                resolve(brickData);
+            }
+            xhr.send();
+        });
+    }
+
     public static async InitializeDataFromFile(): Promise<void> {
         return new Promise<void>(resolve => {
             var xhr = new XMLHttpRequest();
@@ -304,7 +367,14 @@ class BrickDataManager {
         }
     }
 
-    public static GetBrickData(brickReference: IBrickReference): BrickData {
+    public static async GetBrickData(brickReference: IBrickReference): Promise<BrickData> {
+        if (brickReference.name.startsWith("construct_")) {
+            if (!BrickDataManager._BrickDatas.get(brickReference.name)) {
+                let constructName = brickReference.name.replace("construct_", "");
+                let data = await BrickDataManager._LoadConstructBrickData(constructName);
+                BrickDataManager._BrickDatas.set(brickReference.name, data);
+            }
+        }
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }

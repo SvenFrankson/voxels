@@ -1,0 +1,30 @@
+{
+    "name": "barStoolRed",
+    "locks": {
+        "min": [0, 0, 0],
+        "max": [1, 5, 1]
+    },
+    "covers": "locks",
+    "bricks": [
+        {
+            "brickReference": { "name": "plateRound-2x2", "color": "white" },
+            "position": [0, 0, 0],
+            "rotation": [0, 0, 0]
+        },
+        {
+            "brickReference": { "name": "cone-1x1", "color": "white" },
+            "position": [0.4, 0.32, 0.4],
+            "rotation": [0, 0, 0]
+        },
+        {
+            "brickReference": { "name": "plateRound-2x2", "color": "white" },
+            "position": [0, 1.28, 0],
+            "rotation": [0, 0, 0]
+        },
+        {
+            "brickReference": { "name": "tileRound-2x2", "color": "brightred" },
+            "position": [0, 1.6, 0],
+            "rotation": [0, 0, 0]
+        }
+    ]
+}

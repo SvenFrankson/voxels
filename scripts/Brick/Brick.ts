@@ -14,6 +14,12 @@ interface IBrickReference {
 class Brick {
 
     public static ParseReference(brickReference: string): IBrickReference {
+        if (brickReference.startsWith("construct_")) {
+            return {
+                name: brickReference,
+                color: ""
+            };
+        }
         let splitRef = brickReference.split("-");
         let color = splitRef.pop();
         let name = splitRef.join("-");

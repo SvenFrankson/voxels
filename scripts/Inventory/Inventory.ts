@@ -26,14 +26,14 @@ class InventoryItem {
         return it;
     }
 
-    public static Brick(reference: IBrickReference): InventoryItem {
+    public static async Brick(reference: IBrickReference): Promise<InventoryItem> {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
         it.name = reference.name + "-" + reference.color;
         it.brickReference = reference;
-        let data = BrickDataManager.GetBrickData(reference);
+        let data = await BrickDataManager.GetBrickData(reference);
         it.size = data.locks.length / 3;
-        it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
+        it.playerAction = await PlayerActionTemplate.CreateBrickAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + it.name + "-miniature.png";
         return it;
     }

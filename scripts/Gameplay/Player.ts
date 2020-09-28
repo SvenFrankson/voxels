@@ -142,21 +142,21 @@ class Player extends BABYLON.Mesh {
         document.getElementById("player-actions").style.display = "block";
     }
 
-    public storeBrick(): Brick {
+    public async storeBrick(): Promise<Brick> {
         console.log("Store Brick");
         if (this.aimedObject && this.aimedObject instanceof Brick) {
             this.aimedObject.chunck.removeBrick(this.aimedObject);
-            this.aimedObject.chunck.updateBricks();
+            await this.aimedObject.chunck.updateBricks();
             console.log("Brick Stored");
             return this.aimedObject;
         }
     }
 
-    public takeBrick(): boolean {
+    public async takeBrick(): Promise<boolean> {
         console.log("Take Brick");
-        let brick = this.storeBrick();
+        let brick = await this.storeBrick();
         if (brick) {
-            this.currentAction = PlayerActionTemplate.CreateBrickAction(
+            this.currentAction = await PlayerActionTemplate.CreateBrickAction(
                 brick.reference,
                 () => {
                     if (this.currentAction.onUnequip) {

@@ -434,6 +434,12 @@ class Brick {
         this._r = 0;
     }
     static ParseReference(brickReference) {
+        if (brickReference.startsWith("construct_")) {
+            return {
+                name: brickReference,
+                color: ""
+            };
+        }
         let splitRef = brickReference.split("-");
         let color = splitRef.pop();
         let name = splitRef.join("-");
@@ -599,6 +605,66 @@ class BrickData {
     }
 }
 class BrickDataManager {
+    static async _LoadConstructBrickData(constructName) {
+        return new Promise(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "datas/constructs/" + constructName + ".json");
+            xhr.onload = () => {
+                let data = JSON.parse(xhr.responseText);
+                let knobs = [];
+                let locks = [];
+                let covers = [];
+                if (data.knobs) {
+                    if (data.knobs.min && data.knobs.max) {
+                        for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
+                            for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
+                                for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
+                                    knobs.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        knobs = data.knobs;
+                    }
+                }
+                if (data.locks) {
+                    if (data.locks.min && data.locks.max) {
+                        for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
+                            for (let j = data.locks.min[1]; j <= data.locks.max[1]; j++) {
+                                for (let k = data.locks.min[2]; k <= data.locks.max[2]; k++) {
+                                    locks.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        locks = data.locks;
+                    }
+                }
+                if (data.covers) {
+                    if (data.covers === "locks") {
+                        covers = locks;
+                    }
+                    if (data.covers.min && data.covers.max) {
+                        for (let i = data.covers.min[0]; i <= data.covers.max[0]; i++) {
+                            for (let j = data.covers.min[1]; j <= data.covers.max[1]; j++) {
+                                for (let k = data.covers.min[2]; k <= data.covers.max[2]; k++) {
+                                    covers.push(i, j, k);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        covers = data.covers;
+                    }
+                }
+                let brickData = new BrickData(knobs, locks, covers);
+                resolve(brickData);
+            };
+            xhr.send();
+        });
+    }
     static async InitializeDataFromFile() {
         return new Promise(resolve => {
             var xhr = new XMLHttpRequest();
@@ -793,7 +859,14 @@ class BrickDataManager {
             }
         }
     }
-    static GetBrickData(brickReference) {
+    static async GetBrickData(brickReference) {
+        if (brickReference.name.startsWith("construct_")) {
+            if (!BrickDataManager._BrickDatas.get(brickReference.name)) {
+                let constructName = brickReference.name.replace("construct_", "");
+                let data = await BrickDataManager._LoadConstructBrickData(constructName);
+                BrickDataManager._BrickDatas.set(brickReference.name, data);
+            }
+        }
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
@@ -849,6 +922,45 @@ class BrickVertexData {
                 }
                 resolve();
             });
+        });
+    }
+    static async _LoadConstructVertexData(constructName, lod) {
+        console.log("_LoadConstructVertexData for " + constructName);
+        return new Promise(resolve => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "datas/constructs/" + constructName + ".json");
+            xhr.onload = async () => {
+                let data = JSON.parse(xhr.responseText);
+                let bricks = data.bricks;
+                let vertexData = new BABYLON.VertexData();
+                let positions = [];
+                let indices = [];
+                let normals = [];
+                let colors = [];
+                for (let i = 0; i < bricks.length; i++) {
+                    let brick = bricks[i];
+                    let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.brickReference);
+                    let l = positions.length / 3;
+                    for (let n = 0; n < vertexData.positions.length / 3; n++) {
+                        positions.push(vertexData.positions[3 * n] + brick.position[0], vertexData.positions[3 * n + 1] + brick.position[1], vertexData.positions[3 * n + 2] + brick.position[2]);
+                    }
+                    for (let n = 0; n < vertexData.indices.length; n++) {
+                        indices.push(vertexData.indices[n] + l);
+                    }
+                    for (let n = 0; n < vertexData.normals.length / 3; n++) {
+                        normals.push(vertexData.normals[3 * n], vertexData.normals[3 * n + 1], vertexData.normals[3 * n + 2]);
+                    }
+                    for (let n = 0; n < vertexData.colors.length / 4; n++) {
+                        colors.push(vertexData.colors[4 * n], vertexData.colors[4 * n + 1], vertexData.colors[4 * n + 2], vertexData.colors[4 * n + 3]);
+                    }
+                }
+                vertexData.positions = positions;
+                vertexData.indices = indices;
+                vertexData.normals = normals;
+                vertexData.colors = colors;
+                resolve(vertexData);
+            };
+            xhr.send();
         });
     }
     static async GenerateFromCubicTemplate(w, h, l, lod) {
@@ -928,6 +1040,10 @@ class BrickVertexData {
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
         }
+        else if (type.startsWith("construct_")) {
+            let constructName = type.replace("construct_", "");
+            return BrickVertexData._LoadConstructVertexData(constructName, lod);
+        }
         else {
             let fileName = BrickVertexData._GetFileNameFromType(type);
             await BrickVertexData._LoadVertexData(fileName);
@@ -986,6 +1102,9 @@ class BrickVertexData {
     }
     static async GetFullBrickVertexData(brickReference) {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
+        if (brickReference.name.startsWith("construct_")) {
+            return vertexData;
+        }
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
@@ -994,7 +1113,7 @@ class BrickVertexData {
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(color.r, color.g, color.b, color.a);
         }
-        let brickData = BrickDataManager.GetBrickData(brickReference);
+        let brickData = await BrickDataManager.GetBrickData(brickReference);
         for (let i = 0; i < brickData.knobs.length; i++) {
             BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
         }
@@ -2623,8 +2742,8 @@ class Chunck_V2 extends Chunck {
     get barycenter() {
         return this._barycenter;
     }
-    canAddBrick(brick) {
-        let data = BrickDataManager.GetBrickData(brick.reference);
+    async canAddBrick(brick) {
+        let data = await BrickDataManager.GetBrickData(brick.reference);
         let locks = data.getLocks(brick.r);
         for (let n = 0; n < locks.length / 3; n++) {
             let ii = locks[3 * n];
@@ -2655,8 +2774,8 @@ class Chunck_V2 extends Chunck {
             brick.chunck = this;
         }
     }
-    addBrickSafe(brick) {
-        if (this.canAddBrick(brick)) {
+    async addBrickSafe(brick) {
+        if (await this.canAddBrick(brick)) {
             this.addBrick(brick);
             return true;
         }
@@ -2898,7 +3017,7 @@ class Chunck_V2 extends Chunck {
         }
     }
     async updateBricks() {
-        while (this.brickMeshes.length > 1) {
+        while (this.brickMeshes.length > 0) {
             this.brickMeshes.pop().dispose();
         }
         for (let i = 0; i < this.bricks.length; i++) {
@@ -2918,13 +3037,13 @@ class Chunck_V2 extends Chunck {
             }
             this.brickMeshes.push(b);
         }
-        this.updateLocks();
+        await this.updateLocks();
     }
-    updateLocks() {
+    async updateLocks() {
         this._locks = [];
         for (let i = 0; i < this.bricks.length; i++) {
             let brick = this.bricks[i];
-            let data = BrickDataManager.GetBrickData(brick.reference);
+            let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
@@ -3831,20 +3950,20 @@ class Player extends BABYLON.Mesh {
         };
         document.getElementById("player-actions").style.display = "block";
     }
-    storeBrick() {
+    async storeBrick() {
         console.log("Store Brick");
         if (this.aimedObject && this.aimedObject instanceof Brick) {
             this.aimedObject.chunck.removeBrick(this.aimedObject);
-            this.aimedObject.chunck.updateBricks();
+            await this.aimedObject.chunck.updateBricks();
             console.log("Brick Stored");
             return this.aimedObject;
         }
     }
-    takeBrick() {
+    async takeBrick() {
         console.log("Take Brick");
-        let brick = this.storeBrick();
+        let brick = await this.storeBrick();
         if (brick) {
-            this.currentAction = PlayerActionTemplate.CreateBrickAction(brick.reference, () => {
+            this.currentAction = await PlayerActionTemplate.CreateBrickAction(brick.reference, () => {
                 if (this.currentAction.onUnequip) {
                     this.currentAction.onUnequip();
                 }
@@ -4075,7 +4194,7 @@ class PlayerActionTemplate {
         };
         return action;
     }
-    static _animationCanAddBrick(t, offsetRef) {
+    static _animationCannotAddBrick(t, offsetRef) {
         if (t > ADD_BRICK_ANIMATION_DURATION * 0.7) {
             offsetRef.x = 0;
             offsetRef.z = 0;
@@ -4096,8 +4215,8 @@ class PlayerActionTemplate {
         offsetRef.x = Math.cos(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
-    static CreateBrickAction(brickReference, onBrickAddedCallback = () => { }) {
-        let data = BrickDataManager.GetBrickData(brickReference);
+    static async CreateBrickAction(brickReference, onBrickAddedCallback = () => { }) {
+        let data = await BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh;
         let previewMeshOffset = BABYLON.Vector3.Zero();
@@ -4177,7 +4296,7 @@ class PlayerActionTemplate {
                     let k = coordinates.coordinates.z - anchorZ;
                     if (coordinates.chunck instanceof Chunck_V2) {
                         if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, r)) {
-                            PlayerActionTemplate._animationCanAddBrick(t, previewMeshOffset);
+                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
                         }
                         else {
                             previewMeshOffset.copyFromFloats(0, 0, 0);
@@ -4194,7 +4313,6 @@ class PlayerActionTemplate {
                             else {
                                 previewMesh.material = Main.cellShadingMaterial;
                             }
-                            previewMesh.material = Main.DebugGreenMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -4226,7 +4344,7 @@ class PlayerActionTemplate {
                 debugText.setText(text);
             }
         };
-        action.onClick = () => {
+        action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = Main.Scene.pick(x, y, (m) => {
@@ -4241,7 +4359,10 @@ class PlayerActionTemplate {
                 }
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                console.log(coordinates.chunck);
+                console.log(coordinates.coordinates);
                 if (coordinates) {
+                    console.log("alpha");
                     let brick = new Brick();
                     brick.reference = brickReference;
                     brick.i = coordinates.coordinates.x - anchorX;
@@ -4249,8 +4370,10 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        if (coordinates.chunck.addBrickSafe(brick)) {
-                            coordinates.chunck.updateBricks();
+                        console.log("bravo");
+                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                            console.log("charly");
+                            await coordinates.chunck.updateBricks();
                             onBrickAddedCallback();
                         }
                     }
@@ -4401,14 +4524,14 @@ class InventoryItem {
         it.iconUrl = "./datas/textures/miniatures/" + reference + "-miniature.png";
         return it;
     }
-    static Brick(reference) {
+    static async Brick(reference) {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
         it.name = reference.name + "-" + reference.color;
         it.brickReference = reference;
-        let data = BrickDataManager.GetBrickData(reference);
+        let data = await BrickDataManager.GetBrickData(reference);
         it.size = data.locks.length / 3;
-        it.playerAction = PlayerActionTemplate.CreateBrickAction(reference);
+        it.playerAction = await PlayerActionTemplate.CreateBrickAction(reference);
         it.iconUrl = "./datas/textures/miniatures/" + it.name + "-miniature.png";
         return it;
     }
@@ -5132,9 +5255,9 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    this.runManyScreenShots();
+                    //this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    //await this.createBrick("windshield-6x2x2-brightbluetransparent");
+                    await this.createBrick("construct_barStoolRed");
                 }, 100);
             }
             else {
@@ -5461,8 +5584,9 @@ class PlayerTest extends Main {
                 bricks.push(n);
             }
         });
+        inventory.addItem(await InventoryItem.Brick({ name: "construct_barStoolRed", color: "default" }));
         let firstBrick = inventory.items.length;
-        inventory.addItem(InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
+        inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
         for (let i = 0; i < colors.length; i++) {
             let color = colors[i];
@@ -5470,14 +5594,14 @@ class PlayerTest extends Main {
                 let brickName = bricks[j];
                 let count = Math.floor(Math.random() * 9 + 2);
                 for (let n = 0; n < count; n++) {
-                    inventory.addItem(InventoryItem.Brick({ name: brickName, color: color }));
+                    inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
                 }
             }
         }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = player;
-            Main.Camera.position.y = 1.25;
+            Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
         }
         return;
@@ -5651,7 +5775,7 @@ class TileTest extends Main {
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {
-                inventory.addItem(InventoryItem.Brick({ name: brickName, color: color }));
+                inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
             }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);

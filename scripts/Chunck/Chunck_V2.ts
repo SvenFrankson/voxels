@@ -52,8 +52,8 @@ class Chunck_V2 extends Chunck {
         return this._barycenter;
     }
 
-    public canAddBrick(brick: Brick): boolean {
-        let data = BrickDataManager.GetBrickData(brick.reference);
+    public async canAddBrick(brick: Brick): Promise<boolean> {
+        let data = await BrickDataManager.GetBrickData(brick.reference);
         let locks = data.getLocks(brick.r);
         for (let n = 0; n < locks.length / 3; n++) {
             let ii = locks[3 * n];
@@ -87,8 +87,8 @@ class Chunck_V2 extends Chunck {
         }
     }
 
-    public addBrickSafe(brick: Brick): boolean {
-        if (this.canAddBrick(brick)) {
+    public async addBrickSafe(brick: Brick): Promise<boolean> {
+        if (await this.canAddBrick(brick)) {
             this.addBrick(brick);
             return true;
         }
@@ -421,7 +421,7 @@ class Chunck_V2 extends Chunck {
     }
 
     public async updateBricks(): Promise<void> {
-        while (this.brickMeshes.length > 1) {
+        while (this.brickMeshes.length > 0) {
             this.brickMeshes.pop().dispose();
         }
         for (let i = 0; i < this.bricks.length; i++) {
@@ -441,14 +441,14 @@ class Chunck_V2 extends Chunck {
             }
             this.brickMeshes.push(b);
         }
-        this.updateLocks();
+        await this.updateLocks();
     }
 
-    public updateLocks(): void {
+    public async updateLocks(): Promise<void> {
         this._locks = [];
         for (let i = 0; i < this.bricks.length; i++) {
             let brick = this.bricks[i];
-            let data = BrickDataManager.GetBrickData(brick.reference);
+            let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
