@@ -1,5 +1,5 @@
 {
-    "name": "barStoolRed",
+    "name": "bar_stool_red",
     "locks": {
         "min": [0, 0, 0],
         "max": [1, 5, 1]

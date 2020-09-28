@@ -148,7 +148,7 @@ class BrickDataManager {
                     }
                 }
                 let brickData = new BrickData(knobs, locks, covers);
-                
+                console.log(brickData);
                 resolve(brickData);
             }
             xhr.send();

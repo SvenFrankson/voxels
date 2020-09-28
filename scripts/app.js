@@ -436,8 +436,7 @@ class Brick {
     static ParseReference(brickReference) {
         if (brickReference.startsWith("construct_")) {
             return {
-                name: brickReference,
-                color: ""
+                name: brickReference
             };
         }
         let splitRef = brickReference.split("-");
@@ -447,6 +446,12 @@ class Brick {
             name: name,
             color: color
         };
+    }
+    static ReferenceToString(brickReference) {
+        if (brickReference.name.startsWith("construct_")) {
+            return brickReference.name;
+        }
+        return brickReference.name + "-" + brickReference.color;
     }
     get tile() {
         return this._tile;
@@ -660,6 +665,7 @@ class BrickDataManager {
                     }
                 }
                 let brickData = new BrickData(knobs, locks, covers);
+                console.log(brickData);
                 resolve(brickData);
             };
             xhr.send();
@@ -3029,7 +3035,7 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            if (brick.reference.color.indexOf("transparent") != -1) {
+            if (brick.reference.color && brick.reference.color.indexOf("transparent") != -1) {
                 b.material = Main.cellShadingTransparentMaterial;
             }
             else {
@@ -3941,7 +3947,6 @@ class Player extends BABYLON.Mesh {
             }
         });
         Main.Canvas.onwheel = (e) => {
-            console.log(".");
             if (this.currentAction) {
                 if (this.currentAction.onWheel) {
                     this.currentAction.onWheel(e);
@@ -3951,16 +3956,13 @@ class Player extends BABYLON.Mesh {
         document.getElementById("player-actions").style.display = "block";
     }
     async storeBrick() {
-        console.log("Store Brick");
         if (this.aimedObject && this.aimedObject instanceof Brick) {
             this.aimedObject.chunck.removeBrick(this.aimedObject);
             await this.aimedObject.chunck.updateBricks();
-            console.log("Brick Stored");
             return this.aimedObject;
         }
     }
     async takeBrick() {
-        console.log("Take Brick");
         let brick = await this.storeBrick();
         if (brick) {
             this.currentAction = await PlayerActionTemplate.CreateBrickAction(brick.reference, () => {
@@ -3968,9 +3970,7 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onUnequip();
                 }
                 this.currentAction = undefined;
-                console.log("Done");
             });
-            console.log("Brick Taken");
             return true;
         }
         return false;
@@ -4226,7 +4226,7 @@ class PlayerActionTemplate {
         let anchorX = 0;
         let anchorZ = 0;
         let t = 0;
-        action.iconUrl = "./datas/textures/miniatures/" + brickReference.name + "-" + brickReference.color + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + Brick.ReferenceToString(brickReference) + "-miniature.png";
         action.onKeyDown = (e) => {
             if (e.code === "ControlLeft") {
                 ctrlDown = true;
@@ -4307,7 +4307,7 @@ class PlayerActionTemplate {
                             BrickVertexData.GetFullBrickVertexData(brickReference).then(data => {
                                 data.applyToMesh(previewMesh);
                             });
-                            if (brickReference.color.indexOf("transparent") != -1) {
+                            if (brickReference.color && brickReference.color.indexOf("transparent") != -1) {
                                 previewMesh.material = Main.cellShadingTransparentMaterial;
                             }
                             else {
@@ -4527,7 +4527,7 @@ class InventoryItem {
     static async Brick(reference) {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
-        it.name = reference.name + "-" + reference.color;
+        it.name = Brick.ReferenceToString(reference);
         it.brickReference = reference;
         let data = await BrickDataManager.GetBrickData(reference);
         it.size = data.locks.length / 3;
@@ -5257,7 +5257,7 @@ class Miniature extends Main {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    await this.createBrick("construct_barStoolRed");
+                    await this.createBrick("construct_bar_stool_red");
                 }, 100);
             }
             else {
@@ -5584,7 +5584,7 @@ class PlayerTest extends Main {
                 bricks.push(n);
             }
         });
-        inventory.addItem(await InventoryItem.Brick({ name: "construct_barStoolRed", color: "default" }));
+        inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
         let firstBrick = inventory.items.length;
         inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
         player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);

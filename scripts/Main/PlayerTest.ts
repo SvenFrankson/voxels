@@ -146,7 +146,7 @@ class PlayerTest extends Main {
 			}
 		});
 		
-		inventory.addItem(await InventoryItem.Brick({ name: "construct_barStoolRed", color : "default" }));
+		inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
 		let firstBrick = inventory.items.length;
 		inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
 		player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);

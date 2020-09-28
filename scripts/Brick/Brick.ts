@@ -8,7 +8,7 @@ interface IBrickData {
 
 interface IBrickReference {
     name: string;
-    color: string;
+    color?: string;
 }
 
 class Brick {
@@ -16,8 +16,7 @@ class Brick {
     public static ParseReference(brickReference: string): IBrickReference {
         if (brickReference.startsWith("construct_")) {
             return {
-                name: brickReference,
-                color: ""
+                name: brickReference
             };
         }
         let splitRef = brickReference.split("-");
@@ -27,6 +26,13 @@ class Brick {
             name: name,
             color: color
         };
+    }
+
+    public static ReferenceToString(brickReference: IBrickReference): string {
+        if (brickReference.name.startsWith("construct_")) {
+            return brickReference.name;
+        }
+        return brickReference.name + "-" + brickReference.color;
     }
 
     public reference: IBrickReference;

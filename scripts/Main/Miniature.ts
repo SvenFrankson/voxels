@@ -42,7 +42,7 @@ class Miniature extends Main {
 					async () => {
 						//this.runManyScreenShots();
 						//this.runAllScreenShots();
-						await this.createBrick("construct_barStoolRed");
+						await this.createBrick("construct_bar_stool_red");
 					},
 					100
 				);

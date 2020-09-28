@@ -300,7 +300,7 @@ class PlayerActionTemplate {
 
         let t = 0;
 
-        action.iconUrl = "./datas/textures/miniatures/" + brickReference.name + "-" + brickReference.color + "-miniature.png";
+        action.iconUrl = "./datas/textures/miniatures/" + Brick.ReferenceToString(brickReference) + "-miniature.png";
 
         action.onKeyDown = (e: KeyboardEvent) => {
             if (e.code === "ControlLeft") {
@@ -395,7 +395,7 @@ class PlayerActionTemplate {
                                     data.applyToMesh(previewMesh);
                                 }
                             );
-                            if (brickReference.color.indexOf("transparent") != -1) {
+                            if (brickReference.color && brickReference.color.indexOf("transparent") != -1) {
                                 previewMesh.material = Main.cellShadingTransparentMaterial;
                             }
                             else {

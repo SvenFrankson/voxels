@@ -29,7 +29,7 @@ class InventoryItem {
     public static async Brick(reference: IBrickReference): Promise<InventoryItem> {
         let it = new InventoryItem();
         it.section = InventorySection.Brick;
-        it.name = reference.name + "-" + reference.color;
+        it.name = Brick.ReferenceToString(reference);
         it.brickReference = reference;
         let data = await BrickDataManager.GetBrickData(reference);
         it.size = data.locks.length / 3;
