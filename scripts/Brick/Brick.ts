@@ -33,11 +33,11 @@ class Brick {
         this._tile = t;
     }
 
-    private _chunck: Chunck;
-    public get chunck(): Chunck {
+    private _chunck: Chunck_V2;
+    public get chunck(): Chunck_V2 {
         return this._chunck;
     }
-    public set chunck(c: Chunck) {
+    public set chunck(c: Chunck_V2) {
         this._chunck = c;
     }
 

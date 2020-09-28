@@ -95,6 +95,13 @@ class Chunck_V2 extends Chunck {
         return false;
     }
 
+    public removeBrick(brick: Brick): void {
+        let index = this.bricks.indexOf(brick);
+        if (index != -1) {
+            this.bricks.splice(index, 1);
+        }
+    }
+
     public getLock(i: number, j: number, k: number): boolean {
         if (this._locks[i]) {
             if (this._locks[i][j]) {

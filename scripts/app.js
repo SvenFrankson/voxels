@@ -2662,6 +2662,12 @@ class Chunck_V2 extends Chunck {
         }
         return false;
     }
+    removeBrick(brick) {
+        let index = this.bricks.indexOf(brick);
+        if (index != -1) {
+            this.bricks.splice(index, 1);
+        }
+    }
     getLock(i, j, k) {
         if (this._locks[i]) {
             if (this._locks[i][j]) {
@@ -3806,6 +3812,14 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onClick();
                 }
             }
+            else {
+                if (e.button === 0) {
+                    this.takeBrick();
+                }
+                else if (e.button === 2) {
+                    this.storeBrick();
+                }
+            }
         });
         Main.Canvas.onwheel = (e) => {
             console.log(".");
@@ -3816,6 +3830,31 @@ class Player extends BABYLON.Mesh {
             }
         };
         document.getElementById("player-actions").style.display = "block";
+    }
+    storeBrick() {
+        console.log("Store Brick");
+        if (this.aimedObject && this.aimedObject instanceof Brick) {
+            this.aimedObject.chunck.removeBrick(this.aimedObject);
+            this.aimedObject.chunck.updateBricks();
+            console.log("Brick Stored");
+            return this.aimedObject;
+        }
+    }
+    takeBrick() {
+        console.log("Take Brick");
+        let brick = this.storeBrick();
+        if (brick) {
+            this.currentAction = PlayerActionTemplate.CreateBrickAction(brick.reference, () => {
+                if (this.currentAction.onUnequip) {
+                    this.currentAction.onUnequip();
+                }
+                this.currentAction = undefined;
+                console.log("Done");
+            });
+            console.log("Brick Taken");
+            return true;
+        }
+        return false;
     }
 }
 var ACTIVE_DEBUG_PLAYER_ACTION = true;
@@ -4057,7 +4096,7 @@ class PlayerActionTemplate {
         offsetRef.x = Math.cos(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
-    static CreateBrickAction(brickReference) {
+    static CreateBrickAction(brickReference, onBrickAddedCallback = () => { }) {
         let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh;
@@ -4155,6 +4194,7 @@ class PlayerActionTemplate {
                             else {
                                 previewMesh.material = Main.cellShadingMaterial;
                             }
+                            previewMesh.material = Main.DebugGreenMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -4175,7 +4215,7 @@ class PlayerActionTemplate {
                     previewMesh = undefined;
                 }
             }
-            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION && previewMesh) {
                 if (!debugText) {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
@@ -4209,8 +4249,10 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        coordinates.chunck.addBrickSafe(brick);
-                        coordinates.chunck.updateBricks();
+                        if (coordinates.chunck.addBrickSafe(brick)) {
+                            coordinates.chunck.updateBricks();
+                            onBrickAddedCallback();
+                        }
                     }
                 }
             }

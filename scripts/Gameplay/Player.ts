@@ -120,6 +120,14 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onClick();
                 }
             }
+            else {
+                if (e.button === 0) {
+                    this.takeBrick();
+                }
+                else if (e.button === 2) {
+                    this.storeBrick();
+                }
+            }
         });
 
         Main.Canvas.onwheel = (e: WheelEvent) => {
@@ -132,6 +140,36 @@ class Player extends BABYLON.Mesh {
         };
 
         document.getElementById("player-actions").style.display = "block";
+    }
+
+    public storeBrick(): Brick {
+        console.log("Store Brick");
+        if (this.aimedObject && this.aimedObject instanceof Brick) {
+            this.aimedObject.chunck.removeBrick(this.aimedObject);
+            this.aimedObject.chunck.updateBricks();
+            console.log("Brick Stored");
+            return this.aimedObject;
+        }
+    }
+
+    public takeBrick(): boolean {
+        console.log("Take Brick");
+        let brick = this.storeBrick();
+        if (brick) {
+            this.currentAction = PlayerActionTemplate.CreateBrickAction(
+                brick.reference,
+                () => {
+                    if (this.currentAction.onUnequip) {
+                        this.currentAction.onUnequip();
+                    }
+                    this.currentAction = undefined;
+                    console.log("Done");        
+                }
+            );
+            console.log("Brick Taken");
+            return true;
+        }
+        return false;
     }
 
     public update = () => {

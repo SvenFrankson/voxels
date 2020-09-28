@@ -286,7 +286,7 @@ class PlayerActionTemplate {
         offsetRef.z = Math.sin(t / (ADD_BRICK_ANIMATION_DURATION * 0.2) * Math.PI * 2) * q;
     }
 
-    public static CreateBrickAction(brickReference: IBrickReference): PlayerAction {
+    public static CreateBrickAction(brickReference: IBrickReference, onBrickAddedCallback = () => {}): PlayerAction {
         let data = BrickDataManager.GetBrickData(brickReference);
         let action = new PlayerAction();
         let previewMesh: BABYLON.Mesh;
@@ -401,6 +401,7 @@ class PlayerActionTemplate {
                             else {
                                 previewMesh.material = Main.cellShadingMaterial;
                             }
+                            previewMesh.material = Main.DebugGreenMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -422,7 +423,7 @@ class PlayerActionTemplate {
                 }
             }
 
-            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+            if (ACTIVE_DEBUG_PLAYER_ACTION && previewMesh) {
                 if (!debugText) {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
@@ -462,8 +463,10 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        coordinates.chunck.addBrickSafe(brick);
-                        coordinates.chunck.updateBricks();
+                        if (coordinates.chunck.addBrickSafe(brick)) {
+                            coordinates.chunck.updateBricks();
+                            onBrickAddedCallback();
+                        }
                     }
                 }
             }
