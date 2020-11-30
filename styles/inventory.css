@@ -62,6 +62,8 @@
 #items {
     letter-spacing: 0px;
     margin-bottom: 5px;
+    height: 85%;
+    overflow-y : scroll;
 }
 
 .item {
