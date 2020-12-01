@@ -40,9 +40,9 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						//this.runManyScreenShots();
+						this.runManyScreenShots();
 						//this.runAllScreenShots();
-						await this.createBrick("construct_bar_stool_red");
+						//await this.createBrick("construct_bar_stool_red");
 					},
 					100
 				);
@@ -74,12 +74,8 @@ class Miniature extends Main {
 		*/
 
 		let bricks = [
-			"cone-1x1",
-			"plateRound-1x1",
-			"brickRound-1x1",
-			"brickRound-2x2",
-			"plateRound-2x2",
-			"tileRound-2x2"
+			"windowRound-2x2",
+			"windowRound-4x2"
 		];
 
 		for (let i = 0; i < bricks.length; i++) {

@@ -1019,6 +1019,9 @@ class BrickVertexData {
         if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "cone") {
             return "round";
         }
+        if (type === "windowRound") {
+            return "window";
+        }
         return type;
     }
     static async _LoadBrickVertexData(brickName, lod) {
@@ -5255,9 +5258,9 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    //this.runManyScreenShots();
+                    this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    await this.createBrick("construct_bar_stool_red");
+                    //await this.createBrick("construct_bar_stool_red");
                 }, 100);
             }
             else {
@@ -5284,12 +5287,8 @@ class Miniature extends Main {
         });
         */
         let bricks = [
-            "cone-1x1",
-            "plateRound-1x1",
-            "brickRound-1x1",
-            "brickRound-2x2",
-            "plateRound-2x2",
-            "tileRound-2x2"
+            "windowRound-2x2",
+            "windowRound-4x2"
         ];
         for (let i = 0; i < bricks.length; i++) {
             let name = bricks[i];
@@ -5577,7 +5576,9 @@ class PlayerTest extends Main {
             "brickRound-1x1",
             "brickRound-2x2",
             "plateRound-2x2",
-            "tileRound-2x2"
+            "tileRound-2x2",
+            "windowRound-2x2",
+            "windowRound-4x2"
         ];
         BrickDataManager.BrickNames.forEach(n => {
             if (n.indexOf("slope") != -1) {

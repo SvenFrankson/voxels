@@ -189,6 +189,9 @@ class BrickVertexData {
         if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "cone") {
             return "round";
         }
+        if (type === "windowRound") {
+            return "window";
+        }
         return type;
     }
 
