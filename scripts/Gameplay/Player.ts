@@ -141,6 +141,17 @@ class Player extends BABYLON.Mesh {
         document.getElementById("player-actions").style.display = "block";
     }
 
+    public checkPause(): void {
+        if (!document.pointerLockElement) {
+            if (this.currentAction) {
+                if (this.currentAction.onUnequip) {
+                    this.currentAction.onUnequip();
+                }
+                this.currentAction = undefined;
+            }
+        }
+    }
+
     public async storeBrick(): Promise<Brick> {
         if (this.aimedObject && this.aimedObject instanceof Brick) {
             this.aimedObject.chunck.removeBrick(this.aimedObject);
@@ -167,6 +178,8 @@ class Player extends BABYLON.Mesh {
     }
 
     public update = () => {
+        this.checkPause();
+
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
 
