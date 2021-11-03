@@ -3766,25 +3766,27 @@ class Player extends BABYLON.Mesh {
         this._inputRight = false;
         this._inputBack = false;
         this._inputForward = false;
+        this.speed = 5;
         this._downSpeed = 0;
         this.update = () => {
             this.checkPause();
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
+            let dt = this.getEngine().getDeltaTime() / 1000;
             if (this._inputLeft) {
-                this.position.addInPlace(right.scale(-0.04));
+                this.position.addInPlace(right.scale(-this.speed * dt));
             }
             if (this._inputRight) {
-                this.position.addInPlace(right.scale(0.04));
+                this.position.addInPlace(right.scale(this.speed * dt));
             }
             if (this._inputBack) {
-                this.position.addInPlace(forward.scale(-0.04));
+                this.position.addInPlace(forward.scale(-this.speed * dt));
             }
             if (this._inputForward) {
-                this.position.addInPlace(forward.scale(0.04));
+                this.position.addInPlace(forward.scale(this.speed * dt));
             }
             this.position.y -= this._downSpeed;
-            this._downSpeed += 0.005;
+            this._downSpeed += 0.1 * dt;
             this._downSpeed *= 0.99;
             Main.ChunckManager.foreachChunck((chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
