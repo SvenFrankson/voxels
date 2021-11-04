@@ -7,6 +7,8 @@ class Player extends BABYLON.Mesh {
     private _inputBack: boolean = false;
     private _inputForward: boolean = false;
 
+    public speed: number = 5;
+
     private _downSpeed: number = 0;
 
     public playerActionManager: PlayerActionManager;
@@ -141,6 +143,17 @@ class Player extends BABYLON.Mesh {
         document.getElementById("player-actions").style.display = "block";
     }
 
+    public checkPause(): void {
+        if (!document.pointerLockElement) {
+            if (this.currentAction) {
+                if (this.currentAction.onUnequip) {
+                    this.currentAction.onUnequip();
+                }
+                this.currentAction = undefined;
+            }
+        }
+    }
+
     public async storeBrick(): Promise<Brick> {
         if (this.aimedObject && this.aimedObject instanceof Brick) {
             this.aimedObject.chunck.removeBrick(this.aimedObject);
@@ -167,15 +180,26 @@ class Player extends BABYLON.Mesh {
     }
 
     public update = () => {
+        this.checkPause();
+
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
+        let dt = this.getEngine().getDeltaTime() / 1000;
 
-        if (this._inputLeft) { this.position.addInPlace(right.scale(-0.04)); }
-        if (this._inputRight) { this.position.addInPlace(right.scale(0.04)); }
-        if (this._inputBack) { this.position.addInPlace(forward.scale(-0.04)); }
-        if (this._inputForward) { this.position.addInPlace(forward.scale(0.04)); }
+        if (this._inputLeft) {
+            this.position.addInPlace(right.scale(-  this.speed * dt)); 
+        }
+        if (this._inputRight) {
+            this.position.addInPlace(right.scale( this.speed * dt)); 
+        }
+        if (this._inputBack) {
+            this.position.addInPlace(forward.scale(- this.speed * dt)); 
+        }
+        if (this._inputForward) {
+            this.position.addInPlace(forward.scale( this.speed * dt)); 
+        }
         this.position.y -= this._downSpeed;
-        this._downSpeed += 0.005;
+        this._downSpeed += 0.1 * dt;
         this._downSpeed *= 0.99;
         
         Main.ChunckManager.foreachChunck(

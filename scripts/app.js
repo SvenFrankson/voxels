@@ -2672,6 +2672,7 @@ class Chunck_V1 extends Chunck {
 var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
+var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 class Chunck_V2 extends Chunck {
@@ -2747,9 +2748,11 @@ class Chunck_V2 extends Chunck {
         this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
         this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
         this.material = Main.terrainCellShadingMaterial;
-        this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
-        this.knobsMesh.parent = this;
-        this.knobsMesh.material = Main.cellShadingMaterial;
+        if (GENERATE_TERRAIN_KNOBS) {
+            this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
+            this.knobsMesh.parent = this;
+            this.knobsMesh.material = Main.cellShadingMaterial;
+        }
     }
     get barycenter() {
         return this._barycenter;
@@ -2875,16 +2878,18 @@ class Chunck_V2 extends Chunck {
                     }
                     */
                     let data = ChunckVertexData.Get(ref);
-                    if (c0 && !c4) {
-                        BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                        if (c1 && !c5) {
-                            BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                            if (c3 && !c7 && c2 && !c6) {
-                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                    if (GENERATE_TERRAIN_KNOBS) {
+                        if (c0 && !c4) {
+                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                            if (c1 && !c5) {
+                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                                if (c3 && !c7 && c2 && !c6) {
+                                    BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                                }
                             }
-                        }
-                        if (c3 && !c7) {
-                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                            if (c3 && !c7) {
+                                BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
+                            }
                         }
                     }
                     if (data) {
@@ -3014,12 +3019,14 @@ class Chunck_V2 extends Chunck {
         vertexData.normals = normals;
         vertexData.colors = colors;
         vertexData.applyToMesh(this);
-        let knobsVertexData = new BABYLON.VertexData();
-        knobsVertexData.positions = knobsPositions;
-        knobsVertexData.indices = knobsIndices;
-        knobsVertexData.normals = knobsNormals;
-        knobsVertexData.colors = knobsColors;
-        knobsVertexData.applyToMesh(this.knobsMesh);
+        if (GENERATE_TERRAIN_KNOBS) {
+            let knobsVertexData = new BABYLON.VertexData();
+            knobsVertexData.positions = knobsPositions;
+            knobsVertexData.indices = knobsIndices;
+            knobsVertexData.normals = knobsNormals;
+            knobsVertexData.colors = knobsColors;
+            knobsVertexData.applyToMesh(this.knobsMesh);
+        }
         this.updateBricks();
         if (ACTIVE_DEBUG_CHUNCK) {
             Main.AddOnUpdateDebugCallback(this._updateDebug);
@@ -3762,24 +3769,27 @@ class Player extends BABYLON.Mesh {
         this._inputRight = false;
         this._inputBack = false;
         this._inputForward = false;
+        this.speed = 5;
         this._downSpeed = 0;
         this.update = () => {
+            this.checkPause();
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
+            let dt = this.getEngine().getDeltaTime() / 1000;
             if (this._inputLeft) {
-                this.position.addInPlace(right.scale(-0.04));
+                this.position.addInPlace(right.scale(-this.speed * dt));
             }
             if (this._inputRight) {
-                this.position.addInPlace(right.scale(0.04));
+                this.position.addInPlace(right.scale(this.speed * dt));
             }
             if (this._inputBack) {
-                this.position.addInPlace(forward.scale(-0.04));
+                this.position.addInPlace(forward.scale(-this.speed * dt));
             }
             if (this._inputForward) {
-                this.position.addInPlace(forward.scale(0.04));
+                this.position.addInPlace(forward.scale(this.speed * dt));
             }
             this.position.y -= this._downSpeed;
-            this._downSpeed += 0.005;
+            this._downSpeed += 0.1 * dt;
             this._downSpeed *= 0.99;
             Main.ChunckManager.foreachChunck((chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
@@ -3960,6 +3970,16 @@ class Player extends BABYLON.Mesh {
             }
         };
         document.getElementById("player-actions").style.display = "block";
+    }
+    checkPause() {
+        if (!document.pointerLockElement) {
+            if (this.currentAction) {
+                if (this.currentAction.onUnequip) {
+                    this.currentAction.onUnequip();
+                }
+                this.currentAction = undefined;
+            }
+        }
     }
     async storeBrick() {
         if (this.aimedObject && this.aimedObject instanceof Brick) {
