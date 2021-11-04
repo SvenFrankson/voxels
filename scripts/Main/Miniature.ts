@@ -74,8 +74,11 @@ class Miniature extends Main {
 		*/
 
 		let bricks = [
-			"windowRound-2x2",
-			"windowRound-4x2"
+			"brickCornerRound-2x2",
+			"plateCornerRound-2x2",
+			"tileCornerRound-2x2",
+			"plateCornerRound-3x3",
+			"tileCornerRound-3x3"
 		];
 
 		for (let i = 0; i < bricks.length; i++) {

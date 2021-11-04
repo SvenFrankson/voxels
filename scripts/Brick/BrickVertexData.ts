@@ -70,6 +70,9 @@ class BrickVertexData {
                                 if (name === "tileRound") {
                                     BrickVertexData._BrickVertexDatas.set("plateRound-" + sizeString + "-" + lodString, BABYLON.VertexData.ExtractFromMesh(mesh));
                                 }
+                                if (name === "tileCornerRound") {
+                                    BrickVertexData._BrickVertexDatas.set("plateCornerRound-" + sizeString + "-" + lodString, BABYLON.VertexData.ExtractFromMesh(mesh));
+                                }
                                 mesh.dispose();
                             }
                         }
@@ -186,7 +189,7 @@ class BrickVertexData {
     }
 
     private static _GetFileNameFromType(type: string): string {
-        if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "cone") {
+        if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "brickCornerRound" || type === "tileCornerRound" || type === "plateCornerRound" || type === "cone") {
             return "round";
         }
         if (type === "windowRound") {

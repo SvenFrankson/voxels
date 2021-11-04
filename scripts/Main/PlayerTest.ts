@@ -128,6 +128,7 @@ class PlayerTest extends Main {
 			"brick-2x8",
 			"plate-1x1",
 			"plate-2x2",
+			"plate-2x3",
 			"plate-1x4",
 			"plate-2x4",
 			"plate-1x8",
@@ -140,7 +141,12 @@ class PlayerTest extends Main {
 			"plateRound-2x2",
 			"tileRound-2x2",
 			"windowRound-2x2",
-			"windowRound-4x2"
+			"windowRound-4x2",
+			"brickCornerRound-2x2",
+			"plateCornerRound-2x2",
+			"tileCornerRound-2x2",
+			"plateCornerRound-3x3",
+			"tileCornerRound-3x3"
 		];
 		BrickDataManager.BrickNames.forEach(n => {
 			if (n.indexOf("slope") != -1) {
