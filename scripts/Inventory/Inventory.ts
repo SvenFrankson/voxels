@@ -15,6 +15,7 @@ class InventoryItem {
     public size: number = 1;
     public playerAction: PlayerAction;
     public iconUrl: string;
+    public timeUse: number = 0;
 
     public static Block(reference: string): InventoryItem {
         let it = new InventoryItem();
@@ -100,6 +101,7 @@ class Inventory {
             playerAction.ondrop = (e) => {
                 if (this._draggedItem) {
                     this.player.playerActionManager.linkAction(this._draggedItem.playerAction, ii);
+                    this._draggedItem.timeUse = (new Date()).getTime();
                 }
                 this._draggedItem = undefined;
             }
@@ -313,6 +315,14 @@ class Inventory {
                 currentSectionItems = currentSectionItems.sort(
                     (a, b) => {
                         return - a.brickReference.color.localeCompare(b.brickReference.color);
+                    }
+                )
+            }
+            else if (this._brickSorting === BrickSortingOrder.Recent) {
+                this.hightlightButton(this._sortBrickMostRecent);
+                currentSectionItems = currentSectionItems.sort(
+                    (a, b) => {
+                        return b.timeUse - a.timeUse;
                     }
                 )
             }

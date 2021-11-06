@@ -2857,26 +2857,6 @@ class Chunck_V2 extends Chunck {
                     if (ref === "00000000" || ref === "11111111") {
                         continue;
                     }
-                    // debug
-                    /*
-                    if (c0) {
-                        let debugData = BABYLON.VertexData.CreateBox({ size: 0.3 });
-                        let debugColors = [];
-                        for (let n = 0; n < debugData.positions.length / 3; n++) {
-                            debugColors.push(...c0.color.asArray());
-                        }
-                        debugData.colors = debugColors;
-                        let debugMesh = new BABYLON.Mesh("debug");
-                        debugData.applyToMesh(debugMesh);
-                        debugMesh.parent = this;
-                        debugMesh.position.x = i * 1.6;
-                        debugMesh.position.y = j * 0.96;
-                        debugMesh.position.z = k * 1.6;
-                        debugMesh.scaling.y = 4;
-                        debugMesh.material = Main.cellShadingMaterial;
-                        debugMesh.freezeWorldMatrix();
-                    }
-                    */
                     let data = ChunckVertexData.Get(ref);
                     if (GENERATE_TERRAIN_KNOBS) {
                         if (c0 && !c4) {
@@ -4540,6 +4520,7 @@ class InventoryItem {
     constructor() {
         this.count = 1;
         this.size = 1;
+        this.timeUse = 0;
     }
     static Block(reference) {
         let it = new InventoryItem();
@@ -4597,6 +4578,7 @@ class Inventory {
             playerAction.ondrop = (e) => {
                 if (this._draggedItem) {
                     this.player.playerActionManager.linkAction(this._draggedItem.playerAction, ii);
+                    this._draggedItem.timeUse = (new Date()).getTime();
                 }
                 this._draggedItem = undefined;
             };
@@ -4789,6 +4771,12 @@ class Inventory {
                 this.hightlightButton(this._sortBrickColor);
                 currentSectionItems = currentSectionItems.sort((a, b) => {
                     return -a.brickReference.color.localeCompare(b.brickReference.color);
+                });
+            }
+            else if (this._brickSorting === BrickSortingOrder.Recent) {
+                this.hightlightButton(this._sortBrickMostRecent);
+                currentSectionItems = currentSectionItems.sort((a, b) => {
+                    return b.timeUse - a.timeUse;
                 });
             }
         }
