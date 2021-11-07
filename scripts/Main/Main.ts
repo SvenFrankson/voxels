@@ -284,6 +284,51 @@ window.addEventListener("load", async () => {
 			}
 		}
 	}
-	await main.initialize();
-	main.animate();
+	else {
+		let availableScenesContainer = document.createElement("div");
+		availableScenesContainer.style.position = "fixed";
+		availableScenesContainer.style.top = "40%";
+		availableScenesContainer.style.left = "45%";
+		availableScenesContainer.style.zIndex = "1";
+		document.body.appendChild(availableScenesContainer);
+
+		let skullIsland = document.createElement("a");
+		skullIsland.style.color = "black";
+		skullIsland.style.display = "block";
+		skullIsland.href = url + "?main=skull_island";
+		skullIsland.textContent = "Skull Island";
+		availableScenesContainer.appendChild(skullIsland);
+		
+		let collisionTest = document.createElement("a");
+		collisionTest.style.color = "black";
+		collisionTest.style.display = "block";
+		collisionTest.href = url + "?main=collisions_test";
+		collisionTest.textContent = "Collision Test";
+		availableScenesContainer.appendChild(collisionTest);
+		
+		let playerTest = document.createElement("a");
+		playerTest.style.color = "black";
+		playerTest.style.display = "block";
+		playerTest.href = url + "?main=player_test";
+		playerTest.textContent = "Player Test";
+		availableScenesContainer.appendChild(playerTest);
+		
+		let miniature = document.createElement("a");
+		miniature.style.color = "black";
+		miniature.style.display = "block";
+		miniature.href = url + "?main=miniature";
+		miniature.textContent = "Miniature";
+		availableScenesContainer.appendChild(miniature);
+		
+		let tileTest = document.createElement("a");
+		tileTest.style.color = "black";
+		tileTest.style.display = "block";
+		tileTest.href = url + "?main=tile_test";
+		tileTest.textContent = "Tile Test";
+		availableScenesContainer.appendChild(tileTest);
+	}
+	if (main) {
+		await main.initialize();
+		main.animate();
+	}
 })
