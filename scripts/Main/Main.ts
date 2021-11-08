@@ -294,6 +294,7 @@ window.addEventListener("load", async () => {
 
 		let skullIsland = document.createElement("a");
 		skullIsland.style.color = "black";
+		skullIsland.style.fontSize = "24px";
 		skullIsland.style.display = "block";
 		skullIsland.href = url + "?main=skull_island";
 		skullIsland.textContent = "Skull Island";
@@ -301,6 +302,7 @@ window.addEventListener("load", async () => {
 		
 		let collisionTest = document.createElement("a");
 		collisionTest.style.color = "black";
+		collisionTest.style.fontSize = "24px";
 		collisionTest.style.display = "block";
 		collisionTest.href = url + "?main=collisions_test";
 		collisionTest.textContent = "Collision Test";
@@ -308,6 +310,7 @@ window.addEventListener("load", async () => {
 		
 		let playerTest = document.createElement("a");
 		playerTest.style.color = "black";
+		playerTest.style.fontSize = "24px";
 		playerTest.style.display = "block";
 		playerTest.href = url + "?main=player_test";
 		playerTest.textContent = "Player Test";
@@ -315,6 +318,7 @@ window.addEventListener("load", async () => {
 		
 		let miniature = document.createElement("a");
 		miniature.style.color = "black";
+		miniature.style.fontSize = "24px";
 		miniature.style.display = "block";
 		miniature.href = url + "?main=miniature";
 		miniature.textContent = "Miniature";
@@ -322,6 +326,7 @@ window.addEventListener("load", async () => {
 		
 		let tileTest = document.createElement("a");
 		tileTest.style.color = "black";
+		tileTest.style.fontSize = "24px";
 		tileTest.style.display = "block";
 		tileTest.href = url + "?main=tile_test";
 		tileTest.textContent = "Tile Test";
