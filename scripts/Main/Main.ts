@@ -11,6 +11,7 @@ class Main {
 	public static ChunckManager: ChunckManager;
 	public static ChunckEditor: ChunckEditor;
 	public static MenuManager: MenuManager;
+	public static InputManager: InputManager;
 
     public static _cellShadingMaterial: ToonMaterial;
 	public static get cellShadingMaterial(): ToonMaterial {
@@ -216,6 +217,9 @@ class Main {
 
 		Main.MenuManager = new MenuManager();
 		Main.MenuManager.initialize();
+
+		Main.InputManager = new InputManager();
+		Main.InputManager.initialize();
 		
 		let pauseMenu = new PauseMenu();
 		pauseMenu.initialize();

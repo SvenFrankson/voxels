@@ -3741,6 +3741,83 @@ class DebugText3D {
         }
     }
 }
+var KeyInput;
+(function (KeyInput) {
+    KeyInput[KeyInput["NULL"] = -1] = "NULL";
+    KeyInput[KeyInput["ACTION_SLOT_0"] = 0] = "ACTION_SLOT_0";
+    KeyInput[KeyInput["ACTION_SLOT_1"] = 1] = "ACTION_SLOT_1";
+    KeyInput[KeyInput["ACTION_SLOT_2"] = 2] = "ACTION_SLOT_2";
+    KeyInput[KeyInput["ACTION_SLOT_3"] = 3] = "ACTION_SLOT_3";
+    KeyInput[KeyInput["ACTION_SLOT_4"] = 4] = "ACTION_SLOT_4";
+    KeyInput[KeyInput["ACTION_SLOT_5"] = 5] = "ACTION_SLOT_5";
+    KeyInput[KeyInput["ACTION_SLOT_6"] = 6] = "ACTION_SLOT_6";
+    KeyInput[KeyInput["ACTION_SLOT_7"] = 7] = "ACTION_SLOT_7";
+    KeyInput[KeyInput["ACTION_SLOT_8"] = 8] = "ACTION_SLOT_8";
+    KeyInput[KeyInput["ACTION_SLOT_9"] = 9] = "ACTION_SLOT_9";
+})(KeyInput || (KeyInput = {}));
+class InputManager {
+    constructor() {
+        this.keyInputMap = new Map();
+        this.keyInputDown = new UniqueList();
+    }
+    initialize() {
+        this.keyInputMap.set("Digit0", KeyInput.ACTION_SLOT_0);
+        this.keyInputMap.set("Digit1", KeyInput.ACTION_SLOT_1);
+        this.keyInputMap.set("Digit2", KeyInput.ACTION_SLOT_2);
+        this.keyInputMap.set("Digit3", KeyInput.ACTION_SLOT_3);
+        this.keyInputMap.set("Digit4", KeyInput.ACTION_SLOT_4);
+        this.keyInputMap.set("Digit5", KeyInput.ACTION_SLOT_5);
+        this.keyInputMap.set("Digit6", KeyInput.ACTION_SLOT_6);
+        this.keyInputMap.set("Digit7", KeyInput.ACTION_SLOT_7);
+        this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
+        this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
+        window.addEventListener("keydown", (e) => {
+            let keyInput = this.keyInputMap.get(e.code);
+            if (isFinite(keyInput)) {
+                this.keyInputDown.push(keyInput);
+            }
+        });
+        window.addEventListener("keyup", (e) => {
+            let keyInput = this.keyInputMap.get(e.code);
+            if (isFinite(keyInput)) {
+                this.keyInputDown.remove(keyInput);
+            }
+        });
+    }
+    getkeyInputActionSlotDown() {
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_0)) {
+            return KeyInput.ACTION_SLOT_0;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_1)) {
+            return KeyInput.ACTION_SLOT_1;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_2)) {
+            return KeyInput.ACTION_SLOT_2;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_3)) {
+            return KeyInput.ACTION_SLOT_3;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_4)) {
+            return KeyInput.ACTION_SLOT_4;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_5)) {
+            return KeyInput.ACTION_SLOT_5;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_6)) {
+            return KeyInput.ACTION_SLOT_6;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_7)) {
+            return KeyInput.ACTION_SLOT_7;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_8)) {
+            return KeyInput.ACTION_SLOT_8;
+        }
+        if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_9)) {
+            return KeyInput.ACTION_SLOT_9;
+        }
+        return KeyInput.NULL;
+    }
+}
 var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
     constructor() {
@@ -4796,6 +4873,13 @@ class Inventory {
                 itemDiv.ondragend = (e) => {
                     this._draggedItem = undefined;
                 };
+                itemDiv.onpointerup = (e) => {
+                    let keyInputActionSlot = Main.InputManager.getkeyInputActionSlotDown();
+                    if (keyInputActionSlot != KeyInput.NULL) {
+                        this.player.playerActionManager.linkAction(it.playerAction, keyInputActionSlot);
+                        it.timeUse = (new Date()).getTime();
+                    }
+                };
             }
             let itemCount = document.createElement("div");
             itemCount.classList.add("item-count");
@@ -4990,6 +5074,8 @@ class Main {
         new VertexDataLoader(Main.Scene);
         Main.MenuManager = new MenuManager();
         Main.MenuManager.initialize();
+        Main.InputManager = new InputManager();
+        Main.InputManager.initialize();
         let pauseMenu = new PauseMenu();
         pauseMenu.initialize();
         console.log("Main scene Initialized.");
@@ -7269,6 +7355,34 @@ class WorldDataGenerator {
 }
 WorldDataGenerator._RawDatas = new Map();
 WorldDataGenerator._Datas = new Map();
+class UniqueList {
+    constructor() {
+        this._elements = [];
+    }
+    length() {
+        return this._elements.length;
+    }
+    get(i) {
+        return this._elements[i];
+    }
+    getLast() {
+        return this.get(this.length() - 1);
+    }
+    push(e) {
+        if (this._elements.indexOf(e) === -1) {
+            this._elements.push(e);
+        }
+    }
+    remove(e) {
+        let i = this._elements.indexOf(e);
+        if (i != -1) {
+            this._elements.splice(i, 1);
+        }
+    }
+    contains(e) {
+        return this._elements.indexOf(e) != -1;
+    }
+}
 class BranchMesh {
     constructor() {
         this.branches = [];

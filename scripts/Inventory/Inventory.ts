@@ -344,6 +344,13 @@ class Inventory {
                 itemDiv.ondragend = (e: DragEvent) => {
                     this._draggedItem = undefined;
                 }
+                itemDiv.onpointerup = (e: PointerEvent) => {
+                    let keyInputActionSlot = Main.InputManager.getkeyInputActionSlotDown();
+                    if (keyInputActionSlot != KeyInput.NULL) {
+                        this.player.playerActionManager.linkAction(it.playerAction, keyInputActionSlot);
+                        it.timeUse = (new Date()).getTime();
+                    }
+                }
             }
 
             let itemCount = document.createElement("div");
