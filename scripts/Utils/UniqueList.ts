@@ -2,7 +2,7 @@ class UniqueList<T> {
 
     private _elements: T[] = [];
 
-    public length(): number {
+    public get length(): number {
         return this._elements.length;
     }
 
@@ -11,7 +11,7 @@ class UniqueList<T> {
     }
 
     public getLast(): T {
-        return this.get(this.length() - 1);
+        return this.get(this.length - 1);
     }
 
     public push(e: T) {

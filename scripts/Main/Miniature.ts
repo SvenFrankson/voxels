@@ -32,6 +32,7 @@ class Miniature extends Main {
         BrickDataManager.InitializeProceduralData();
         await BrickDataManager.InitializeDataFromFile();
 
+		Main.Skybox.dispose();
 		Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
 
         console.log("Miniature initialized.");

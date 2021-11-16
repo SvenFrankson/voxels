@@ -3759,6 +3759,8 @@ class InputManager {
     constructor() {
         this.keyInputMap = new Map();
         this.keyInputDown = new UniqueList();
+        this.keyDownListeners = [];
+        this.keyUpListeners = [];
     }
     initialize() {
         this.keyInputMap.set("Digit0", KeyInput.ACTION_SLOT_0);
@@ -3775,14 +3777,38 @@ class InputManager {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
                 this.keyInputDown.push(keyInput);
+                for (let i = 0; i < this.keyDownListeners.length; i++) {
+                    this.keyDownListeners[i](keyInput);
+                }
             }
         });
         window.addEventListener("keyup", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
                 this.keyInputDown.remove(keyInput);
+                for (let i = 0; i < this.keyUpListeners.length; i++) {
+                    this.keyUpListeners[i](keyInput);
+                }
             }
         });
+    }
+    addKeyDownListener(callback) {
+        this.keyDownListeners.push(callback);
+    }
+    removeKeyDownListener(callback) {
+        let i = this.keyDownListeners.indexOf(callback);
+        if (i != -1) {
+            this.keyDownListeners.splice(i, 1);
+        }
+    }
+    addKeyUpListener(callback) {
+        this.keyUpListeners.push(callback);
+    }
+    removeKeyUpListener(callback) {
+        let i = this.keyUpListeners.indexOf(callback);
+        if (i != -1) {
+            this.keyUpListeners.splice(i, 1);
+        }
     }
     getkeyInputActionSlotDown() {
         if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_0)) {
@@ -3942,7 +3968,7 @@ class Player extends BABYLON.Mesh {
         }
     }
     register(brickMode = false) {
-        this.playerActionManager.register();
+        this.playerActionManager.initialize();
         if (brickMode) {
             Main.Scene.onBeforeRenderObservable.add(this.updateBrickMode);
         }
@@ -4534,11 +4560,37 @@ class PlayerActionManager {
     constructor(player) {
         this.player = player;
         this.linkedActions = [];
+        this.hintedSlotIndex = new UniqueList();
+        this.update = () => {
+            if (this.hintedSlotIndex.length > 0) {
+                let t = (new Date()).getTime();
+                let thickness = Math.cos(2 * Math.PI * t / 1000) * 2 + 3;
+                let opacity = (Math.cos(2 * Math.PI * t / 1000) + 1) * 0.5 * 0.5 + 0.25;
+                for (let i = 0; i < this.hintedSlotIndex.length; i++) {
+                    let slotIndex = this.hintedSlotIndex.get(i);
+                    console.log(thickness);
+                    document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "rgba(255, 255, 255, " + opacity.toFixed(2) + ")";
+                }
+            }
+        };
     }
-    register() {
-        Main.Canvas.addEventListener("keyup", (e) => {
-            let index = e.keyCode - 48;
-            if (index >= 0 && index < 10) {
+    initialize() {
+        Main.Scene.onBeforeRenderObservable.add(this.update);
+        Main.InputManager.addKeyDownListener((e) => {
+            let slotIndex = e;
+            if (slotIndex >= 0 && slotIndex < 10) {
+                if (!document.pointerLockElement) {
+                    this.startHint(slotIndex);
+                }
+            }
+        });
+        Main.InputManager.addKeyUpListener((e) => {
+            let slotIndex = e;
+            if (slotIndex >= 0 && slotIndex < 10) {
+                this.stopHint(slotIndex);
+                if (!document.pointerLockElement) {
+                    return;
+                }
                 for (let i = 0; i < 10; i++) {
                     document.getElementById("player-action-" + i + "-icon").style.border = "";
                     document.getElementById("player-action-" + i + "-icon").style.margin = "";
@@ -4549,17 +4601,17 @@ class PlayerActionManager {
                         this.player.currentAction.onUnequip();
                     }
                 }
-                if (this.linkedActions[index]) {
+                if (this.linkedActions[slotIndex]) {
                     // If request action was already equiped, remove it.
-                    if (this.player.currentAction === this.linkedActions[index]) {
+                    if (this.player.currentAction === this.linkedActions[slotIndex]) {
                         this.player.currentAction = undefined;
                     }
                     // Equip new action.
                     else {
-                        this.player.currentAction = this.linkedActions[index];
+                        this.player.currentAction = this.linkedActions[slotIndex];
                         if (this.player.currentAction) {
-                            document.getElementById("player-action-" + index + "-icon").style.border = "solid 3px white";
-                            document.getElementById("player-action-" + index + "-icon").style.margin = "-2px -2px -2px 8px";
+                            document.getElementById("player-action-" + slotIndex + "-icon").style.border = "solid 3px white";
+                            document.getElementById("player-action-" + slotIndex + "-icon").style.margin = "-2px -2px -2px 8px";
                             if (this.player.currentAction.onEquip) {
                                 this.player.currentAction.onEquip();
                             }
@@ -4572,18 +4624,25 @@ class PlayerActionManager {
             }
         });
     }
-    linkAction(action, index) {
-        if (index >= 0 && index <= 9) {
-            this.linkedActions[index] = action;
-            console.log(index + " " + action.iconUrl);
-            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "url(" + action.iconUrl + ")";
+    linkAction(action, slotIndex) {
+        if (slotIndex >= 0 && slotIndex <= 9) {
+            this.linkedActions[slotIndex] = action;
+            console.log(slotIndex + " " + action.iconUrl);
+            document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundImage = "url(" + action.iconUrl + ")";
         }
     }
-    unlinkAction(index) {
-        if (index >= 0 && index <= 9) {
-            this.linkedActions[index] = undefined;
-            document.getElementById("player-action-" + index + "-icon").style.backgroundImage = "";
+    unlinkAction(slotIndex) {
+        if (slotIndex >= 0 && slotIndex <= 9) {
+            this.linkedActions[slotIndex] = undefined;
+            document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundImage = "";
         }
+    }
+    startHint(slotIndex) {
+        this.hintedSlotIndex.push(slotIndex);
+    }
+    stopHint(slotIndex) {
+        this.hintedSlotIndex.remove(slotIndex);
+        document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "";
     }
 }
 var InventorySection;
@@ -5374,6 +5433,7 @@ class Miniature extends Main {
         await BrickVertexData.InitializeData();
         BrickDataManager.InitializeProceduralData();
         await BrickDataManager.InitializeDataFromFile();
+        Main.Skybox.dispose();
         Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
         console.log("Miniature initialized.");
         let loop = () => {
@@ -7359,14 +7419,14 @@ class UniqueList {
     constructor() {
         this._elements = [];
     }
-    length() {
+    get length() {
         return this._elements.length;
     }
     get(i) {
         return this._elements[i];
     }
     getLast() {
-        return this.get(this.length() - 1);
+        return this.get(this.length - 1);
     }
     push(e) {
         if (this._elements.indexOf(e) === -1) {

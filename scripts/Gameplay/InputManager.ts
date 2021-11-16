@@ -18,7 +18,11 @@ class InputManager {
 
     public keyInputDown: UniqueList<KeyInput> = new UniqueList<KeyInput>();
 
+    public keyDownListeners: ((k: KeyInput) => any)[] = [];
+    public keyUpListeners: ((k: KeyInput) => any)[] = [];
+
     public initialize(): void {
+
         this.keyInputMap.set("Digit0", KeyInput.ACTION_SLOT_0);
         this.keyInputMap.set("Digit1", KeyInput.ACTION_SLOT_1);
         this.keyInputMap.set("Digit2", KeyInput.ACTION_SLOT_2);
@@ -34,14 +38,42 @@ class InputManager {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
                 this.keyInputDown.push(keyInput);
+                for (let i = 0; i < this.keyDownListeners.length; i++) {
+                    this.keyDownListeners[i](keyInput);
+                }
             }
         });
         window.addEventListener("keyup", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
                 this.keyInputDown.remove(keyInput);
+                for (let i = 0; i < this.keyUpListeners.length; i++) {
+                    this.keyUpListeners[i](keyInput);
+                }
             }
         });
+    }
+
+    public addKeyDownListener(callback: (k: KeyInput) => any): void {
+        this.keyDownListeners.push(callback);
+    }
+
+    public removeKeyDownListener(callback: (k: KeyInput) => any): void {
+        let i = this.keyDownListeners.indexOf(callback);
+        if (i != -1) {
+            this.keyDownListeners.splice(i, 1);
+        }
+    }
+
+    public addKeyUpListener(callback: (k: KeyInput) => any): void {
+        this.keyUpListeners.push(callback);
+    }
+
+    public removeKeyUpListener(callback: (k: KeyInput) => any): void {
+        let i = this.keyUpListeners.indexOf(callback);
+        if (i != -1) {
+            this.keyUpListeners.splice(i, 1);
+        }
     }
 
     public getkeyInputActionSlotDown(): KeyInput {

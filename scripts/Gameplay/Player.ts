@@ -45,7 +45,7 @@ class Player extends BABYLON.Mesh {
     }
 
     public register(brickMode: boolean = false): void {
-        this.playerActionManager.register();
+        this.playerActionManager.initialize();
 
         if (brickMode) {
             Main.Scene.onBeforeRenderObservable.add(this.updateBrickMode);
