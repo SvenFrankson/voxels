@@ -199,3 +199,23 @@ a {
     transform: translateX(-16px) translateY(-16px);
     z-index: 2;
 }
+
+.available-scenes-container {
+    position: fixed;
+	top: 30%;
+	left: 44%;
+    width: 12%;
+	z-index: 2;
+    text-align: center;
+}
+
+.available-scene-button {
+    color: black;
+    font-family: "Bangers";
+    display: block;
+    font-size: 32px;
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border: 3px solid black;
+}

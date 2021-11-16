@@ -5027,6 +5027,13 @@ class Main {
     }
 }
 Main._OnUpdateDebugCallbacks = [];
+function makeAvailableSceneButton(name, sceneRef) {
+    let skullIsland = document.createElement("a");
+    skullIsland.classList.add("available-scene-button");
+    skullIsland.href = window.location.href + "?main=" + sceneRef;
+    skullIsland.textContent = "#" + name;
+    return skullIsland;
+}
 window.addEventListener("load", async () => {
     let main;
     let url = window.location.href;
@@ -5056,45 +5063,17 @@ window.addEventListener("load", async () => {
     }
     else {
         let availableScenesContainer = document.createElement("div");
-        availableScenesContainer.style.position = "fixed";
-        availableScenesContainer.style.top = "40%";
-        availableScenesContainer.style.left = "45%";
-        availableScenesContainer.style.zIndex = "1";
+        availableScenesContainer.classList.add("available-scenes-container");
         document.body.appendChild(availableScenesContainer);
-        let skullIsland = document.createElement("a");
-        skullIsland.style.color = "black";
-        skullIsland.style.fontSize = "24px";
-        skullIsland.style.display = "block";
-        skullIsland.href = url + "?main=skull_island";
-        skullIsland.textContent = "Skull Island";
+        let skullIsland = makeAvailableSceneButton("Skull Island", "skull_island");
         availableScenesContainer.appendChild(skullIsland);
-        let collisionTest = document.createElement("a");
-        collisionTest.style.color = "black";
-        collisionTest.style.fontSize = "24px";
-        collisionTest.style.display = "block";
-        collisionTest.href = url + "?main=collisions_test";
-        collisionTest.textContent = "Collision Test";
+        let collisionTest = makeAvailableSceneButton("Collision Test", "collisions_test");
         availableScenesContainer.appendChild(collisionTest);
-        let playerTest = document.createElement("a");
-        playerTest.style.color = "black";
-        playerTest.style.fontSize = "24px";
-        playerTest.style.display = "block";
-        playerTest.href = url + "?main=player_test";
-        playerTest.textContent = "Player Test";
+        let playerTest = makeAvailableSceneButton("Player Test", "player_test");
         availableScenesContainer.appendChild(playerTest);
-        let miniature = document.createElement("a");
-        miniature.style.color = "black";
-        miniature.style.fontSize = "24px";
-        miniature.style.display = "block";
-        miniature.href = url + "?main=miniature";
-        miniature.textContent = "Miniature";
+        let miniature = makeAvailableSceneButton("Miniature", "miniature");
         availableScenesContainer.appendChild(miniature);
-        let tileTest = document.createElement("a");
-        tileTest.style.color = "black";
-        tileTest.style.fontSize = "24px";
-        tileTest.style.display = "block";
-        tileTest.href = url + "?main=tile_test";
-        tileTest.textContent = "Tile Test";
+        let tileTest = makeAvailableSceneButton("Tile Test", "tile_test");
         availableScenesContainer.appendChild(tileTest);
     }
     if (main) {
