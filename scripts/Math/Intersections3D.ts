@@ -1,5 +1,11 @@
 var ACTIVE_DEBUG_CHUNCK_INTERSECTION = false;
 
+interface IVec3 {
+    x: number;
+    y: number;
+    z: number;
+}
+
 class RayIntersection {
 
     constructor(

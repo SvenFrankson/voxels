@@ -31,7 +31,7 @@ class ChunckManager {
                 let i2 = Math.max(r1, r2);
                 let c1 = this.updateBuffer[i1];
                 let c2 = this.updateBuffer[i2];
-                if (c1 && c2 && c1 !== c2) {
+                if (c1 && c2 && c1 != c2) {
                     let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
                     let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
                     if (d2 > d1) {

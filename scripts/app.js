@@ -67,7 +67,10 @@ class PauseMenu {
         this.saveButton.addEventListener("pointerup", () => {
             let data = Main.ChunckManager.serialize();
             let stringData = JSON.stringify(data);
-            window.localStorage.setItem("player-test", stringData);
+            window.localStorage.setItem("player-test-scene", stringData);
+            let playerData = PlayerTest.Player.serialize();
+            let playerStringData = JSON.stringify(playerData);
+            window.localStorage.setItem("player-test-player", playerStringData);
         });
     }
 }
@@ -1530,7 +1533,7 @@ class ChunckManager {
                     let i2 = Math.max(r1, r2);
                     let c1 = this.updateBuffer[i1];
                     let c2 = this.updateBuffer[i2];
-                    if (c1 && c2 && c1 !== c2) {
+                    if (c1 && c2 && c1 != c2) {
                         let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
                         let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
                         if (d2 > d1) {
@@ -3854,8 +3857,16 @@ class Player extends BABYLON.Mesh {
         this._inputForward = false;
         this.speed = 5;
         this._downSpeed = 0;
+        this.areNearChunckReady = false;
         this.update = () => {
             this.checkPause();
+            if (!this.areNearChunckReady) {
+                let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
+                if (o.chunck) {
+                    this.areNearChunckReady = true;
+                }
+                return;
+            }
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
             let dt = this.getEngine().getDeltaTime() / 1000;
@@ -4083,6 +4094,21 @@ class Player extends BABYLON.Mesh {
             return true;
         }
         return false;
+    }
+    serialize() {
+        let data = {
+            position: { x: this.position.x, y: this.position.y, z: this.position.z },
+            rX: Main.Camera.rotation.x,
+            rY: this.rotation.y
+        };
+        return data;
+    }
+    deserialize(data) {
+        this.position.x = data.position.x;
+        this.position.y = data.position.y;
+        this.position.z = data.position.z;
+        Main.Camera.rotation.x = data.rX;
+        this.rotation.y = data.rY;
     }
 }
 var ACTIVE_DEBUG_PLAYER_ACTION = true;
@@ -5656,7 +5682,7 @@ class PlayerTest extends Main {
         await BrickDataManager.InitializeDataFromFile();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
-        let savedTerrainString = window.localStorage.getItem("player-test");
+        let savedTerrainString = window.localStorage.getItem("player-test-scene");
         if (savedTerrainString) {
             let t0 = performance.now();
             let savedTerrain = JSON.parse(savedTerrainString);
@@ -5682,10 +5708,19 @@ class PlayerTest extends Main {
                 Main.ChunckManager.updateBuffer.push(chunck);
             });
         }
-        let player = new Player();
-        player.position.y = 60;
-        player.register();
-        let inventory = new Inventory(player);
+        PlayerTest.Player = new Player();
+        let savedPlayerString = window.localStorage.getItem("player-test-player");
+        if (savedPlayerString) {
+            let t0 = performance.now();
+            let savedPlayer = JSON.parse(savedPlayerString);
+            PlayerTest.Player.deserialize(savedPlayer);
+            console.log("Player loaded from local storage");
+        }
+        else {
+            PlayerTest.Player.position.y = 40;
+        }
+        PlayerTest.Player.register();
+        let inventory = new Inventory(PlayerTest.Player);
         inventory.initialize();
         let inventoryEditBlock = new InventoryItem();
         inventoryEditBlock.name = "EditBlock";
@@ -5720,10 +5755,10 @@ class PlayerTest extends Main {
         inventoryCreateMountainLarge.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
         inventory.addItem(inventoryCreateMountainLarge);
-        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
-        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
-        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
-        player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.None), 4);
+        PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
+        PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
+        PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
+        PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.None), 4);
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
         }
@@ -5778,7 +5813,7 @@ class PlayerTest extends Main {
         inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
         let firstBrick = inventory.items.length;
         inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
-        player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
+        PlayerTest.Player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
         for (let i = 0; i < colors.length; i++) {
             let color = colors[i];
             for (let j = 0; j < bricks.length; j++) {
@@ -5791,7 +5826,7 @@ class PlayerTest extends Main {
         }
         inventory.update();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
-            Main.Camera.parent = player;
+            Main.Camera.parent = PlayerTest.Player;
             Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
         }

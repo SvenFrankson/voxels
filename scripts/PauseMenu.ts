@@ -83,7 +83,11 @@ class PauseMenu {
         this.saveButton.addEventListener("pointerup", () => {
             let data = Main.ChunckManager.serialize();
             let stringData = JSON.stringify(data);
-            window.localStorage.setItem("player-test", stringData);
+            window.localStorage.setItem("player-test-scene", stringData);
+            
+            let playerData = PlayerTest.Player.serialize();
+            let playerStringData = JSON.stringify(playerData);
+            window.localStorage.setItem("player-test-player", playerStringData);
         });
     }
 }

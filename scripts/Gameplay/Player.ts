@@ -1,5 +1,11 @@
 var ACTIVE_DEBUG_BRICK = true;
 
+interface IPlayerData {
+    position: IVec3;
+    rX: number;
+    rY: number;
+}
+
 class Player extends BABYLON.Mesh {
 
     private _inputLeft: boolean = false;
@@ -15,6 +21,8 @@ class Player extends BABYLON.Mesh {
     public currentAction: PlayerAction;
 
     private _aimedObject: Brick;
+
+    public areNearChunckReady: boolean = false;
 
     constructor() {
         super("player");
@@ -182,6 +190,14 @@ class Player extends BABYLON.Mesh {
     public update = () => {
         this.checkPause();
 
+        if (!this.areNearChunckReady) {
+            let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
+            if (o.chunck) {
+                this.areNearChunckReady = true;
+            }
+            return;
+        }
+
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
         let dt = this.getEngine().getDeltaTime() / 1000;
@@ -276,5 +292,22 @@ class Player extends BABYLON.Mesh {
                 this.currentAction.onUpdate();
             }
         }
+    }
+
+    public serialize(): IPlayerData {
+        let data: IPlayerData = {
+            position: { x: this.position.x, y: this.position.y, z: this.position.z },
+            rX: (Main.Camera as BABYLON.FreeCamera).rotation.x,
+            rY: this.rotation.y
+        };
+        return data;
+    }
+
+    public deserialize(data: IPlayerData): void {
+        this.position.x = data.position.x;
+        this.position.y = data.position.y;
+        this.position.z = data.position.z;
+        (Main.Camera as BABYLON.FreeCamera).rotation.x = data.rX;
+        this.rotation.y = data.rY;
     }
 }

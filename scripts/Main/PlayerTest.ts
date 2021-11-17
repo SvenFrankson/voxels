@@ -2,6 +2,8 @@
 
 class PlayerTest extends Main {
 
+	public static Player: Player;
+
     public initializeCamera(): void {
         let camera = new BABYLON.FreeCamera("camera1", BABYLON.Vector3.Zero(), Main.Scene);
 		Main.Camera = camera;
@@ -15,7 +17,7 @@ class PlayerTest extends Main {
         await BrickDataManager.InitializeDataFromFile();
         //Main.ChunckEditor.saveSceneName = "player-test";
         let l = 5;
-		let savedTerrainString = window.localStorage.getItem("player-test");
+		let savedTerrainString = window.localStorage.getItem("player-test-scene");
 		if (savedTerrainString) {
 			let t0 = performance.now();
 			let savedTerrain = JSON.parse(savedTerrainString) as TerrainData;
@@ -50,11 +52,21 @@ class PlayerTest extends Main {
 			);
 		}
         
-        let player = new Player();
-        player.position.y = 60;
-        player.register();
+        PlayerTest.Player = new Player();
+		
+		let savedPlayerString = window.localStorage.getItem("player-test-player");
+		if (savedPlayerString) {
+			let t0 = performance.now();
+			let savedPlayer = JSON.parse(savedPlayerString) as IPlayerData;
+			PlayerTest.Player.deserialize(savedPlayer);
+			console.log("Player loaded from local storage");
+		}
+		else {
+			PlayerTest.Player.position.y = 40;
+		}
+		PlayerTest.Player.register();
 
-		let inventory = new Inventory(player);
+		let inventory = new Inventory( PlayerTest.Player);
 		inventory.initialize();
 
 		let inventoryEditBlock = new InventoryItem();
@@ -95,10 +107,10 @@ class PlayerTest extends Main {
 		inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
 		inventory.addItem(inventoryCreateMountainLarge);
 
-		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
-		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
-		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
-		player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.None), 4);
+		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
+		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
+		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
+		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.None), 4);
 
 		for (let i = 0; i <= Math.random() * 100; i++) {
 			inventory.addItem(InventoryItem.Cube(CubeType.Dirt));
@@ -157,7 +169,7 @@ class PlayerTest extends Main {
 		inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
 		let firstBrick = inventory.items.length;
 		inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
-		player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
+		PlayerTest.Player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
 		
 		for (let i = 0; i < colors.length; i++) {
 			let color = colors[i];
@@ -172,7 +184,7 @@ class PlayerTest extends Main {
 		inventory.update();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {
-            Main.Camera.parent = player;
+            Main.Camera.parent =  PlayerTest.Player;
             Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
 		}
