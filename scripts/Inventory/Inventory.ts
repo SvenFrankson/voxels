@@ -189,12 +189,19 @@ class Inventory {
             Main.Canvas.requestPointerLock();
             Main.Canvas.focus();
         });
-        Main.Canvas.addEventListener("keyup", (e) => {
-            if (e.keyCode === 73) {
-                Main.MenuManager.currentMenu = MenuPage.Inventory;
-                document.exitPointerLock();
+        Main.InputManager.addKeyUpListener((k: KeyInput) => {
+            if (k === KeyInput.INVENTORY) {
+                if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
+                    Main.MenuManager.currentMenu = MenuPage.Inventory;
+                    document.exitPointerLock();
+                }
+                else {
+                    Main.MenuManager.currentMenu = MenuPage.None;
+                    Main.Canvas.requestPointerLock();
+                    Main.Canvas.focus();
+                }
             }
-        });
+        })
         this.update();
     }
 

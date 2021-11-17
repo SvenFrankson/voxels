@@ -9,7 +9,8 @@ enum KeyInput {
     ACTION_SLOT_6,
     ACTION_SLOT_7,
     ACTION_SLOT_8,
-    ACTION_SLOT_9
+    ACTION_SLOT_9,
+    INVENTORY,
 }
 
 class InputManager {
@@ -33,6 +34,7 @@ class InputManager {
         this.keyInputMap.set("Digit7", KeyInput.ACTION_SLOT_7);
         this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
         this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
+        this.keyInputMap.set("KeyI", KeyInput.INVENTORY);
 
         window.addEventListener("keydown", (e) => {
             let keyInput = this.keyInputMap.get(e.code);

@@ -1,4 +1,5 @@
 enum MenuPage {
+    None,
     Pause,
     Inventory
 }
@@ -19,6 +20,7 @@ class MenuManager {
                 if (this.inventory) {
                     this.inventory.body.style.display = "none";
                 }
+                this.currentMenu = MenuPage.None;
             }
             if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
                 if (!document.pointerLockElement) {
@@ -30,7 +32,7 @@ class MenuManager {
                     this.inventory.body.style.display = "";
                 }
             }
-            if (this.currentMenu === undefined) {
+            if (this.currentMenu === MenuPage.None) {
                 this.currentMenu = MenuPage.Pause;
             }
             requestAnimationFrame(update);

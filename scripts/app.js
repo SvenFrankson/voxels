@@ -1,7 +1,8 @@
 var MenuPage;
 (function (MenuPage) {
-    MenuPage[MenuPage["Pause"] = 0] = "Pause";
-    MenuPage[MenuPage["Inventory"] = 1] = "Inventory";
+    MenuPage[MenuPage["None"] = 0] = "None";
+    MenuPage[MenuPage["Pause"] = 1] = "Pause";
+    MenuPage[MenuPage["Inventory"] = 2] = "Inventory";
 })(MenuPage || (MenuPage = {}));
 class MenuManager {
     constructor() {
@@ -16,6 +17,7 @@ class MenuManager {
                 if (this.inventory) {
                     this.inventory.body.style.display = "none";
                 }
+                this.currentMenu = MenuPage.None;
             }
             if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
                 if (!document.pointerLockElement) {
@@ -27,7 +29,7 @@ class MenuManager {
                     this.inventory.body.style.display = "";
                 }
             }
-            if (this.currentMenu === undefined) {
+            if (this.currentMenu === MenuPage.None) {
                 this.currentMenu = MenuPage.Pause;
             }
             requestAnimationFrame(update);
@@ -3757,6 +3759,7 @@ var KeyInput;
     KeyInput[KeyInput["ACTION_SLOT_7"] = 7] = "ACTION_SLOT_7";
     KeyInput[KeyInput["ACTION_SLOT_8"] = 8] = "ACTION_SLOT_8";
     KeyInput[KeyInput["ACTION_SLOT_9"] = 9] = "ACTION_SLOT_9";
+    KeyInput[KeyInput["INVENTORY"] = 10] = "INVENTORY";
 })(KeyInput || (KeyInput = {}));
 class InputManager {
     constructor() {
@@ -3776,6 +3779,7 @@ class InputManager {
         this.keyInputMap.set("Digit7", KeyInput.ACTION_SLOT_7);
         this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
         this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
+        this.keyInputMap.set("KeyI", KeyInput.INVENTORY);
         window.addEventListener("keydown", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
@@ -4824,10 +4828,17 @@ class Inventory {
             Main.Canvas.requestPointerLock();
             Main.Canvas.focus();
         });
-        Main.Canvas.addEventListener("keyup", (e) => {
-            if (e.keyCode === 73) {
-                Main.MenuManager.currentMenu = MenuPage.Inventory;
-                document.exitPointerLock();
+        Main.InputManager.addKeyUpListener((k) => {
+            if (k === KeyInput.INVENTORY) {
+                if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
+                    Main.MenuManager.currentMenu = MenuPage.Inventory;
+                    document.exitPointerLock();
+                }
+                else {
+                    Main.MenuManager.currentMenu = MenuPage.None;
+                    Main.Canvas.requestPointerLock();
+                    Main.Canvas.focus();
+                }
             }
         });
         this.update();
