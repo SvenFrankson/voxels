@@ -18,23 +18,21 @@ class MenuManager {
                 if (this.inventory) {
                     this.inventory.body.style.display = "none";
                 }
-                this.currentMenu = MenuPage.None;
                 this.cursor.style.display = "";
+                this.currentMenu = MenuPage.None;
             }
-            if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
-                if (!document.pointerLockElement) {
+            else {
+                if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
                     this.pauseMenu.background.style.display = "";
                     this.cursor.style.display = "none";
                 }
-            }
-            else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
-                if (!document.pointerLockElement) {
+                else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
                     this.inventory.body.style.display = "";
                     this.cursor.style.display = "none";
                 }
-            }
-            if (this.currentMenu === MenuPage.None) {
-                this.currentMenu = MenuPage.Pause;
+                else if (this.currentMenu === MenuPage.None) {
+                    this.currentMenu = MenuPage.Pause;
+                }
             }
             requestAnimationFrame(update);
         };
