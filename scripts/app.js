@@ -9,6 +9,7 @@ class MenuManager {
         this.currentMenu = MenuPage.Pause;
     }
     initialize() {
+        this.cursor = document.getElementById("cursor");
         let update = () => {
             if (document.pointerLockElement) {
                 if (this.pauseMenu) {
@@ -18,15 +19,18 @@ class MenuManager {
                     this.inventory.body.style.display = "none";
                 }
                 this.currentMenu = MenuPage.None;
+                this.cursor.style.display = "";
             }
             if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
                 if (!document.pointerLockElement) {
                     this.pauseMenu.background.style.display = "";
+                    this.cursor.style.display = "none";
                 }
             }
             else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
                 if (!document.pointerLockElement) {
                     this.inventory.body.style.display = "";
+                    this.cursor.style.display = "none";
                 }
             }
             if (this.currentMenu === MenuPage.None) {

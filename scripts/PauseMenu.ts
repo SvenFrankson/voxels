@@ -6,12 +6,14 @@ enum MenuPage {
 
 class MenuManager {
 
+    public cursor: HTMLImageElement;
     public pauseMenu: PauseMenu;
     public inventory: Inventory;
 
     public currentMenu: MenuPage = MenuPage.Pause;
 
     public initialize(): void {
+        this.cursor = document.getElementById("cursor") as HTMLImageElement;
         let update = () => {
             if (document.pointerLockElement) {
                 if (this.pauseMenu) {
@@ -21,15 +23,18 @@ class MenuManager {
                     this.inventory.body.style.display = "none";
                 }
                 this.currentMenu = MenuPage.None;
+                this.cursor.style.display = "";
             }
             if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
                 if (!document.pointerLockElement) {
                     this.pauseMenu.background.style.display = "";
+                    this.cursor.style.display = "none";
                 }
             }
             else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
                 if (!document.pointerLockElement) {
                     this.inventory.body.style.display = "";
+                    this.cursor.style.display = "none";
                 }
             }
             if (this.currentMenu === MenuPage.None) {
