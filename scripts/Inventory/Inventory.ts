@@ -189,17 +189,15 @@ class Inventory {
             Main.Canvas.requestPointerLock();
             Main.Canvas.focus();
         });
-        Main.InputManager.addKeyUpListener((k: KeyInput) => {
-            if (k === KeyInput.INVENTORY) {
-                if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
-                    Main.MenuManager.currentMenu = MenuPage.Inventory;
-                    document.exitPointerLock();
-                }
-                else {
-                    Main.MenuManager.currentMenu = MenuPage.None;
-                    Main.Canvas.requestPointerLock();
-                    Main.Canvas.focus();
-                }
+        Main.InputManager.addMappedKeyUpListener(KeyInput.INVENTORY, () => {
+            if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
+                Main.MenuManager.currentMenu = MenuPage.Inventory;
+                document.exitPointerLock();
+            }
+            else {
+                Main.MenuManager.currentMenu = MenuPage.None;
+                Main.Canvas.requestPointerLock();
+                Main.Canvas.focus();
             }
         })
         this.update();

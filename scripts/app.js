@@ -3766,7 +3766,9 @@ class InputManager {
         this.keyInputMap = new Map();
         this.keyInputDown = new UniqueList();
         this.keyDownListeners = [];
+        this.mappedKeyDownListeners = new Map();
         this.keyUpListeners = [];
+        this.mappedKeyUpListeners = new Map();
     }
     initialize() {
         this.keyInputMap.set("Digit0", KeyInput.ACTION_SLOT_0);
@@ -3787,6 +3789,12 @@ class InputManager {
                 for (let i = 0; i < this.keyDownListeners.length; i++) {
                     this.keyDownListeners[i](keyInput);
                 }
+                let listeners = this.mappedKeyDownListeners.get(keyInput);
+                if (listeners) {
+                    for (let i = 0; i < listeners.length; i++) {
+                        listeners[i]();
+                    }
+                }
             }
         });
         window.addEventListener("keyup", (e) => {
@@ -3796,11 +3804,27 @@ class InputManager {
                 for (let i = 0; i < this.keyUpListeners.length; i++) {
                     this.keyUpListeners[i](keyInput);
                 }
+                let listeners = this.mappedKeyUpListeners.get(keyInput);
+                if (listeners) {
+                    for (let i = 0; i < listeners.length; i++) {
+                        listeners[i]();
+                    }
+                }
             }
         });
     }
     addKeyDownListener(callback) {
         this.keyDownListeners.push(callback);
+    }
+    addMappedKeyDownListener(k, callback) {
+        let listeners = this.mappedKeyDownListeners.get(k);
+        if (listeners) {
+            listeners.push(callback);
+        }
+        else {
+            listeners = [callback];
+            this.mappedKeyDownListeners.set(k, listeners);
+        }
     }
     removeKeyDownListener(callback) {
         let i = this.keyDownListeners.indexOf(callback);
@@ -3808,13 +3832,41 @@ class InputManager {
             this.keyDownListeners.splice(i, 1);
         }
     }
+    removeMappedKeyDownListener(k, callback) {
+        let listeners = this.mappedKeyDownListeners.get(k);
+        if (listeners) {
+            let i = listeners.indexOf(callback);
+            if (i != -1) {
+                listeners.splice(i, 1);
+            }
+        }
+    }
     addKeyUpListener(callback) {
         this.keyUpListeners.push(callback);
+    }
+    addMappedKeyUpListener(k, callback) {
+        let listeners = this.mappedKeyUpListeners.get(k);
+        if (listeners) {
+            listeners.push(callback);
+        }
+        else {
+            listeners = [callback];
+            this.mappedKeyUpListeners.set(k, listeners);
+        }
     }
     removeKeyUpListener(callback) {
         let i = this.keyUpListeners.indexOf(callback);
         if (i != -1) {
             this.keyUpListeners.splice(i, 1);
+        }
+    }
+    removeMappedKeyUpListener(k, callback) {
+        let listeners = this.mappedKeyUpListeners.get(k);
+        if (listeners) {
+            let i = listeners.indexOf(callback);
+            if (i != -1) {
+                listeners.splice(i, 1);
+            }
         }
     }
     getkeyInputActionSlotDown() {
@@ -4828,17 +4880,15 @@ class Inventory {
             Main.Canvas.requestPointerLock();
             Main.Canvas.focus();
         });
-        Main.InputManager.addKeyUpListener((k) => {
-            if (k === KeyInput.INVENTORY) {
-                if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
-                    Main.MenuManager.currentMenu = MenuPage.Inventory;
-                    document.exitPointerLock();
-                }
-                else {
-                    Main.MenuManager.currentMenu = MenuPage.None;
-                    Main.Canvas.requestPointerLock();
-                    Main.Canvas.focus();
-                }
+        Main.InputManager.addMappedKeyUpListener(KeyInput.INVENTORY, () => {
+            if (Main.MenuManager.currentMenu != MenuPage.Inventory) {
+                Main.MenuManager.currentMenu = MenuPage.Inventory;
+                document.exitPointerLock();
+            }
+            else {
+                Main.MenuManager.currentMenu = MenuPage.None;
+                Main.Canvas.requestPointerLock();
+                Main.Canvas.focus();
             }
         });
         this.update();
