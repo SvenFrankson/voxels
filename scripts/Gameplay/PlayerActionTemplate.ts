@@ -365,9 +365,11 @@ class PlayerActionTemplate {
                 y,
                 (m) => {
                     return m.isPickable;
-                }
+                },
+                false
             );
             if (pickInfo.hit) {
+                document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
