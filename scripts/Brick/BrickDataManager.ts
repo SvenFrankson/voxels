@@ -367,7 +367,7 @@ class BrickDataManager {
         }
 
         // TileCurb
-        for (let S = 2; S < 4; S++) {
+        for (let S = 2; S <= 6; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             

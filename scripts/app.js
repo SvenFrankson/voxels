@@ -792,7 +792,7 @@ class BrickDataManager {
             }
         }
         // TileCurb
-        for (let S = 2; S < 4; S++) {
+        for (let S = 2; S <= 6; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             tileCurbData.knobs.push(0, 1, 0);
@@ -964,13 +964,31 @@ class BrickVertexData {
         let positions = [...BrickVertexData._CurbTemplateVertexData[lod].positions];
         let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
+        let VCOUNT = 5;
+        let directions = [];
+        for (let i = 0; i < VCOUNT; i++) {
+            directions.push(Math.cos(Math.PI * 0.5 * i / (VCOUNT - 1)), Math.sin(Math.PI * 0.5 * i / (VCOUNT - 1)));
+        }
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let y = positions[3 * i + 1];
+            let z = positions[3 * i + 2];
+            for (let j = 0; j < directions.length; j++) {
+                let dot = x * directions[2 * j] + z * directions[2 * j + 1];
+                if (Math.abs(dot * dot - x * x - z * z) < 0.05) {
+                    positions[3 * i] = x + directions[2 * j] * (w - 2) * DX;
+                    positions[3 * i + 2] = z + directions[2 * j + 1] * (w - 2) * DX;
+                    break;
+                }
+            }
+        }
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
             positions[3 * i] = x - DX * 0.5;
             positions[3 * i + 1] = y;
-            positions[3 * i + 2] = z - DX * 1.5;
+            positions[3 * i + 2] = z - (DX * (w - 1)) - DX * 0.5;
         }
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
@@ -5597,7 +5615,11 @@ class Miniature extends Main {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    this.createBrick("tileCurb-2x2-brightred", true);
+                    await this.createBrick("tileCurb-2x2-brightred");
+                    await this.createBrick("tileCurb-3x3-brightred");
+                    await this.createBrick("tileCurb-4x4-brightred");
+                    await this.createBrick("tileCurb-5x5-brightred");
+                    await this.createBrick("tileCurb-6x6-brightred");
                 }, 100);
             }
             else {
