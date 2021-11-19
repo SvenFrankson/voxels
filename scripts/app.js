@@ -1,83 +1,3 @@
-var MenuPage;
-(function (MenuPage) {
-    MenuPage[MenuPage["None"] = 0] = "None";
-    MenuPage[MenuPage["Pause"] = 1] = "Pause";
-    MenuPage[MenuPage["Inventory"] = 2] = "Inventory";
-})(MenuPage || (MenuPage = {}));
-class MenuManager {
-    constructor() {
-        this.currentMenu = MenuPage.Pause;
-    }
-    initialize() {
-        this.cursor = document.getElementById("cursor");
-        let update = () => {
-            if (document.pointerLockElement) {
-                if (this.pauseMenu) {
-                    this.pauseMenu.background.style.display = "none";
-                }
-                if (this.inventory) {
-                    this.inventory.body.style.display = "none";
-                }
-                this.cursor.style.display = "";
-                this.currentMenu = MenuPage.None;
-            }
-            else {
-                if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
-                    this.pauseMenu.background.style.display = "";
-                    this.cursor.style.display = "none";
-                }
-                else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
-                    this.inventory.body.style.display = "";
-                    this.cursor.style.display = "none";
-                }
-                else if (this.currentMenu === MenuPage.None) {
-                    this.currentMenu = MenuPage.Pause;
-                }
-            }
-            requestAnimationFrame(update);
-        };
-        update();
-    }
-}
-class PauseMenu {
-    constructor() {
-        Main.MenuManager.pauseMenu = this;
-    }
-    initialize() {
-        let canvasBBox = Main.Canvas.getBoundingClientRect();
-        let w = canvasBBox.width;
-        let h = canvasBBox.height;
-        this.background = document.getElementById("pause-menu");
-        this.background.style.position = "absolute";
-        this.background.style.left = canvasBBox.left + "px";
-        this.background.style.top = canvasBBox.top + "px";
-        this.background.style.width = w + "px";
-        this.background.style.height = h + "px";
-        this.background.style.backgroundColor = "rgba(0, 0, 0, 40%)";
-        this.background.style.zIndex = "1";
-        this.optionsButton = document.getElementById("options-button");
-        this.optionsButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
-        this.optionsButton.style.top = (h * 0.5 - 160) + "px";
-        this.saveButton = document.getElementById("save-button");
-        this.saveButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
-        this.saveButton.style.top = (h * 0.5 - 40) + "px";
-        this.resumeButton = document.getElementById("resume-button");
-        this.resumeButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
-        this.resumeButton.style.top = (h * 0.5 + 80) + "px";
-        this.resumeButton.addEventListener("pointerup", () => {
-            Main.Canvas.requestPointerLock();
-            Main.Canvas.focus();
-        });
-        this.saveButton.addEventListener("pointerup", () => {
-            let data = Main.ChunckManager.serialize();
-            let stringData = JSON.stringify(data);
-            window.localStorage.setItem("player-test-scene", stringData);
-            let playerData = PlayerTest.Player.serialize();
-            let playerStringData = JSON.stringify(playerData);
-            window.localStorage.setItem("player-test-player", playerStringData);
-        });
-    }
-}
 class VertexDataLoader {
     constructor(scene) {
         this.scene = scene;
@@ -871,6 +791,22 @@ class BrickDataManager {
                 }
             }
         }
+        // TileCurb
+        for (let S = 2; S < 4; S++) {
+            let tileCurbData = new BrickData();
+            let tileCurbName = "tileCurb-" + S + "x" + S;
+            tileCurbData.knobs.push(0, 1, 0);
+            tileCurbData.knobs.push(S - 1, 1, S - 1);
+            for (let l = 0; l < S; l++) {
+                for (let w = 0; w < S; w++) {
+                    tileCurbData.locks.push(w, 0, l);
+                    tileCurbData.covers.push(w, 0, l);
+                }
+            }
+            tileCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
+            BrickDataManager.BrickNames.push(tileCurbName);
+        }
     }
     static async GetBrickData(brickReference) {
         if (brickReference.name.startsWith("construct_")) {
@@ -910,6 +846,20 @@ class BrickVertexData {
                     let mesh = meshes[i];
                     if (mesh instanceof BABYLON.Mesh) {
                         BrickVertexData._CubicTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                        mesh.dispose();
+                    }
+                }
+                resolve();
+            });
+        });
+    }
+    static async _LoadCurbTemplateVertexData() {
+        return new Promise(resolve => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/curb-template.babylon", "", Main.Scene, (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        BrickVertexData._CurbTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
                         mesh.dispose();
                     }
                 }
@@ -1006,6 +956,37 @@ class BrickVertexData {
         data.normals = normals;
         return data;
     }
+    static async GenerateFromCurbTemplate(w, h, l, lod) {
+        if (!BrickVertexData._CurbTemplateVertexData[lod]) {
+            await BrickVertexData._LoadCurbTemplateVertexData();
+        }
+        let data = new BABYLON.VertexData();
+        let positions = [...BrickVertexData._CurbTemplateVertexData[lod].positions];
+        let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
+        let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let y = positions[3 * i + 1];
+            let z = positions[3 * i + 2];
+            positions[3 * i] = x - DX * 0.5;
+            positions[3 * i + 1] = y;
+            positions[3 * i + 2] = z - DX * 1.5;
+        }
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            let nx = normals[3 * i];
+            let nz = normals[3 * i + 2];
+            positions[3 * i] = -z;
+            positions[3 * i + 2] = x;
+            normals[3 * i] = -nz;
+            normals[3 * i + 2] = nx;
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
     static async GenerateFromSlopeTemplate(w, h, l, lod) {
         let baseData;
         let baseBrickName = "slope" + h + "-" + w + "x1";
@@ -1058,6 +1039,11 @@ class BrickVertexData {
                 let h = parseInt(type.replace("slope", ""));
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
+        }
+        else if (type.toLowerCase().indexOf("curb") != -1) {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return await BrickVertexData.GenerateFromCurbTemplate(w, l, 1, lod);
         }
         else if (type.startsWith("construct_")) {
             let constructName = type.replace("construct_", "");
@@ -1145,6 +1131,7 @@ class BrickVertexData {
     }
 }
 BrickVertexData._CubicTemplateVertexData = [];
+BrickVertexData._CurbTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
 BrickVertexData._KnobVertexDatas = [];
 BrickVertexData.knobColorFactor = 0.9;
@@ -3905,6 +3892,86 @@ class InputManager {
         return KeyInput.NULL;
     }
 }
+var MenuPage;
+(function (MenuPage) {
+    MenuPage[MenuPage["None"] = 0] = "None";
+    MenuPage[MenuPage["Pause"] = 1] = "Pause";
+    MenuPage[MenuPage["Inventory"] = 2] = "Inventory";
+})(MenuPage || (MenuPage = {}));
+class MenuManager {
+    constructor() {
+        this.currentMenu = MenuPage.Pause;
+    }
+    initialize() {
+        this.cursor = document.getElementById("cursor");
+        let update = () => {
+            if (document.pointerLockElement) {
+                if (this.pauseMenu) {
+                    this.pauseMenu.background.style.display = "none";
+                }
+                if (this.inventory) {
+                    this.inventory.body.style.display = "none";
+                }
+                this.cursor.style.display = "";
+                this.currentMenu = MenuPage.None;
+            }
+            else {
+                if (this.currentMenu === MenuPage.Pause && this.pauseMenu) {
+                    this.pauseMenu.background.style.display = "";
+                    this.cursor.style.display = "none";
+                }
+                else if (this.currentMenu === MenuPage.Inventory && this.inventory) {
+                    this.inventory.body.style.display = "";
+                    this.cursor.style.display = "none";
+                }
+                else if (this.currentMenu === MenuPage.None) {
+                    this.currentMenu = MenuPage.Pause;
+                }
+            }
+            requestAnimationFrame(update);
+        };
+        update();
+    }
+}
+class PauseMenu {
+    constructor() {
+        Main.MenuManager.pauseMenu = this;
+    }
+    initialize() {
+        let canvasBBox = Main.Canvas.getBoundingClientRect();
+        let w = canvasBBox.width;
+        let h = canvasBBox.height;
+        this.background = document.getElementById("pause-menu");
+        this.background.style.position = "absolute";
+        this.background.style.left = canvasBBox.left + "px";
+        this.background.style.top = canvasBBox.top + "px";
+        this.background.style.width = w + "px";
+        this.background.style.height = h + "px";
+        this.background.style.backgroundColor = "rgba(0, 0, 0, 40%)";
+        this.background.style.zIndex = "1";
+        this.optionsButton = document.getElementById("options-button");
+        this.optionsButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
+        this.optionsButton.style.top = (h * 0.5 - 160) + "px";
+        this.saveButton = document.getElementById("save-button");
+        this.saveButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
+        this.saveButton.style.top = (h * 0.5 - 40) + "px";
+        this.resumeButton = document.getElementById("resume-button");
+        this.resumeButton.style.left = Math.floor((canvasBBox.width - 240) * 0.5) + "px";
+        this.resumeButton.style.top = (h * 0.5 + 80) + "px";
+        this.resumeButton.addEventListener("pointerup", () => {
+            Main.Canvas.requestPointerLock();
+            Main.Canvas.focus();
+        });
+        this.saveButton.addEventListener("pointerup", () => {
+            let data = Main.ChunckManager.serialize();
+            let stringData = JSON.stringify(data);
+            window.localStorage.setItem("player-test-scene", stringData);
+            let playerData = PlayerTest.Player.serialize();
+            let playerStringData = JSON.stringify(playerData);
+            window.localStorage.setItem("player-test-player", playerStringData);
+        });
+    }
+}
 var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
     constructor() {
@@ -5528,9 +5595,9 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    this.runManyScreenShots();
+                    //this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    //await this.createBrick("construct_bar_stool_red");
+                    this.createBrick("tileCurb-2x2-brightred", true);
                 }, 100);
             }
             else {
@@ -5632,7 +5699,7 @@ class Miniature extends Main {
             }, 200);
         });
     }
-    async createBrick(brickReferenceStr) {
+    async createBrick(brickReferenceStr, keepAlive) {
         let brickReference = Brick.ParseReference(brickReferenceStr);
         let mesh = new BABYLON.Mesh("mesh");
         let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
@@ -5643,7 +5710,9 @@ class Miniature extends Main {
                 this.updateCameraPosition();
                 setTimeout(async () => {
                     await this.makeScreenShot(brickReferenceStr, false);
-                    mesh.dispose();
+                    if (!keepAlive) {
+                        mesh.dispose();
+                    }
                     resolve();
                 }, 200);
             }, 200);

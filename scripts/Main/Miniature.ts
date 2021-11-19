@@ -41,9 +41,9 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						this.runManyScreenShots();
+						//this.runManyScreenShots();
 						//this.runAllScreenShots();
-						//await this.createBrick("construct_bar_stool_red");
+						this.createBrick("tileCurb-2x2-brightred", true);
 					},
 					100
 				);
@@ -180,7 +180,7 @@ class Miniature extends Main {
         )
 	}
 
-	public async createBrick(brickReferenceStr: string): Promise<void> {
+	public async createBrick(brickReferenceStr: string, keepAlive?: boolean): Promise<void> {
 		let brickReference = Brick.ParseReference(brickReferenceStr);
 		let mesh = new BABYLON.Mesh("mesh");
 		let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
@@ -196,7 +196,9 @@ class Miniature extends Main {
                         setTimeout(
                             async () => {
 								await this.makeScreenShot(brickReferenceStr, false);
-								mesh.dispose();
+								if (!keepAlive) {
+									mesh.dispose();
+								}
                                 resolve();
                             },
                             200

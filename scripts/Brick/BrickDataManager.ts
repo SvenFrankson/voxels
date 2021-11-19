@@ -365,6 +365,26 @@ class BrickDataManager {
                 }
             }
         }
+
+        // TileCurb
+        for (let S = 2; S < 4; S++) {
+            let tileCurbData = new BrickData();
+            let tileCurbName = "tileCurb-" + S + "x" + S;
+            
+            tileCurbData.knobs.push(0, 1, 0);
+            tileCurbData.knobs.push(S - 1, 1, S - 1);
+
+            for (let l = 0; l < S; l++) {
+                for (let w = 0; w < S; w++) {
+                    tileCurbData.locks.push(w, 0, l);
+                    tileCurbData.covers.push(w, 0, l);
+                }
+            }
+            
+            tileCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
+            BrickDataManager.BrickNames.push(tileCurbName);
+        }
     }
 
     public static async GetBrickData(brickReference: IBrickReference): Promise<BrickData> {

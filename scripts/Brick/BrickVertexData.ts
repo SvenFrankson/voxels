@@ -1,6 +1,7 @@
 class BrickVertexData {
 
     private static _CubicTemplateVertexData: BABYLON.VertexData[] = [];
+    private static _CurbTemplateVertexData: BABYLON.VertexData[] = [];
     private static _BrickVertexDatas: Map<string, BABYLON.VertexData> = new Map<string, BABYLON.VertexData>();
     private static _KnobVertexDatas: BABYLON.VertexData[] = [];
 
@@ -41,6 +42,29 @@ class BrickVertexData {
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh) {
                                 BrickVertexData._CubicTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
+                                mesh.dispose();
+                            }
+                        }
+                        resolve();
+                    }
+                );
+            }
+        );
+    }
+
+    private static async _LoadCurbTemplateVertexData(): Promise<void> {
+        return new Promise<void>(
+            resolve => {
+                BABYLON.SceneLoader.ImportMesh(
+                    "",
+                    "./datas/meshes/curb-template.babylon",
+                    "",
+                    Main.Scene,
+                    (meshes) => {
+                        for (let i = 0; i < meshes.length; i++) {
+                            let mesh = meshes[i];
+                            if (mesh instanceof BABYLON.Mesh) {
+                                BrickVertexData._CurbTemplateVertexData[i] = BABYLON.VertexData.ExtractFromMesh(mesh);
                                 mesh.dispose();
                             }
                         }
@@ -168,6 +192,44 @@ class BrickVertexData {
         return data;
     }
 
+    private static async GenerateFromCurbTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
+        if (!BrickVertexData._CurbTemplateVertexData[lod]) {
+            await BrickVertexData._LoadCurbTemplateVertexData();
+        }
+        let data = new BABYLON.VertexData();
+        let positions = [...BrickVertexData._CurbTemplateVertexData[lod].positions];
+        let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
+        let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let y = positions[3 * i + 1];
+            let z = positions[3 * i + 2];
+
+            positions[3 * i] = x - DX * 0.5;
+            positions[3 * i + 1] = y;
+            positions[3 * i + 2] = z - DX * 1.5;
+        }
+        
+        for (let i = 0; i < positions.length / 3; i++) {
+            let x = positions[3 * i];
+            let z = positions[3 * i + 2];
+            
+            let nx = normals[3 * i];
+            let nz = normals[3 * i + 2];
+
+            positions[3 * i] = - z;
+            positions[3 * i + 2] = x;
+            
+            normals[3 * i] = - nz;
+            normals[3 * i + 2] = nx;
+        }
+
+        data.positions = positions;
+        data.indices = indices;
+        data.normals = normals;
+        return data;
+    }
+
     private static async GenerateFromSlopeTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
         let baseData: BABYLON.VertexData;
         let baseBrickName = "slope" + h + "-" + w + "x1";
@@ -222,6 +284,11 @@ class BrickVertexData {
                 let h = parseInt(type.replace("slope", ""));
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
+        }
+        else if (type.toLowerCase().indexOf("curb") != -1) {
+            let w = parseInt(size.split("x")[0]);
+            let l = parseInt(size.split("x")[1]);
+            return await BrickVertexData.GenerateFromCurbTemplate(w, l, 1, lod);
         }
         else if (type.startsWith("construct_")) {
             let constructName = type.replace("construct_", "");
