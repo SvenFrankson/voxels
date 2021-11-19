@@ -30,7 +30,7 @@ class VertexDataLoader {
         let vertexData = undefined;
         let loadedFile = await BABYLON.SceneLoader.ImportMeshAsync("", "./datas/meshes/" + name + ".babylon", "", Main.Scene);
         let vertexDatas = [];
-        loadedFile.meshes = loadedFile.meshes.sort((m1, m2) => {
+        let loadedFileMeshes = loadedFile.meshes.sort((m1, m2) => {
             if (m1.name < m2.name) {
                 return -1;
             }
@@ -39,14 +39,14 @@ class VertexDataLoader {
             }
             return 0;
         });
-        for (let i = 0; i < loadedFile.meshes.length; i++) {
-            let loadedMesh = loadedFile.meshes[i];
+        for (let i = 0; i < loadedFileMeshes.length; i++) {
+            let loadedMesh = loadedFileMeshes[i];
             if (loadedMesh instanceof BABYLON.Mesh) {
                 vertexData = BABYLON.VertexData.ExtractFromMesh(loadedMesh);
                 vertexDatas.push(vertexData);
             }
         }
-        loadedFile.meshes.forEach(m => { m.dispose(); });
+        loadedFileMeshes.forEach(m => { m.dispose(); });
         loadedFile.skeletons.forEach(s => { s.dispose(); });
         return vertexDatas;
     }
@@ -797,10 +797,10 @@ class BrickDataManager {
             let plateCurbName = "plateCurb-" + S + "x" + S;
             plateCurbData.knobs.push(0, 1, 0);
             plateCurbData.knobs.push(S - 1, 1, S - 1);
-            plateCurbData.locks.push(0, 1, 0);
-            plateCurbData.locks.push(S - 1, 1, S - 1);
-            plateCurbData.covers.push(0, 1, 0);
-            plateCurbData.covers.push(S - 1, 1, S - 1);
+            plateCurbData.locks.push(0, 0, 0);
+            plateCurbData.locks.push(S - 1, 0, S - 1);
+            plateCurbData.covers.push(0, 0, 0);
+            plateCurbData.covers.push(S - 1, 0, S - 1);
             plateCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(plateCurbName, plateCurbData);
             BrickDataManager.BrickNames.push(plateCurbName);
@@ -809,10 +809,10 @@ class BrickDataManager {
         for (let S = 2; S <= 6; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
-            tileCurbData.locks.push(0, 1, 0);
-            tileCurbData.locks.push(S - 1, 1, S - 1);
-            tileCurbData.covers.push(0, 1, 0);
-            tileCurbData.covers.push(S - 1, 1, S - 1);
+            tileCurbData.locks.push(0, 0, 0);
+            tileCurbData.locks.push(S - 1, 0, S - 1);
+            tileCurbData.covers.push(0, 0, 0);
+            tileCurbData.covers.push(S - 1, 0, S - 1);
             tileCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
             BrickDataManager.BrickNames.push(tileCurbName);
@@ -4589,8 +4589,9 @@ class PlayerActionTemplate {
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = Main.Scene.pick(x, y, (m) => {
                 return m.isPickable;
-            });
+            }, null);
             if (pickInfo.hit) {
+                document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";

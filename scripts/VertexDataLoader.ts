@@ -38,7 +38,7 @@ class VertexDataLoader {
         let vertexData: BABYLON.VertexData = undefined;
         let loadedFile = await BABYLON.SceneLoader.ImportMeshAsync("", "./datas/meshes/" + name + ".babylon", "", Main.Scene);
         let vertexDatas: BABYLON.VertexData[] = [];
-        loadedFile.meshes = loadedFile.meshes.sort(
+        let loadedFileMeshes = loadedFile.meshes.sort(
             (m1, m2) => {
                 if (m1.name < m2.name) {
                     return -1;
@@ -49,14 +49,14 @@ class VertexDataLoader {
                 return 0;
             }
         )
-        for (let i = 0; i < loadedFile.meshes.length; i++) {
-            let loadedMesh = loadedFile.meshes[i];
+        for (let i = 0; i < loadedFileMeshes.length; i++) {
+            let loadedMesh = loadedFileMeshes[i];
             if (loadedMesh instanceof BABYLON.Mesh) {
                 vertexData =  BABYLON.VertexData.ExtractFromMesh(loadedMesh);
                 vertexDatas.push(vertexData);
             }
         }
-        loadedFile.meshes.forEach(m => { m.dispose(); });
+        loadedFileMeshes.forEach(m => { m.dispose(); });
         loadedFile.skeletons.forEach(s => { s.dispose(); });
         return vertexDatas;
     }
