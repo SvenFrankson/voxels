@@ -192,7 +192,7 @@ class BrickVertexData {
         return data;
     }
 
-    private static async GenerateFromCurbTemplate(w: number, h: number, l: number, lod: number): Promise<BABYLON.VertexData> {
+    private static async GenerateFromCurbTemplate(s: number, h: number, lod: number): Promise<BABYLON.VertexData> {
         if (!BrickVertexData._CurbTemplateVertexData[lod]) {
             await BrickVertexData._LoadCurbTemplateVertexData();
         }
@@ -211,12 +211,16 @@ class BrickVertexData {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
+            
+            if (y > DY * 0.5) {
+                positions[3 * i + 1] = y + (h - 1) * DY;
+            }
 
             for (let j = 0; j < directions.length; j++) {
                 let dot = x * directions[2 * j] + z * directions[2 * j + 1];
                 if (Math.abs(dot * dot - x * x - z * z) < 0.05) {
-                    positions[3 * i] = x + directions[2 * j] * (w - 2) * DX;
-                    positions[3 * i + 2] = z + directions[2 * j + 1] * (w - 2) * DX;
+                    positions[3 * i] = x + directions[2 * j] * (s - 2) * DX;
+                    positions[3 * i + 2] = z + directions[2 * j + 1] * (s - 2) * DX;
                     break;
                 }
             }
@@ -224,12 +228,10 @@ class BrickVertexData {
 
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
-            let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
 
             positions[3 * i] = x - DX * 0.5;
-            positions[3 * i + 1] = y;
-            positions[3 * i + 2] = z - (DX * (w - 1)) - DX * 0.5;
+            positions[3 * i + 2] = z - (DX * (s - 1)) - DX * 0.5;
         }
         
         for (let i = 0; i < positions.length / 3; i++) {
@@ -307,10 +309,13 @@ class BrickVertexData {
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
         }
-        else if (type.toLowerCase().indexOf("curb") != -1) {
-            let w = parseInt(size.split("x")[0]);
-            let l = parseInt(size.split("x")[1]);
-            return await BrickVertexData.GenerateFromCurbTemplate(w, l, 1, lod);
+        else if (type === "plateCurb" || type === "tileCurb") {
+            let s = parseInt(size.split("x")[0]);
+            return await BrickVertexData.GenerateFromCurbTemplate(s, 1, lod);
+        }
+        else if (type === "brickCurb") {
+            let s = parseInt(size.split("x")[0]);
+            return await BrickVertexData.GenerateFromCurbTemplate(s, 3, lod);
         }
         else if (type.startsWith("construct_")) {
             let constructName = type.replace("construct_", "");

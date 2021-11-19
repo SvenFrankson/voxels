@@ -366,24 +366,60 @@ class BrickDataManager {
             }
         }
 
+        // PlateCurb
+        for (let S = 2; S <= 6; S++) {
+            let plateCurbData = new BrickData();
+            let plateCurbName = "plateCurb-" + S + "x" + S;
+            
+            plateCurbData.knobs.push(0, 1, 0);
+            plateCurbData.knobs.push(S - 1, 1, S - 1);
+            
+            plateCurbData.locks.push(0, 1, 0);
+            plateCurbData.locks.push(S - 1, 1, S - 1);
+            
+            plateCurbData.covers.push(0, 1, 0);
+            plateCurbData.covers.push(S - 1, 1, S - 1);
+            
+            plateCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(plateCurbName, plateCurbData);
+            BrickDataManager.BrickNames.push(plateCurbName);
+        }
+
         // TileCurb
         for (let S = 2; S <= 6; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             
-            tileCurbData.knobs.push(0, 1, 0);
-            tileCurbData.knobs.push(S - 1, 1, S - 1);
-
-            for (let l = 0; l < S; l++) {
-                for (let w = 0; w < S; w++) {
-                    tileCurbData.locks.push(w, 0, l);
-                    tileCurbData.covers.push(w, 0, l);
-                }
-            }
+            tileCurbData.locks.push(0, 1, 0);
+            tileCurbData.locks.push(S - 1, 1, S - 1);
+            
+            tileCurbData.covers.push(0, 1, 0);
+            tileCurbData.covers.push(S - 1, 1, S - 1);
             
             tileCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
             BrickDataManager.BrickNames.push(tileCurbName);
+        }
+
+        // BrickCurb
+        for (let S = 2; S <= 6; S++) {
+            let brickCurbData = new BrickData();
+            let brickCurbName = "brickCurb-" + S + "x" + S;
+            
+            brickCurbData.knobs.push(0, 3, 0);
+            brickCurbData.knobs.push(S - 1, 3, S - 1);
+
+            for (let h = 0; h < 3; h++) {
+                brickCurbData.locks.push(0, h, 0);
+                brickCurbData.locks.push(S - 1, h, S - 1);
+
+                brickCurbData.covers.push(0, h, 0);
+                brickCurbData.covers.push(S - 1, h, S - 1);
+            }
+            
+            brickCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(brickCurbName, brickCurbData);
+            BrickDataManager.BrickNames.push(brickCurbName);
         }
     }
 

@@ -791,21 +791,47 @@ class BrickDataManager {
                 }
             }
         }
+        // PlateCurb
+        for (let S = 2; S <= 6; S++) {
+            let plateCurbData = new BrickData();
+            let plateCurbName = "plateCurb-" + S + "x" + S;
+            plateCurbData.knobs.push(0, 1, 0);
+            plateCurbData.knobs.push(S - 1, 1, S - 1);
+            plateCurbData.locks.push(0, 1, 0);
+            plateCurbData.locks.push(S - 1, 1, S - 1);
+            plateCurbData.covers.push(0, 1, 0);
+            plateCurbData.covers.push(S - 1, 1, S - 1);
+            plateCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(plateCurbName, plateCurbData);
+            BrickDataManager.BrickNames.push(plateCurbName);
+        }
         // TileCurb
         for (let S = 2; S <= 6; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
-            tileCurbData.knobs.push(0, 1, 0);
-            tileCurbData.knobs.push(S - 1, 1, S - 1);
-            for (let l = 0; l < S; l++) {
-                for (let w = 0; w < S; w++) {
-                    tileCurbData.locks.push(w, 0, l);
-                    tileCurbData.covers.push(w, 0, l);
-                }
-            }
+            tileCurbData.locks.push(0, 1, 0);
+            tileCurbData.locks.push(S - 1, 1, S - 1);
+            tileCurbData.covers.push(0, 1, 0);
+            tileCurbData.covers.push(S - 1, 1, S - 1);
             tileCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
             BrickDataManager.BrickNames.push(tileCurbName);
+        }
+        // BrickCurb
+        for (let S = 2; S <= 6; S++) {
+            let brickCurbData = new BrickData();
+            let brickCurbName = "brickCurb-" + S + "x" + S;
+            brickCurbData.knobs.push(0, 3, 0);
+            brickCurbData.knobs.push(S - 1, 3, S - 1);
+            for (let h = 0; h < 3; h++) {
+                brickCurbData.locks.push(0, h, 0);
+                brickCurbData.locks.push(S - 1, h, S - 1);
+                brickCurbData.covers.push(0, h, 0);
+                brickCurbData.covers.push(S - 1, h, S - 1);
+            }
+            brickCurbData.computeRotatedLocks();
+            BrickDataManager._BrickDatas.set(brickCurbName, brickCurbData);
+            BrickDataManager.BrickNames.push(brickCurbName);
         }
     }
     static async GetBrickData(brickReference) {
@@ -956,7 +982,7 @@ class BrickVertexData {
         data.normals = normals;
         return data;
     }
-    static async GenerateFromCurbTemplate(w, h, l, lod) {
+    static async GenerateFromCurbTemplate(s, h, lod) {
         if (!BrickVertexData._CurbTemplateVertexData[lod]) {
             await BrickVertexData._LoadCurbTemplateVertexData();
         }
@@ -973,22 +999,23 @@ class BrickVertexData {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
+            if (y > DY * 0.5) {
+                positions[3 * i + 1] = y + (h - 1) * DY;
+            }
             for (let j = 0; j < directions.length; j++) {
                 let dot = x * directions[2 * j] + z * directions[2 * j + 1];
                 if (Math.abs(dot * dot - x * x - z * z) < 0.05) {
-                    positions[3 * i] = x + directions[2 * j] * (w - 2) * DX;
-                    positions[3 * i + 2] = z + directions[2 * j + 1] * (w - 2) * DX;
+                    positions[3 * i] = x + directions[2 * j] * (s - 2) * DX;
+                    positions[3 * i + 2] = z + directions[2 * j + 1] * (s - 2) * DX;
                     break;
                 }
             }
         }
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
-            let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
             positions[3 * i] = x - DX * 0.5;
-            positions[3 * i + 1] = y;
-            positions[3 * i + 2] = z - (DX * (w - 1)) - DX * 0.5;
+            positions[3 * i + 2] = z - (DX * (s - 1)) - DX * 0.5;
         }
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
@@ -1058,10 +1085,13 @@ class BrickVertexData {
                 return await BrickVertexData.GenerateFromSlopeTemplate(w, h, l, lod);
             }
         }
-        else if (type.toLowerCase().indexOf("curb") != -1) {
-            let w = parseInt(size.split("x")[0]);
-            let l = parseInt(size.split("x")[1]);
-            return await BrickVertexData.GenerateFromCurbTemplate(w, l, 1, lod);
+        else if (type === "plateCurb" || type === "tileCurb") {
+            let s = parseInt(size.split("x")[0]);
+            return await BrickVertexData.GenerateFromCurbTemplate(s, 1, lod);
+        }
+        else if (type === "brickCurb") {
+            let s = parseInt(size.split("x")[0]);
+            return await BrickVertexData.GenerateFromCurbTemplate(s, 3, lod);
         }
         else if (type.startsWith("construct_")) {
             let constructName = type.replace("construct_", "");
@@ -5613,13 +5643,9 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    //this.runManyScreenShots();
+                    this.runManyScreenShots();
                     //this.runAllScreenShots();
-                    await this.createBrick("tileCurb-2x2-brightred");
-                    await this.createBrick("tileCurb-3x3-brightred");
-                    await this.createBrick("tileCurb-4x4-brightred");
-                    await this.createBrick("tileCurb-5x5-brightred");
-                    await this.createBrick("tileCurb-6x6-brightred");
+                    //await this.createBrick("brickCurb-6x6-brightred", true);
                 }, 100);
             }
             else {
@@ -5630,10 +5656,6 @@ class Miniature extends Main {
     }
     async runManyScreenShots() {
         let colors = [
-            "brightyellow",
-            "brightred",
-            "brightblue",
-            "brightgreen",
             "white",
             "black"
         ];
@@ -5646,11 +5668,16 @@ class Miniature extends Main {
         });
         */
         let bricks = [
-            "brickCornerRound-2x2",
-            "plateCornerRound-2x2",
-            "tileCornerRound-2x2",
-            "plateCornerRound-3x3",
-            "tileCornerRound-3x3"
+            "plateCurb-2x2",
+            "plateCurb-3x3",
+            "plateCurb-4x4",
+            "plateCurb-5x5",
+            "plateCurb-6x6",
+            "brickCurb-2x2",
+            "brickCurb-3x3",
+            "brickCurb-4x4",
+            "brickCurb-5x5",
+            "brickCurb-6x6"
         ];
         for (let i = 0; i < bricks.length; i++) {
             let name = bricks[i];
@@ -5965,9 +5992,33 @@ class PlayerTest extends Main {
             }
         });
         inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
-        let firstBrick = inventory.items.length;
         inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
-        PlayerTest.Player.playerActionManager.linkAction(inventory.items[firstBrick].playerAction, 0);
+        for (let i = 0; i < colors.length; i++) {
+            let color = colors[i];
+            for (let j = 0; j < bricks.length; j++) {
+                let brickName = bricks[j];
+                let count = Math.floor(Math.random() * 9 + 2);
+                for (let n = 0; n < count; n++) {
+                    inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
+                }
+            }
+        }
+        colors = [
+            "white",
+            "black"
+        ];
+        bricks = [
+            "plateCurb-2x2",
+            "plateCurb-3x3",
+            "plateCurb-4x4",
+            "plateCurb-5x5",
+            "plateCurb-6x6",
+            "brickCurb-2x2",
+            "brickCurb-3x3",
+            "brickCurb-4x4",
+            "brickCurb-5x5",
+            "brickCurb-6x6"
+        ];
         for (let i = 0; i < colors.length; i++) {
             let color = colors[i];
             for (let j = 0; j < bricks.length; j++) {

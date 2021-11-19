@@ -41,13 +41,9 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						//this.runManyScreenShots();
+						this.runManyScreenShots();
 						//this.runAllScreenShots();
-						await this.createBrick("tileCurb-2x2-brightred");
-						await this.createBrick("tileCurb-3x3-brightred");
-						await this.createBrick("tileCurb-4x4-brightred");
-						await this.createBrick("tileCurb-5x5-brightred");
-						await this.createBrick("tileCurb-6x6-brightred");
+						//await this.createBrick("brickCurb-6x6-brightred", true);
 					},
 					100
 				);
@@ -61,10 +57,6 @@ class Miniature extends Main {
 
 	public async runManyScreenShots(): Promise<void> {
 		let colors = [
-			"brightyellow",
-			"brightred",
-			"brightblue",
-			"brightgreen",
 			"white",
 			"black"
 		];
@@ -79,11 +71,16 @@ class Miniature extends Main {
 		*/
 
 		let bricks = [
-			"brickCornerRound-2x2",
-			"plateCornerRound-2x2",
-			"tileCornerRound-2x2",
-			"plateCornerRound-3x3",
-			"tileCornerRound-3x3"
+			"plateCurb-2x2",
+			"plateCurb-3x3",
+			"plateCurb-4x4",
+			"plateCurb-5x5",
+			"plateCurb-6x6",
+			"brickCurb-2x2",
+			"brickCurb-3x3",
+			"brickCurb-4x4",
+			"brickCurb-5x5",
+			"brickCurb-6x6"
 		];
 
 		for (let i = 0; i < bricks.length; i++) {
