@@ -192,6 +192,7 @@ class Player extends BABYLON.Mesh {
 
         if (!this.areNearChunckReady) {
             let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
+            console.log(o);
             if (o.chunck) {
                 this.areNearChunckReady = true;
             }

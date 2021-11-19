@@ -1986,9 +1986,9 @@ class ChunckUtils {
         };
     }
     static WorldPositionToChunckBlockCoordinates_V2(world) {
-        let I = Math.floor(world.x / CHUNCK_SIZE * 1.6);
-        let J = Math.floor(world.y / CHUNCK_SIZE * 0.96);
-        let K = Math.floor(world.z / CHUNCK_SIZE * 1.6);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
         let coordinates = world.clone();
         coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * 1.6)) / 2;
         coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * 0.96)) / 2;
@@ -4035,6 +4035,7 @@ class Player extends BABYLON.Mesh {
             this.checkPause();
             if (!this.areNearChunckReady) {
                 let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
+                console.log(o);
                 if (o.chunck) {
                     this.areNearChunckReady = true;
                 }
