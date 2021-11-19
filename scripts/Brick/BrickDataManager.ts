@@ -374,11 +374,11 @@ class BrickDataManager {
             plateCurbData.knobs.push(0, 1, 0);
             plateCurbData.knobs.push(S - 1, 1, S - 1);
             
-            plateCurbData.locks.push(0, 1, 0);
-            plateCurbData.locks.push(S - 1, 1, S - 1);
+            plateCurbData.locks.push(0, 0, 0);
+            plateCurbData.locks.push(S - 1, 0, S - 1);
             
-            plateCurbData.covers.push(0, 1, 0);
-            plateCurbData.covers.push(S - 1, 1, S - 1);
+            plateCurbData.covers.push(0, 0, 0);
+            plateCurbData.covers.push(S - 1, 0, S - 1);
             
             plateCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(plateCurbName, plateCurbData);
@@ -390,11 +390,11 @@ class BrickDataManager {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             
-            tileCurbData.locks.push(0, 1, 0);
-            tileCurbData.locks.push(S - 1, 1, S - 1);
+            tileCurbData.locks.push(0, 0, 0);
+            tileCurbData.locks.push(S - 1, 0, S - 1);
             
-            tileCurbData.covers.push(0, 1, 0);
-            tileCurbData.covers.push(S - 1, 1, S - 1);
+            tileCurbData.covers.push(0, 0, 0);
+            tileCurbData.covers.push(S - 1, 0, S - 1);
             
             tileCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
