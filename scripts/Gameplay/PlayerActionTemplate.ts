@@ -365,11 +365,22 @@ class PlayerActionTemplate {
                 y,
                 (m) => {
                     return m.isPickable;
-                },
-                false
+                }
             );
+            /*
+            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+            Main.Scene.meshes.forEach(m => {
+                if (m.isPickable) {
+                    let tryPick = ray.intersectsMesh(m, false);
+                    if (tryPick.hit) {
+                        pickInfo = tryPick;
+                    }
+                }
+            })
+            */
             if (pickInfo.hit) {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
+                document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
