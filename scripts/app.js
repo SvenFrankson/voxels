@@ -4083,8 +4083,15 @@ class Player extends BABYLON.Mesh {
                 let aimed;
                 let x = Main.Engine.getRenderWidth() * 0.5;
                 let y = Main.Engine.getRenderHeight() * 0.5;
-                let pickInfo = Main.Scene.pick(x, y, (m) => {
-                    return m && m.parent && m.parent instanceof Chunck_V2;
+                let pickInfo;
+                let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+                Main.Scene.meshes.forEach(m => {
+                    if (m.isPickable) {
+                        let tryPick = ray.intersectsMesh(m, false);
+                        if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                            pickInfo = tryPick;
+                        }
+                    }
                 });
                 let pickedMesh = pickInfo.pickedMesh;
                 if (pickedMesh) {
@@ -4587,21 +4594,31 @@ class PlayerActionTemplate {
             }
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = Main.Scene.pick(x, y, (m) => {
-                return m.isPickable;
-            });
             /*
+            let pickInfo = Main.Scene.pick(
+                x,
+                y,
+                (m) => {
+                    return m.isPickable;
+                },
+                false,
+                Main.Camera,
+                (p0, p1, p2, ray) => {
+                    return true;
+                }
+            );
+            */
+            let pickInfo;
             let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
             Main.Scene.meshes.forEach(m => {
                 if (m.isPickable) {
                     let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit) {
+                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
                         pickInfo = tryPick;
                     }
                 }
-            })
-            */
-            if (pickInfo.hit) {
+            });
+            if (pickInfo && pickInfo.hit) {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
@@ -4669,8 +4686,15 @@ class PlayerActionTemplate {
         action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = Main.Scene.pick(x, y, (m) => {
-                return m.isPickable;
+            let pickInfo;
+            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+            Main.Scene.meshes.forEach(m => {
+                if (m.isPickable) {
+                    let tryPick = ray.intersectsMesh(m, false);
+                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                        pickInfo = tryPick;
+                    }
+                }
             });
             if (pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
