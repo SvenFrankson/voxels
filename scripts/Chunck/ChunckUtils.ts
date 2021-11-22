@@ -15,6 +15,7 @@ class ChunckUtils {
         }
     }
 
+    // https://playground.babylonjs.com/#VTJ3M0#8 Need to debug why this does not work like in playground.
     public static ScenePick(x: number, y: number): BABYLON.PickingInfo {
         let pickInfo: BABYLON.PickingInfo;
         let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
