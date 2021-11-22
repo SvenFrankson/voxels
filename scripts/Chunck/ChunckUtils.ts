@@ -15,6 +15,20 @@ class ChunckUtils {
         }
     }
 
+    public static ScenePick(x: number, y: number): BABYLON.PickingInfo {
+        let pickInfo: BABYLON.PickingInfo;
+        let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+        Main.Scene.meshes.forEach(m => {
+            if (m.isPickable) {
+                let tryPick = ray.intersectsMesh(m, false);
+                if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                    pickInfo = tryPick;
+                }
+            }
+        });
+        return pickInfo;
+    }
+
     public static WorldPositionToChunckBlockCoordinates_V1(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);

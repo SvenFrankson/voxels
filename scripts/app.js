@@ -1972,6 +1972,19 @@ class ChunckUtils {
             return "None";
         }
     }
+    static ScenePick(x, y) {
+        let pickInfo;
+        let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+        Main.Scene.meshes.forEach(m => {
+            if (m.isPickable) {
+                let tryPick = ray.intersectsMesh(m, false);
+                if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                    pickInfo = tryPick;
+                }
+            }
+        });
+        return pickInfo;
+    }
     static WorldPositionToChunckBlockCoordinates_V1(world) {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);
@@ -4083,21 +4096,11 @@ class Player extends BABYLON.Mesh {
                 let aimed;
                 let x = Main.Engine.getRenderWidth() * 0.5;
                 let y = Main.Engine.getRenderHeight() * 0.5;
-                let pickInfo;
-                let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
-                Main.Scene.meshes.forEach(m => {
-                    if (m.isPickable) {
-                        let tryPick = ray.intersectsMesh(m, false);
-                        if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                            pickInfo = tryPick;
-                        }
-                    }
-                });
-                let pickedMesh = pickInfo.pickedMesh;
-                if (pickedMesh) {
-                    let chunck = pickedMesh.parent;
+                let pickInfo = ChunckUtils.ScenePick(x, y);
+                if (pickInfo && pickInfo.pickedMesh) {
+                    let chunck = pickInfo.pickedMesh.parent;
                     if (chunck instanceof Chunck_V2) {
-                        let brick = chunck.bricks.find(b => { return b.mesh === pickedMesh; });
+                        let brick = chunck.bricks.find(b => { return b.mesh === pickInfo.pickedMesh; });
                         if (brick) {
                             aimed = brick;
                         }
@@ -4594,30 +4597,7 @@ class PlayerActionTemplate {
             }
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            /*
-            let pickInfo = Main.Scene.pick(
-                x,
-                y,
-                (m) => {
-                    return m.isPickable;
-                },
-                false,
-                Main.Camera,
-                (p0, p1, p2, ray) => {
-                    return true;
-                }
-            );
-            */
-            let pickInfo;
-            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
-            Main.Scene.meshes.forEach(m => {
-                if (m.isPickable) {
-                    let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                        pickInfo = tryPick;
-                    }
-                }
-            });
+            let pickInfo = ChunckUtils.ScenePick(x, y);
             if (pickInfo && pickInfo.hit) {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
@@ -4686,17 +4666,8 @@ class PlayerActionTemplate {
         action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo;
-            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
-            Main.Scene.meshes.forEach(m => {
-                if (m.isPickable) {
-                    let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                        pickInfo = tryPick;
-                    }
-                }
-            });
-            if (pickInfo.hit) {
+            let pickInfo = ChunckUtils.ScenePick(x, y);
+            if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
                 document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";

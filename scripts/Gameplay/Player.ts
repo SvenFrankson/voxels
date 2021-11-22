@@ -246,21 +246,11 @@ class Player extends BABYLON.Mesh {
             let aimed: Brick;
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo: BABYLON.PickingInfo;
-            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
-            Main.Scene.meshes.forEach(m => {
-                if (m.isPickable) {
-                    let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                        pickInfo = tryPick;
-                    }
-                }
-            });
-            let pickedMesh = pickInfo.pickedMesh;
-            if (pickedMesh) {
-                let chunck = pickedMesh.parent;
+            let pickInfo = ChunckUtils.ScenePick(x, y);
+            if (pickInfo && pickInfo.pickedMesh) {
+                let chunck = pickInfo.pickedMesh.parent;
                 if (chunck instanceof Chunck_V2) {
-                    let brick = chunck.bricks.find(b => { return b.mesh === pickedMesh });
+                    let brick = chunck.bricks.find(b => { return b.mesh === pickInfo.pickedMesh });
                     if (brick) {
                         aimed = brick;
                     }
