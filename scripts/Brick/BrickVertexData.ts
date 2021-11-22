@@ -201,7 +201,7 @@ class BrickVertexData {
         let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
 
-        let VCOUNT = 5;
+        let VCOUNT = lod === 0 ? 7 : 5;
         let directions: number[] = [];
         for (let i = 0; i < VCOUNT; i++) {
             directions.push(Math.cos(Math.PI * 0.5 * i / (VCOUNT - 1)), Math.sin(Math.PI * 0.5 * i / (VCOUNT - 1)));
@@ -218,7 +218,7 @@ class BrickVertexData {
 
             for (let j = 0; j < directions.length; j++) {
                 let dot = x * directions[2 * j] + z * directions[2 * j + 1];
-                if (Math.abs(dot * dot - x * x - z * z) < 0.05) {
+                if (Math.abs(dot * dot - x * x - z * z) < 0.02) {
                     positions[3 * i] = x + directions[2 * j] * (s - 2) * DX;
                     positions[3 * i + 2] = z + directions[2 * j + 1] * (s - 2) * DX;
                     break;
