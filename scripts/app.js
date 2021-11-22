@@ -1985,6 +1985,59 @@ class ChunckUtils {
         });
         return pickInfo;
     }
+    static ScenePickAround(world, x, y, radius) {
+        let chuncks = ChunckUtils.WorldPositionToChuncks(world, radius);
+        //console.log(chuncks.length);
+        let pickInfo;
+        if (chuncks) {
+            let meshes = [...chuncks];
+            for (let i = 0; i < chuncks.length; i++) {
+                let chunck = chuncks[i];
+                if (chunck instanceof Chunck_V2) {
+                    meshes.push(...chunck.brickMeshes);
+                }
+            }
+            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+            meshes.forEach(m => {
+                if (m.isPickable) {
+                    let tryPick = ray.intersectsMesh(m, false);
+                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                        pickInfo = tryPick;
+                    }
+                }
+            });
+        }
+        return pickInfo;
+    }
+    static WorldPositionToChuncks(world, radius = 1.74) {
+        let sqrRadius = radius * radius;
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let rMin = Math.floor(-radius);
+        let rMax = Math.ceil(radius);
+        let chuncks = [];
+        for (let i = rMin; i <= rMax; i++) {
+            for (let j = rMin; j <= rMax; j++) {
+                for (let k = rMin; k <= rMax; k++) {
+                    let dd = i * i + j * j + k * k;
+                    if (dd <= sqrRadius) {
+                        let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
+                        if (chunck) {
+                            chuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+        }
+        return chuncks;
+    }
+    static WorldPositionToChunck(world) {
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+        return Main.ChunckManager.getChunck(I, J, K);
+    }
     static WorldPositionToChunckBlockCoordinates_V1(world) {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);
@@ -4096,7 +4149,7 @@ class Player extends BABYLON.Mesh {
                 let aimed;
                 let x = Main.Engine.getRenderWidth() * 0.5;
                 let y = Main.Engine.getRenderHeight() * 0.5;
-                let pickInfo = ChunckUtils.ScenePick(x, y);
+                let pickInfo = ChunckUtils.ScenePickAround(this.position, x, y);
                 if (pickInfo && pickInfo.pickedMesh) {
                     let chunck = pickInfo.pickedMesh.parent;
                     if (chunck instanceof Chunck_V2) {
@@ -4597,7 +4650,7 @@ class PlayerActionTemplate {
             }
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePick(x, y);
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
@@ -4666,7 +4719,7 @@ class PlayerActionTemplate {
         action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePick(x, y);
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));

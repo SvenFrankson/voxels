@@ -246,7 +246,7 @@ class Player extends BABYLON.Mesh {
             let aimed: Brick;
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePick(x, y);
+            let pickInfo = ChunckUtils.ScenePickAround(this.position, x, y);
             if (pickInfo && pickInfo.pickedMesh) {
                 let chunck = pickInfo.pickedMesh.parent;
                 if (chunck instanceof Chunck_V2) {

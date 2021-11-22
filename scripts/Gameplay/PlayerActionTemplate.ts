@@ -359,7 +359,7 @@ class PlayerActionTemplate {
             
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePick(x, y);
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
@@ -432,7 +432,7 @@ class PlayerActionTemplate {
         action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePick(x, y);
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
                 let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));

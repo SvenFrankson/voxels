@@ -29,6 +29,69 @@ class ChunckUtils {
         return pickInfo;
     }
 
+    public static ScenePickAround(world: BABYLON.Vector3, x: number, y: number, radius?: number): BABYLON.PickingInfo {
+        let chuncks = ChunckUtils.WorldPositionToChuncks(world, radius);
+        //console.log(chuncks.length);
+
+        let pickInfo: BABYLON.PickingInfo;
+        if (chuncks) {
+            let meshes: BABYLON.Mesh[] = [...chuncks];
+            for (let i = 0; i < chuncks.length; i++) {
+                let chunck = chuncks[i];
+                if (chunck instanceof Chunck_V2) {
+                    meshes.push(...chunck.brickMeshes);
+                }
+            }
+            let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
+            meshes.forEach(m => {
+                if (m.isPickable) {
+                    let tryPick = ray.intersectsMesh(m, false);
+                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
+                        pickInfo = tryPick;
+                    }
+                }
+            });
+        }
+        return pickInfo;
+    }
+
+    public static WorldPositionToChuncks(world: BABYLON.Vector3, radius: number = 1.74): Chunck[] {
+        let sqrRadius = radius * radius;
+        
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+
+        let rMin = Math.floor(- radius);
+        let rMax = Math.ceil(radius);
+
+        let chuncks: Chunck[] = [];
+
+        for (let i = rMin; i <= rMax; i++) {
+            for (let j = rMin; j <= rMax; j++) {
+                for (let k = rMin; k <= rMax; k++) {
+                    let dd = i * i + j * j + k * k;
+                    if (dd <= sqrRadius) {
+                        let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
+                        if (chunck) {
+                            chuncks.push(chunck);
+                        }
+                    }
+                }
+            }
+        }
+
+        return chuncks;
+    }
+
+    public static WorldPositionToChunck(world: BABYLON.Vector3): Chunck {
+        let I = Math.floor(world.x / CHUNCK_SIZE);
+        let J = Math.floor(world.y / CHUNCK_SIZE);
+        let K = Math.floor(world.z / CHUNCK_SIZE);
+
+        return Main.ChunckManager.getChunck(I, J, K);
+    }
+
     public static WorldPositionToChunckBlockCoordinates_V1(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
         let I = Math.floor(world.x / CHUNCK_SIZE);
         let J = Math.floor(world.y / CHUNCK_SIZE);
