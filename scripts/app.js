@@ -1972,6 +1972,7 @@ class ChunckUtils {
             return "None";
         }
     }
+    // https://playground.babylonjs.com/#VTJ3M0#8 Need to debug why this does not work like in playground.
     static ScenePick(x, y) {
         let pickInfo;
         let ray = Main.Scene.createPickingRay(x, y, BABYLON.Matrix.Identity(), Main.Camera);
@@ -4336,8 +4337,10 @@ class Player extends BABYLON.Mesh {
         let data = {
             position: { x: this.position.x, y: this.position.y, z: this.position.z },
             rX: Main.Camera.rotation.x,
-            rY: this.rotation.y
+            rY: this.rotation.y,
+            playerActionManager: this.playerActionManager.serialize()
         };
+        console.log(data);
         return data;
     }
     deserialize(data) {
@@ -4346,25 +4349,30 @@ class Player extends BABYLON.Mesh {
         this.position.z = data.position.z;
         Main.Camera.rotation.x = data.rX;
         this.rotation.y = data.rY;
+        this.playerActionManager.deserialize(data.playerActionManager);
     }
 }
 var ACTIVE_DEBUG_PLAYER_ACTION = true;
 var ADD_BRICK_ANIMATION_DURATION = 1000;
 class PlayerActionTemplate {
     static CreateCubeAction(cubeType) {
-        let action = new PlayerAction();
+        let action = new PlayerAction("cube-");
         let previewMesh;
         action.iconUrl = "./datas/textures/miniatures/";
         if (cubeType === CubeType.Dirt) {
+            action.name += "dirt";
             action.iconUrl += "dirt";
         }
         if (cubeType === CubeType.Rock) {
+            action.name += "rock";
             action.iconUrl += "rock";
         }
         if (cubeType === CubeType.Sand) {
+            action.name += "sand";
             action.iconUrl += "sand";
         }
         if (cubeType === CubeType.None) {
+            action.name += "delete";
             action.iconUrl += "delete";
         }
         action.iconUrl += "-miniature.png";
@@ -4416,7 +4424,7 @@ class PlayerActionTemplate {
         return action;
     }
     static EditBlockAction() {
-        let action = new PlayerAction();
+        let action = new PlayerAction("edit-block");
         let pickedBlock;
         let aimedBlock;
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
@@ -4495,7 +4503,7 @@ class PlayerActionTemplate {
         return action;
     }
     static CreateBlockAction(blockReference) {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-block-" + blockReference);
         let previewMesh;
         let r = 0;
         action.iconUrl = "./datas/textures/miniatures/" + blockReference + "-miniature.png";
@@ -4589,7 +4597,7 @@ class PlayerActionTemplate {
     }
     static async CreateBrickAction(brickReference, onBrickAddedCallback = () => { }) {
         let data = await BrickDataManager.GetBrickData(brickReference);
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-brick-" + Brick.ReferenceToString(brickReference));
         let previewMesh;
         let previewMeshOffset = BABYLON.Vector3.Zero();
         let debugText;
@@ -4764,7 +4772,7 @@ class PlayerActionTemplate {
         return action;
     }
     static CreateMountainAction(r, h, roughness) {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         action.onClick = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
@@ -4789,7 +4797,7 @@ class PlayerActionTemplate {
         return action;
     }
     static CreateTreeAction() {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-tree");
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
         action.onClick = () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
@@ -4816,6 +4824,9 @@ class PlayerActionTemplate {
     }
 }
 class PlayerAction {
+    constructor(name) {
+        this.name = name;
+    }
 }
 class PlayerActionManager {
     constructor(player) {
@@ -4905,6 +4916,29 @@ class PlayerActionManager {
         this.hintedSlotIndex.remove(slotIndex);
         document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "";
     }
+    serialize() {
+        let linkedActionsNames = [];
+        for (let i = 0; i < this.linkedActions.length; i++) {
+            if (this.linkedActions[i]) {
+                linkedActionsNames[i] = this.linkedActions[i].name;
+            }
+        }
+        return {
+            linkedActionsNames: linkedActionsNames
+        };
+    }
+    deserialize(data) {
+        if (data && data.linkedActionsNames) {
+            for (let i = 0; i < data.linkedActionsNames.length; i++) {
+                let linkedActionName = data.linkedActionsNames[i];
+                let item = this.player.inventory.getItemByPlayerActionName(linkedActionName);
+                if (item) {
+                    this.linkAction(item.playerAction, i);
+                    item.timeUse = (new Date()).getTime();
+                }
+            }
+        }
+    }
 }
 var InventorySection;
 (function (InventorySection) {
@@ -4963,6 +4997,7 @@ class Inventory {
         this.player = player;
         this.items = [];
         this._brickSorting = BrickSortingOrder.TypeAsc;
+        player.inventory = this;
     }
     initialize() {
         Main.MenuManager.inventory = this;
@@ -5089,6 +5124,9 @@ class Inventory {
             }
         }
         return sectionItems;
+    }
+    getItemByPlayerActionName(playerActionName) {
+        return this.items.find(it => { return it.playerAction.name === playerActionName; });
     }
     update() {
         if (this._sectionActions) {
@@ -5952,17 +5990,6 @@ class PlayerTest extends Main {
             });
         }
         PlayerTest.Player = new Player();
-        let savedPlayerString = window.localStorage.getItem("player-test-player");
-        if (savedPlayerString) {
-            let t0 = performance.now();
-            let savedPlayer = JSON.parse(savedPlayerString);
-            PlayerTest.Player.deserialize(savedPlayer);
-            console.log("Player loaded from local storage");
-        }
-        else {
-            PlayerTest.Player.position.y = 40;
-        }
-        PlayerTest.Player.register();
         let inventory = new Inventory(PlayerTest.Player);
         inventory.initialize();
         let inventoryEditBlock = new InventoryItem();
@@ -6092,6 +6119,17 @@ class PlayerTest extends Main {
             }
         }
         inventory.update();
+        let savedPlayerString = window.localStorage.getItem("player-test-player");
+        if (savedPlayerString) {
+            let t0 = performance.now();
+            let savedPlayer = JSON.parse(savedPlayerString);
+            PlayerTest.Player.deserialize(savedPlayer);
+            console.log("Player loaded from local storage");
+        }
+        else {
+            PlayerTest.Player.position.y = 40;
+        }
+        PlayerTest.Player.register();
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent = PlayerTest.Player;
             Main.Camera.position.y = 3.5;

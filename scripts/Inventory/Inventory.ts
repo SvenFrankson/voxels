@@ -86,7 +86,7 @@ class Inventory {
     constructor(
         public player: Player
     ) {
-
+        player.inventory = this;
     }
 
     public initialize(): void {
@@ -222,6 +222,10 @@ class Inventory {
         }
 
         return sectionItems;
+    }
+
+    public getItemByPlayerActionName(playerActionName: string): InventoryItem {
+        return this.items.find(it => { return it.playerAction.name === playerActionName; });
     }
 
     public update(): void {

@@ -53,18 +53,6 @@ class PlayerTest extends Main {
 		}
         
         PlayerTest.Player = new Player();
-		
-		let savedPlayerString = window.localStorage.getItem("player-test-player");
-		if (savedPlayerString) {
-			let t0 = performance.now();
-			let savedPlayer = JSON.parse(savedPlayerString) as IPlayerData;
-			PlayerTest.Player.deserialize(savedPlayer);
-			console.log("Player loaded from local storage");
-		}
-		else {
-			PlayerTest.Player.position.y = 40;
-		}
-		PlayerTest.Player.register();
 
 		let inventory = new Inventory( PlayerTest.Player);
 		inventory.initialize();
@@ -210,6 +198,18 @@ class PlayerTest extends Main {
 		}
 
 		inventory.update();
+		
+		let savedPlayerString = window.localStorage.getItem("player-test-player");
+		if (savedPlayerString) {
+			let t0 = performance.now();
+			let savedPlayer = JSON.parse(savedPlayerString) as IPlayerData;
+			PlayerTest.Player.deserialize(savedPlayer);
+			console.log("Player loaded from local storage");
+		}
+		else {
+			PlayerTest.Player.position.y = 40;
+		}
+		PlayerTest.Player.register();
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {
             Main.Camera.parent =  PlayerTest.Player;

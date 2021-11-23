@@ -1,5 +1,8 @@
-class PlayerAction {
+interface IPlayerActionManagerData {
+    linkedActionsNames: string[];
+}
 
+class PlayerAction {
     public iconUrl: string;
 
     public onUpdate: () => void;
@@ -9,6 +12,12 @@ class PlayerAction {
     public onKeyUp: (e: KeyboardEvent) => void;
     public onEquip: () => void;
     public onUnequip: () => void;
+
+    constructor(    
+        public name: string
+    ) {
+
+    }
 }
 
 class PlayerActionManager {
@@ -110,5 +119,30 @@ class PlayerActionManager {
     public stopHint(slotIndex: number): void {
         this.hintedSlotIndex.remove(slotIndex);
         document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "";
+    }
+
+    public serialize(): IPlayerActionManagerData {
+        let linkedActionsNames: string[] = [];
+        for (let i = 0; i < this.linkedActions.length; i++) {
+            if (this.linkedActions[i]) {
+                linkedActionsNames[i] = this.linkedActions[i].name;
+            }
+        }
+        return {
+            linkedActionsNames: linkedActionsNames
+        }
+    }
+
+    public deserialize(data: IPlayerActionManagerData): void {
+        if (data && data.linkedActionsNames) {
+            for (let i = 0; i < data.linkedActionsNames.length; i++) {
+                let linkedActionName = data.linkedActionsNames[i];
+                let item = this.player.inventory.getItemByPlayerActionName(linkedActionName);
+                if (item) {
+                    this.linkAction(item.playerAction, i);
+                    item.timeUse = (new Date()).getTime();
+                }
+            }
+        }
     }
 }

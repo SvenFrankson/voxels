@@ -5,20 +5,23 @@ var ADD_BRICK_ANIMATION_DURATION = 1000;
 class PlayerActionTemplate {
 
     public static CreateCubeAction(cubeType: CubeType): PlayerAction {
-        let action = new PlayerAction();
+        let action = new PlayerAction("cube-");
         let previewMesh: BABYLON.Mesh;
-
         action.iconUrl = "./datas/textures/miniatures/";
         if (cubeType === CubeType.Dirt) {
+            action.name += "dirt";
             action.iconUrl += "dirt";
         }
         if (cubeType === CubeType.Rock) {
+            action.name += "rock";
             action.iconUrl += "rock";
         }
         if (cubeType === CubeType.Sand) {
+            action.name += "sand";
             action.iconUrl += "sand";
         }
         if (cubeType === CubeType.None) {
+            action.name += "delete";
             action.iconUrl += "delete";
         }
         action.iconUrl += "-miniature.png";
@@ -77,7 +80,7 @@ class PlayerActionTemplate {
     }
 
     public static EditBlockAction(): PlayerAction {
-        let action = new PlayerAction();
+        let action = new PlayerAction("edit-block");
         let pickedBlock: Block;
         let aimedBlock: Block;
 
@@ -173,7 +176,7 @@ class PlayerActionTemplate {
     }
 
     public static CreateBlockAction(blockReference: string): PlayerAction {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-block-" + blockReference);
         let previewMesh: BABYLON.Mesh;
         let r = 0;
 
@@ -288,7 +291,7 @@ class PlayerActionTemplate {
 
     public static async CreateBrickAction(brickReference: IBrickReference, onBrickAddedCallback = () => {}): Promise<PlayerAction> {
         let data = await BrickDataManager.GetBrickData(brickReference);
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-brick-" + Brick.ReferenceToString(brickReference));
         let previewMesh: BABYLON.Mesh;
         let previewMeshOffset: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
@@ -480,7 +483,7 @@ class PlayerActionTemplate {
     }
 
     public static CreateMountainAction(r: number, h: number, roughness: number): PlayerAction {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);
 
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
 
@@ -517,7 +520,7 @@ class PlayerActionTemplate {
     }
 
     public static CreateTreeAction(): PlayerAction {
-        let action = new PlayerAction();
+        let action = new PlayerAction("create-tree");
 
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
 

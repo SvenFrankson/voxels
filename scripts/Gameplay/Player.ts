@@ -4,9 +4,12 @@ interface IPlayerData {
     position: IVec3;
     rX: number;
     rY: number;
+    playerActionManager: IPlayerActionManagerData
 }
 
 class Player extends BABYLON.Mesh {
+
+    public inventory: Inventory;
 
     private _inputLeft: boolean = false;
     private _inputRight: boolean = false;
@@ -293,8 +296,10 @@ class Player extends BABYLON.Mesh {
         let data: IPlayerData = {
             position: { x: this.position.x, y: this.position.y, z: this.position.z },
             rX: (Main.Camera as BABYLON.FreeCamera).rotation.x,
-            rY: this.rotation.y
+            rY: this.rotation.y,
+            playerActionManager: this.playerActionManager.serialize()
         };
+        console.log(data);
         return data;
     }
 
@@ -304,5 +309,6 @@ class Player extends BABYLON.Mesh {
         this.position.z = data.position.z;
         (Main.Camera as BABYLON.FreeCamera).rotation.x = data.rX;
         this.rotation.y = data.rY;
+        this.playerActionManager.deserialize(data.playerActionManager);
     }
 }
