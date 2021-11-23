@@ -792,7 +792,7 @@ class BrickDataManager {
             }
         }
         // PlateCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let plateCurbData = new BrickData();
             let plateCurbName = "plateCurb-" + S + "x" + S;
             plateCurbData.knobs.push(0, 1, 0);
@@ -806,7 +806,7 @@ class BrickDataManager {
             BrickDataManager.BrickNames.push(plateCurbName);
         }
         // TileCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             tileCurbData.locks.push(0, 0, 0);
@@ -818,7 +818,7 @@ class BrickDataManager {
             BrickDataManager.BrickNames.push(tileCurbName);
         }
         // BrickCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let brickCurbData = new BrickData();
             let brickCurbName = "brickCurb-" + S + "x" + S;
             brickCurbData.knobs.push(0, 3, 0);
@@ -5773,11 +5773,19 @@ class Miniature extends Main {
             "plateCurb-4x4",
             "plateCurb-5x5",
             "plateCurb-6x6",
+            "plateCurb-7x7",
+            "plateCurb-8x8",
+            "plateCurb-9x9",
+            "plateCurb-10x10",
             "brickCurb-2x2",
             "brickCurb-3x3",
             "brickCurb-4x4",
             "brickCurb-5x5",
-            "brickCurb-6x6"
+            "brickCurb-6x6",
+            "brickCurb-7x7",
+            "brickCurb-8x8",
+            "brickCurb-9x9",
+            "brickCurb-10x10",
         ];
         for (let i = 0; i < bricks.length; i++) {
             let name = bricks[i];
@@ -6102,11 +6110,19 @@ class PlayerTest extends Main {
             "plateCurb-4x4",
             "plateCurb-5x5",
             "plateCurb-6x6",
+            "plateCurb-7x7",
+            "plateCurb-8x8",
+            "plateCurb-9x9",
+            "plateCurb-10x10",
             "brickCurb-2x2",
             "brickCurb-3x3",
             "brickCurb-4x4",
             "brickCurb-5x5",
-            "brickCurb-6x6"
+            "brickCurb-6x6",
+            "brickCurb-7x7",
+            "brickCurb-8x8",
+            "brickCurb-9x9",
+            "brickCurb-10x10",
         ];
         for (let i = 0; i < colors.length; i++) {
             let color = colors[i];

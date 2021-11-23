@@ -76,11 +76,19 @@ class Miniature extends Main {
 			"plateCurb-4x4",
 			"plateCurb-5x5",
 			"plateCurb-6x6",
+			"plateCurb-7x7",
+			"plateCurb-8x8",
+			"plateCurb-9x9",
+			"plateCurb-10x10",
 			"brickCurb-2x2",
 			"brickCurb-3x3",
 			"brickCurb-4x4",
 			"brickCurb-5x5",
-			"brickCurb-6x6"
+			"brickCurb-6x6",
+			"brickCurb-7x7",
+			"brickCurb-8x8",
+			"brickCurb-9x9",
+			"brickCurb-10x10",
 		];
 
 		for (let i = 0; i < bricks.length; i++) {

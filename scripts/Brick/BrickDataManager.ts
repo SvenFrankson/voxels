@@ -367,7 +367,7 @@ class BrickDataManager {
         }
 
         // PlateCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let plateCurbData = new BrickData();
             let plateCurbName = "plateCurb-" + S + "x" + S;
             
@@ -386,7 +386,7 @@ class BrickDataManager {
         }
 
         // TileCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
             
@@ -402,7 +402,7 @@ class BrickDataManager {
         }
 
         // BrickCurb
-        for (let S = 2; S <= 6; S++) {
+        for (let S = 2; S <= 10; S++) {
             let brickCurbData = new BrickData();
             let brickCurbName = "brickCurb-" + S + "x" + S;
             
