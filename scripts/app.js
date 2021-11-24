@@ -3864,6 +3864,11 @@ var KeyInput;
     KeyInput[KeyInput["ACTION_SLOT_8"] = 8] = "ACTION_SLOT_8";
     KeyInput[KeyInput["ACTION_SLOT_9"] = 9] = "ACTION_SLOT_9";
     KeyInput[KeyInput["INVENTORY"] = 10] = "INVENTORY";
+    KeyInput[KeyInput["MOVE_FORWARD"] = 11] = "MOVE_FORWARD";
+    KeyInput[KeyInput["MOVE_LEFT"] = 12] = "MOVE_LEFT";
+    KeyInput[KeyInput["MOVE_BACK"] = 13] = "MOVE_BACK";
+    KeyInput[KeyInput["MOVE_RIGHT"] = 14] = "MOVE_RIGHT";
+    KeyInput[KeyInput["JUMP"] = 15] = "JUMP";
 })(KeyInput || (KeyInput = {}));
 class InputManager {
     constructor() {
@@ -3886,6 +3891,11 @@ class InputManager {
         this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
         this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
         this.keyInputMap.set("KeyI", KeyInput.INVENTORY);
+        this.keyInputMap.set("KeyW", KeyInput.MOVE_FORWARD);
+        this.keyInputMap.set("KeyA", KeyInput.MOVE_LEFT);
+        this.keyInputMap.set("KeyS", KeyInput.MOVE_BACK);
+        this.keyInputMap.set("KeyD", KeyInput.MOVE_RIGHT);
+        this.keyInputMap.set("Space", KeyInput.JUMP);
         window.addEventListener("keydown", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
@@ -3972,6 +3982,9 @@ class InputManager {
                 listeners.splice(i, 1);
             }
         }
+    }
+    isKeyInputDown(keyInput) {
+        return this.keyInputDown.contains(keyInput);
     }
     getkeyInputActionSlotDown() {
         if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_0)) {
@@ -4091,10 +4104,6 @@ var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
     constructor() {
         super("player");
-        this._inputLeft = false;
-        this._inputRight = false;
-        this._inputBack = false;
-        this._inputForward = false;
         this.speed = 5;
         this._downSpeed = 0;
         this.areNearChunckReady = false;
@@ -4111,17 +4120,17 @@ class Player extends BABYLON.Mesh {
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
             let dt = this.getEngine().getDeltaTime() / 1000;
-            if (this._inputLeft) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+                this.position.addInPlace(forward.scale(this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
                 this.position.addInPlace(right.scale(-this.speed * dt));
             }
-            if (this._inputRight) {
-                this.position.addInPlace(right.scale(this.speed * dt));
-            }
-            if (this._inputBack) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
                 this.position.addInPlace(forward.scale(-this.speed * dt));
             }
-            if (this._inputForward) {
-                this.position.addInPlace(forward.scale(this.speed * dt));
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(this.speed * dt));
             }
             this.position.y -= this._downSpeed;
             this._downSpeed += 0.1 * dt;
@@ -4166,17 +4175,17 @@ class Player extends BABYLON.Mesh {
         this.updateBrickMode = () => {
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
-            if (this._inputLeft) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+                this.position.addInPlace(forward.scale(0.08));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
                 this.position.addInPlace(right.scale(-0.08));
             }
-            if (this._inputRight) {
-                this.position.addInPlace(right.scale(0.08));
-            }
-            if (this._inputBack) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
                 this.position.addInPlace(forward.scale(-0.08));
             }
-            if (this._inputForward) {
-                this.position.addInPlace(forward.scale(0.08));
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(0.08));
             }
             let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, -1, 0));
             let pick = Main.Scene.pickWithRay(ray, (mesh) => {
@@ -4230,39 +4239,15 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyUp(e);
                 }
             }
-            if (e.keyCode === 81) {
-                this._inputLeft = false;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = false;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = false;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = false;
-            }
-            else if (e.keyCode === 32) {
-                this._downSpeed = -0.15;
-            }
+        });
+        Main.InputManager.addMappedKeyDownListener(KeyInput.JUMP, () => {
+            this._downSpeed = -0.15;
         });
         Main.Canvas.addEventListener("keydown", (e) => {
             if (this.currentAction) {
                 if (this.currentAction.onKeyDown) {
                     this.currentAction.onKeyDown(e);
                 }
-            }
-            if (e.keyCode === 81) {
-                this._inputLeft = true;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = true;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = true;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = true;
             }
         });
         let smoothnessX = 3;

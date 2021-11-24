@@ -11,11 +11,6 @@ class Player extends BABYLON.Mesh {
 
     public inventory: Inventory;
 
-    private _inputLeft: boolean = false;
-    private _inputRight: boolean = false;
-    private _inputBack: boolean = false;
-    private _inputForward: boolean = false;
-
     public speed: number = 5;
 
     private _downSpeed: number = 0;
@@ -71,42 +66,17 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyUp(e);
                 }
             }
-            
-            if (e.keyCode === 81) {
-                this._inputLeft = false;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = false;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = false;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = false;
-            }
-            else if (e.keyCode === 32) {
-                this._downSpeed = -0.15;
-            }
         });
+
+        Main.InputManager.addMappedKeyDownListener(KeyInput.JUMP, () => {
+            this._downSpeed = - 0.15;
+        })
         
         Main.Canvas.addEventListener("keydown", (e) => {
             if (this.currentAction) {
                 if (this.currentAction.onKeyDown) {
                     this.currentAction.onKeyDown(e);
                 }
-            }
-
-            if (e.keyCode === 81) {
-                this._inputLeft = true;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = true;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = true;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = true;
             }
         });
 
@@ -206,17 +176,17 @@ class Player extends BABYLON.Mesh {
         let forward = this.getDirection(BABYLON.Axis.Z);
         let dt = this.getEngine().getDeltaTime() / 1000;
 
-        if (this._inputLeft) {
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+            this.position.addInPlace(forward.scale( this.speed * dt)); 
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
             this.position.addInPlace(right.scale(-  this.speed * dt)); 
         }
-        if (this._inputRight) {
-            this.position.addInPlace(right.scale( this.speed * dt)); 
-        }
-        if (this._inputBack) {
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
             this.position.addInPlace(forward.scale(- this.speed * dt)); 
         }
-        if (this._inputForward) {
-            this.position.addInPlace(forward.scale( this.speed * dt)); 
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+            this.position.addInPlace(right.scale( this.speed * dt)); 
         }
         this.position.y -= this._downSpeed;
         this._downSpeed += 0.1 * dt;
@@ -266,11 +236,19 @@ class Player extends BABYLON.Mesh {
     public updateBrickMode = () => {
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
-
-        if (this._inputLeft) { this.position.addInPlace(right.scale(-0.08)); }
-        if (this._inputRight) { this.position.addInPlace(right.scale(0.08)); }
-        if (this._inputBack) { this.position.addInPlace(forward.scale(-0.08)); }
-        if (this._inputForward) { this.position.addInPlace(forward.scale(0.08)); }
+        
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+            this.position.addInPlace(forward.scale(0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+            this.position.addInPlace(right.scale(- 0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+            this.position.addInPlace(forward.scale(- 0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+            this.position.addInPlace(right.scale(0.08));
+        }
         
         let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, - 1, 0));
         let pick = Main.Scene.pickWithRay(
