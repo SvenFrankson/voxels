@@ -6,6 +6,7 @@ var DX2 = DX * 2;
 var DY = 0.32;
 var DY05 = DY / 2;
 var DY2 = DY * 2;
+var DY3 = DY * 3;
 var TILE_LENGTH = TILE_SIZE * DX * 2;
 
 interface TileData {

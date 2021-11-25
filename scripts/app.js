@@ -2010,23 +2010,19 @@ class ChunckUtils {
         }
         return pickInfo;
     }
-    static WorldPositionToChuncks(world, radius = 1.74) {
-        let sqrRadius = radius * radius;
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+    static WorldPositionToChuncks(world, radius = 1) {
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let rMin = Math.floor(-radius);
         let rMax = Math.ceil(radius);
         let chuncks = [];
         for (let i = rMin; i <= rMax; i++) {
             for (let j = rMin; j <= rMax; j++) {
                 for (let k = rMin; k <= rMax; k++) {
-                    let dd = i * i + j * j + k * k;
-                    if (dd <= sqrRadius) {
-                        let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
-                        if (chunck) {
-                            chuncks.push(chunck);
-                        }
+                    let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
+                    if (chunck) {
+                        chuncks.push(chunck);
                     }
                 }
             }
@@ -2034,9 +2030,9 @@ class ChunckUtils {
         return chuncks;
     }
     static WorldPositionToChunck(world) {
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         return Main.ChunckManager.getChunck(I, J, K);
     }
     static WorldPositionToChunckBlockCoordinates_V1(world) {
@@ -2053,26 +2049,26 @@ class ChunckUtils {
         };
     }
     static WorldPositionToChunckBlockCoordinates_V2(world) {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let coordinates = world.clone();
-        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * 1.6)) / 2;
-        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * 0.96)) / 2;
-        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * 1.6)) / 2;
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * DX2)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * DY3)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * DX2)) / 2;
         return {
             chunck: Main.ChunckManager.getChunck(I, J, K),
             coordinates: coordinates
         };
     }
     static WorldPositionToChunckBrickCoordinates_V2(world) {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let coordinates = world.clone();
-        coordinates.x -= I * CHUNCK_SIZE * 1.6;
-        coordinates.y -= J * CHUNCK_SIZE * 0.96;
-        coordinates.z -= K * CHUNCK_SIZE * 1.6;
+        coordinates.x -= I * CHUNCK_SIZE * DX2;
+        coordinates.y -= J * CHUNCK_SIZE * DY3;
+        coordinates.z -= K * CHUNCK_SIZE * DX2;
         coordinates.x = Math.round(coordinates.x / 0.8);
         coordinates.y = Math.floor(coordinates.y / 0.32);
         coordinates.z = Math.round(coordinates.z / 0.8);
@@ -2160,7 +2156,7 @@ class ChunckUtils {
             if (absN.z > absN.x && absN.z > absN.y) {
                 localPickedPoint.z -= Math.sign(n.z) * DX;
             }
-            let coordinates = new BABYLON.Vector3(Math.round(localPickedPoint.x / 1.6), Math.floor(localPickedPoint.y / 0.96) + 1, Math.round(localPickedPoint.z / 1.6));
+            let coordinates = new BABYLON.Vector3(Math.round(localPickedPoint.x / DX2), Math.floor(localPickedPoint.y / DY3) + 1, Math.round(localPickedPoint.z / DX2));
             if (!behindPickedFace) {
                 if (absN.x > absN.y && absN.x > absN.z) {
                     if (n.x > 0) {
@@ -2784,6 +2780,7 @@ var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
+var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
@@ -2856,6 +2853,9 @@ class Chunck_V2 extends Chunck {
         this._barycenter.x += CHUNCK_SIZE * 1.6 * 0.5;
         this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
         this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
+        if (ACTIVE_DEBUG_SPLIT_CHUNCKS) {
+            this.scaling.copyFromFloats(0.995, 0.995, 0.995);
+        }
         this.material = Main.terrainCellShadingMaterial;
         if (GENERATE_TERRAIN_KNOBS) {
             this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
@@ -4135,7 +4135,7 @@ class Player extends BABYLON.Mesh {
             this.position.y -= this._downSpeed;
             this._downSpeed += 0.1 * dt;
             this._downSpeed *= 0.99;
-            Main.ChunckManager.foreachChunck((chunck) => {
+            ChunckUtils.WorldPositionToChuncks(this.position).forEach((chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
                 if (intersections) {
                     for (let j = 0; j < intersections.length; j++) {
@@ -7183,6 +7183,7 @@ var DX2 = DX * 2;
 var DY = 0.32;
 var DY05 = DY / 2;
 var DY2 = DY * 2;
+var DY3 = DY * 3;
 var TILE_LENGTH = TILE_SIZE * DX * 2;
 class Tile extends BABYLON.Mesh {
     constructor(i, j) {
