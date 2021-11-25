@@ -192,7 +192,7 @@ class Player extends BABYLON.Mesh {
         this._downSpeed += 0.1 * dt;
         this._downSpeed *= 0.99;
         
-        Main.ChunckManager.foreachChunck(
+        ChunckUtils.WorldPositionToChuncks(this.position).forEach(
             (chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
                 if (intersections) {
