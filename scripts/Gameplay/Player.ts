@@ -145,6 +145,7 @@ class Player extends BABYLON.Mesh {
 
     public async takeBrick(): Promise<boolean> {
         let brick = await this.storeBrick();
+        let r = brick.r;
         if (brick) {
             this.currentAction = await PlayerActionTemplate.CreateBrickAction(
                 brick.reference,
@@ -155,6 +156,7 @@ class Player extends BABYLON.Mesh {
                     this.currentAction = undefined;
                 }
             );
+            this.currentAction.r = brick.r;
             return true;
         }
         return false;

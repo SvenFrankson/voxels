@@ -4,6 +4,7 @@ interface IPlayerActionManagerData {
 
 class PlayerAction {
     public iconUrl: string;
+    public r: number = 0;
 
     public onUpdate: () => void;
     public onClick: () => void;
