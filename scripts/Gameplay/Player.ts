@@ -12,8 +12,14 @@ class Player extends BABYLON.Mesh {
     public inventory: Inventory;
 
     public speed: number = 5;
+    public camSpeed: number = 20;
 
-    private _downSpeed: number = 0;
+    public camXTargetVelocity: number = 0;
+    public camYTargetVelocity: number = 0;
+    public camXVelocity: number = 0;
+    public camYVelocity: number = 0;
+
+    private _downVelocity: number = 0;
 
     public playerActionManager: PlayerActionManager;
     public currentAction: PlayerAction;
@@ -69,7 +75,7 @@ class Player extends BABYLON.Mesh {
         });
 
         Main.InputManager.addMappedKeyDownListener(KeyInput.JUMP, () => {
-            this._downSpeed = - 0.15;
+            this._downVelocity = - 0.15;
         })
         
         Main.Canvas.addEventListener("keydown", (e) => {
@@ -80,20 +86,10 @@ class Player extends BABYLON.Mesh {
             }
         });
 
-        let smoothnessX: number = 3;
-        let smoothnessXFactor: number = 1 / smoothnessX;
-        let smoothnessY: number = 3;
-        let smoothnessYFactor: number = 1 / smoothnessY;
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                let newRY = this.rotation.y + e.movementX / 200;
-                this.rotation.y = this.rotation.y * (1 - smoothnessYFactor) + newRY * smoothnessYFactor;
-                if (Main.Camera instanceof BABYLON.FreeCamera) {
-                    let newRX = Math.min(Math.max(
-                        Main.Camera.rotation.x + e.movementY / 200, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60
-                    )
-                    Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - smoothnessXFactor) + newRX * smoothnessXFactor;
-                }
+                this.camYTargetVelocity += e.movementX / 200;
+                this.camXTargetVelocity += e.movementY / 200;
             }
         });
 
@@ -190,9 +186,26 @@ class Player extends BABYLON.Mesh {
         if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
             this.position.addInPlace(right.scale( this.speed * dt)); 
         }
-        this.position.y -= this._downSpeed;
-        this._downSpeed += 0.1 * dt;
-        this._downSpeed *= 0.99;
+        this.position.y -= this._downVelocity;
+        this._downVelocity += 0.1 * dt;
+        this._downVelocity *= 0.99;
+
+        this.rotation.y += this.camYVelocity * this.camSpeed * dt;
+        let dx = (this.camXTargetVelocity - this.camXVelocity) * this.camSpeed * dt;
+        this.camXVelocity += dx;
+        this.camXTargetVelocity -= dx;
+        
+        let dy = (this.camYTargetVelocity - this.camYVelocity) * this.camSpeed * dt;
+        this.camYVelocity += dy;
+        this.camYTargetVelocity -= dy;
+
+        if (Main.Camera instanceof BABYLON.FreeCamera) {
+            Main.Camera.rotation.x += this.camXVelocity * this.camSpeed * dt;
+            Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60);
+        }
+        this.camYVelocity -= this.camYVelocity * this.camSpeed * dt;
+        this.camXVelocity -= this.camXVelocity * this.camSpeed * dt;
+        
         
         ChunckUtils.WorldPositionToChuncks(this.position).forEach(
             (chunck) => {
@@ -203,7 +216,7 @@ class Player extends BABYLON.Mesh {
                         let l = d.length();
                         d.normalize();
                         if (d.y > 0.8) {
-                            this._downSpeed = 0.0;
+                            this._downVelocity = 0.0;
                         }
                         d.scaleInPlace((0.5 - l) * 0.5);
                         this.position.addInPlace(d);
