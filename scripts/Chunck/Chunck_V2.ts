@@ -7,6 +7,7 @@ var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
+var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 
 class Chunck_V2 extends Chunck {
 
@@ -41,6 +42,10 @@ class Chunck_V2 extends Chunck {
         this._barycenter.x += CHUNCK_SIZE * 1.6 * 0.5;
         this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
         this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
+
+        if (ACTIVE_DEBUG_SPLIT_CHUNCKS) {
+            this.scaling.copyFromFloats(0.995, 0.995, 0.995);
+        }
 
         this.material = Main.terrainCellShadingMaterial;
 

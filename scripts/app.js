@@ -2010,23 +2010,19 @@ class ChunckUtils {
         }
         return pickInfo;
     }
-    static WorldPositionToChuncks(world, radius = 1.74) {
-        let sqrRadius = radius * radius;
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+    static WorldPositionToChuncks(world, radius = 1) {
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let rMin = Math.floor(-radius);
         let rMax = Math.ceil(radius);
         let chuncks = [];
         for (let i = rMin; i <= rMax; i++) {
             for (let j = rMin; j <= rMax; j++) {
                 for (let k = rMin; k <= rMax; k++) {
-                    let dd = i * i + j * j + k * k;
-                    if (dd <= sqrRadius) {
-                        let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
-                        if (chunck) {
-                            chuncks.push(chunck);
-                        }
+                    let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
+                    if (chunck) {
+                        chuncks.push(chunck);
                     }
                 }
             }
@@ -2034,9 +2030,9 @@ class ChunckUtils {
         return chuncks;
     }
     static WorldPositionToChunck(world) {
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         return Main.ChunckManager.getChunck(I, J, K);
     }
     static WorldPositionToChunckBlockCoordinates_V1(world) {
@@ -2053,26 +2049,26 @@ class ChunckUtils {
         };
     }
     static WorldPositionToChunckBlockCoordinates_V2(world) {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let coordinates = world.clone();
-        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * 1.6)) / 2;
-        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * 0.96)) / 2;
-        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * 1.6)) / 2;
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * DX2)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * DY3)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * DX2)) / 2;
         return {
             chunck: Main.ChunckManager.getChunck(I, J, K),
             coordinates: coordinates
         };
     }
     static WorldPositionToChunckBrickCoordinates_V2(world) {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
         let coordinates = world.clone();
-        coordinates.x -= I * CHUNCK_SIZE * 1.6;
-        coordinates.y -= J * CHUNCK_SIZE * 0.96;
-        coordinates.z -= K * CHUNCK_SIZE * 1.6;
+        coordinates.x -= I * CHUNCK_SIZE * DX2;
+        coordinates.y -= J * CHUNCK_SIZE * DY3;
+        coordinates.z -= K * CHUNCK_SIZE * DX2;
         coordinates.x = Math.round(coordinates.x / 0.8);
         coordinates.y = Math.floor(coordinates.y / 0.32);
         coordinates.z = Math.round(coordinates.z / 0.8);
@@ -2160,7 +2156,7 @@ class ChunckUtils {
             if (absN.z > absN.x && absN.z > absN.y) {
                 localPickedPoint.z -= Math.sign(n.z) * DX;
             }
-            let coordinates = new BABYLON.Vector3(Math.round(localPickedPoint.x / 1.6), Math.floor(localPickedPoint.y / 0.96) + 1, Math.round(localPickedPoint.z / 1.6));
+            let coordinates = new BABYLON.Vector3(Math.round(localPickedPoint.x / DX2), Math.floor(localPickedPoint.y / DY3) + 1, Math.round(localPickedPoint.z / DX2));
             if (!behindPickedFace) {
                 if (absN.x > absN.y && absN.x > absN.z) {
                     if (n.x > 0) {
@@ -2784,6 +2780,7 @@ var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
+var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
@@ -2856,6 +2853,9 @@ class Chunck_V2 extends Chunck {
         this._barycenter.x += CHUNCK_SIZE * 1.6 * 0.5;
         this._barycenter.y += CHUNCK_SIZE * 0.96 * 0.5;
         this._barycenter.z += CHUNCK_SIZE * 1.6 * 0.5;
+        if (ACTIVE_DEBUG_SPLIT_CHUNCKS) {
+            this.scaling.copyFromFloats(0.995, 0.995, 0.995);
+        }
         this.material = Main.terrainCellShadingMaterial;
         if (GENERATE_TERRAIN_KNOBS) {
             this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
@@ -3864,6 +3864,11 @@ var KeyInput;
     KeyInput[KeyInput["ACTION_SLOT_8"] = 8] = "ACTION_SLOT_8";
     KeyInput[KeyInput["ACTION_SLOT_9"] = 9] = "ACTION_SLOT_9";
     KeyInput[KeyInput["INVENTORY"] = 10] = "INVENTORY";
+    KeyInput[KeyInput["MOVE_FORWARD"] = 11] = "MOVE_FORWARD";
+    KeyInput[KeyInput["MOVE_LEFT"] = 12] = "MOVE_LEFT";
+    KeyInput[KeyInput["MOVE_BACK"] = 13] = "MOVE_BACK";
+    KeyInput[KeyInput["MOVE_RIGHT"] = 14] = "MOVE_RIGHT";
+    KeyInput[KeyInput["JUMP"] = 15] = "JUMP";
 })(KeyInput || (KeyInput = {}));
 class InputManager {
     constructor() {
@@ -3886,6 +3891,11 @@ class InputManager {
         this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
         this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
         this.keyInputMap.set("KeyI", KeyInput.INVENTORY);
+        this.keyInputMap.set("KeyW", KeyInput.MOVE_FORWARD);
+        this.keyInputMap.set("KeyA", KeyInput.MOVE_LEFT);
+        this.keyInputMap.set("KeyS", KeyInput.MOVE_BACK);
+        this.keyInputMap.set("KeyD", KeyInput.MOVE_RIGHT);
+        this.keyInputMap.set("Space", KeyInput.JUMP);
         window.addEventListener("keydown", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
             if (isFinite(keyInput)) {
@@ -3972,6 +3982,9 @@ class InputManager {
                 listeners.splice(i, 1);
             }
         }
+    }
+    isKeyInputDown(keyInput) {
+        return this.keyInputDown.contains(keyInput);
     }
     getkeyInputActionSlotDown() {
         if (this.keyInputDown.contains(KeyInput.ACTION_SLOT_0)) {
@@ -4091,12 +4104,13 @@ var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
     constructor() {
         super("player");
-        this._inputLeft = false;
-        this._inputRight = false;
-        this._inputBack = false;
-        this._inputForward = false;
         this.speed = 5;
-        this._downSpeed = 0;
+        this.camSpeed = 20;
+        this.camXTargetVelocity = 0;
+        this.camYTargetVelocity = 0;
+        this.camXVelocity = 0;
+        this.camYVelocity = 0;
+        this._downVelocity = 0;
         this.areNearChunckReady = false;
         this.update = () => {
             this.checkPause();
@@ -4111,22 +4125,35 @@ class Player extends BABYLON.Mesh {
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
             let dt = this.getEngine().getDeltaTime() / 1000;
-            if (this._inputLeft) {
-                this.position.addInPlace(right.scale(-this.speed * dt));
-            }
-            if (this._inputRight) {
-                this.position.addInPlace(right.scale(this.speed * dt));
-            }
-            if (this._inputBack) {
-                this.position.addInPlace(forward.scale(-this.speed * dt));
-            }
-            if (this._inputForward) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
                 this.position.addInPlace(forward.scale(this.speed * dt));
             }
-            this.position.y -= this._downSpeed;
-            this._downSpeed += 0.1 * dt;
-            this._downSpeed *= 0.99;
-            Main.ChunckManager.foreachChunck((chunck) => {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+                this.position.addInPlace(right.scale(-this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+                this.position.addInPlace(forward.scale(-this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(this.speed * dt));
+            }
+            this.position.y -= this._downVelocity;
+            this._downVelocity += 0.1 * dt;
+            this._downVelocity *= 0.99;
+            this.rotation.y += this.camYVelocity * this.camSpeed * dt;
+            let dx = (this.camXTargetVelocity - this.camXVelocity) * this.camSpeed * dt;
+            this.camXVelocity += dx;
+            this.camXTargetVelocity -= dx;
+            let dy = (this.camYTargetVelocity - this.camYVelocity) * this.camSpeed * dt;
+            this.camYVelocity += dy;
+            this.camYTargetVelocity -= dy;
+            if (Main.Camera instanceof BABYLON.FreeCamera) {
+                Main.Camera.rotation.x += this.camXVelocity * this.camSpeed * dt;
+                Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+            }
+            this.camYVelocity -= this.camYVelocity * this.camSpeed * dt;
+            this.camXVelocity -= this.camXVelocity * this.camSpeed * dt;
+            ChunckUtils.WorldPositionToChuncks(this.position).forEach((chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
                 if (intersections) {
                     for (let j = 0; j < intersections.length; j++) {
@@ -4134,7 +4161,7 @@ class Player extends BABYLON.Mesh {
                         let l = d.length();
                         d.normalize();
                         if (d.y > 0.8) {
-                            this._downSpeed = 0.0;
+                            this._downVelocity = 0.0;
                         }
                         d.scaleInPlace((0.5 - l) * 0.5);
                         this.position.addInPlace(d);
@@ -4166,17 +4193,17 @@ class Player extends BABYLON.Mesh {
         this.updateBrickMode = () => {
             let right = this.getDirection(BABYLON.Axis.X);
             let forward = this.getDirection(BABYLON.Axis.Z);
-            if (this._inputLeft) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+                this.position.addInPlace(forward.scale(0.08));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
                 this.position.addInPlace(right.scale(-0.08));
             }
-            if (this._inputRight) {
-                this.position.addInPlace(right.scale(0.08));
-            }
-            if (this._inputBack) {
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
                 this.position.addInPlace(forward.scale(-0.08));
             }
-            if (this._inputForward) {
-                this.position.addInPlace(forward.scale(0.08));
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(0.08));
             }
             let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, -1, 0));
             let pick = Main.Scene.pickWithRay(ray, (mesh) => {
@@ -4230,21 +4257,9 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyUp(e);
                 }
             }
-            if (e.keyCode === 81) {
-                this._inputLeft = false;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = false;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = false;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = false;
-            }
-            else if (e.keyCode === 32) {
-                this._downSpeed = -0.15;
-            }
+        });
+        Main.InputManager.addMappedKeyDownListener(KeyInput.JUMP, () => {
+            this._downVelocity = -0.15;
         });
         Main.Canvas.addEventListener("keydown", (e) => {
             if (this.currentAction) {
@@ -4252,31 +4267,11 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyDown(e);
                 }
             }
-            if (e.keyCode === 81) {
-                this._inputLeft = true;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = true;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = true;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = true;
-            }
         });
-        let smoothnessX = 3;
-        let smoothnessXFactor = 1 / smoothnessX;
-        let smoothnessY = 3;
-        let smoothnessYFactor = 1 / smoothnessY;
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                let newRY = this.rotation.y + e.movementX / 200;
-                this.rotation.y = this.rotation.y * (1 - smoothnessYFactor) + newRY * smoothnessYFactor;
-                if (Main.Camera instanceof BABYLON.FreeCamera) {
-                    let newRX = Math.min(Math.max(Main.Camera.rotation.x + e.movementY / 200, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
-                    Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - smoothnessXFactor) + newRX * smoothnessXFactor;
-                }
+                this.camYTargetVelocity += e.movementX / 200;
+                this.camXTargetVelocity += e.movementY / 200;
             }
         });
         Main.Canvas.addEventListener("pointerup", (e) => {
@@ -4322,6 +4317,7 @@ class Player extends BABYLON.Mesh {
     }
     async takeBrick() {
         let brick = await this.storeBrick();
+        let r = brick.r;
         if (brick) {
             this.currentAction = await PlayerActionTemplate.CreateBrickAction(brick.reference, () => {
                 if (this.currentAction.onUnequip) {
@@ -4329,6 +4325,7 @@ class Player extends BABYLON.Mesh {
                 }
                 this.currentAction = undefined;
             });
+            this.currentAction.r = brick.r;
             return true;
         }
         return false;
@@ -4601,7 +4598,6 @@ class PlayerActionTemplate {
         let previewMesh;
         let previewMeshOffset = BABYLON.Vector3.Zero();
         let debugText;
-        let r = 0;
         let ctrlDown = false;
         let anchorX = 0;
         let anchorZ = 0;
@@ -4614,8 +4610,8 @@ class PlayerActionTemplate {
         };
         action.onKeyUp = (e) => {
             if (e.code === "KeyR") {
-                r = (r + 1) % 4;
-                previewMesh.rotation.y = Math.PI / 2 * r;
+                action.r = (action.r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * action.r;
                 let az = anchorZ;
                 anchorZ = -anchorX;
                 anchorX = az;
@@ -4634,19 +4630,19 @@ class PlayerActionTemplate {
             else {
                 anchorZ += Math.sign(forward.z) * Math.sign(e.deltaY);
             }
-            if (r === 0) {
+            if (action.r === 0) {
                 anchorX = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorX));
                 anchorZ = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorZ));
             }
-            else if (r === 1) {
+            else if (action.r === 1) {
                 anchorX = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorX));
                 anchorZ = Math.max(-data.maxBlockX, Math.min(-data.minBlockX, anchorZ));
             }
-            else if (r === 2) {
+            else if (action.r === 2) {
                 anchorX = Math.max(-data.maxBlockX, Math.min(-data.minBlockX, anchorX));
                 anchorZ = Math.max(-data.maxBlockZ, Math.min(-data.minBlockZ, anchorZ));
             }
-            else if (r === 3) {
+            else if (action.r === 3) {
                 anchorX = Math.max(-data.maxBlockZ, Math.min(-data.minBlockZ, anchorX));
                 anchorZ = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorZ));
             }
@@ -4675,7 +4671,7 @@ class PlayerActionTemplate {
                     let j = coordinates.coordinates.y;
                     let k = coordinates.coordinates.z - anchorZ;
                     if (coordinates.chunck instanceof Chunck_V2) {
-                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, r)) {
+                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
                             PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
                         }
                         else {
@@ -4697,7 +4693,7 @@ class PlayerActionTemplate {
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
                         previewMesh.position.addInPlace(previewMeshOffset);
-                        previewMesh.rotation.y = Math.PI / 2 * r;
+                        previewMesh.rotation.y = Math.PI / 2 * action.r;
                     }
                 }
                 else {
@@ -4718,7 +4714,7 @@ class PlayerActionTemplate {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
                 let text = "";
-                text += "r = " + r + "<br>";
+                text += "r = " + action.r + "<br>";
                 text += "anchorX = " + anchorX + "<br>";
                 text += "anchorZ = " + anchorZ + "<br>";
                 debugText.setText(text);
@@ -4746,7 +4742,7 @@ class PlayerActionTemplate {
                     brick.i = coordinates.coordinates.x - anchorX;
                     brick.j = coordinates.coordinates.y;
                     brick.k = coordinates.coordinates.z - anchorZ;
-                    brick.r = r;
+                    brick.r = action.r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
                         console.log("bravo");
                         if (await coordinates.chunck.addBrickSafe(brick)) {
@@ -4826,6 +4822,7 @@ class PlayerActionTemplate {
 class PlayerAction {
     constructor(name) {
         this.name = name;
+        this.r = 0;
     }
 }
 class PlayerActionManager {
@@ -7214,6 +7211,7 @@ var DX2 = DX * 2;
 var DY = 0.32;
 var DY05 = DY / 2;
 var DY2 = DY * 2;
+var DY3 = DY * 3;
 var TILE_LENGTH = TILE_SIZE * DX * 2;
 class Tile extends BABYLON.Mesh {
     constructor(i, j) {

@@ -296,7 +296,6 @@ class PlayerActionTemplate {
         let previewMeshOffset: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
         let debugText: DebugText3D;
-        let r = 0;
         let ctrlDown = false;
         let anchorX = 0;
         let anchorZ = 0;
@@ -313,8 +312,8 @@ class PlayerActionTemplate {
 
         action.onKeyUp = (e: KeyboardEvent) => {
             if (e.code === "KeyR") {
-                r = (r + 1) % 4;
-                previewMesh.rotation.y = Math.PI / 2 * r;
+                action.r = (action.r + 1) % 4;
+                previewMesh.rotation.y = Math.PI / 2 * action.r;
                 let az = anchorZ;
                 anchorZ = - anchorX;
                 anchorX = az;
@@ -336,19 +335,19 @@ class PlayerActionTemplate {
             else {
                 anchorZ += Math.sign(forward.z) * Math.sign(e.deltaY);
             }
-            if (r === 0) {
+            if (action.r === 0) {
                 anchorX = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorX));
                 anchorZ = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorZ));
             }
-            else if (r === 1) {
+            else if (action.r === 1) {
                 anchorX = Math.min(data.maxBlockZ, Math.max(data.minBlockZ, anchorX));
                 anchorZ = Math.max(- data.maxBlockX, Math.min(- data.minBlockX, anchorZ));
             }
-            else if (r === 2) {
+            else if (action.r === 2) {
                 anchorX = Math.max(- data.maxBlockX, Math.min(- data.minBlockX, anchorX));
                 anchorZ = Math.max(- data.maxBlockZ, Math.min(- data.minBlockZ, anchorZ));
             }
-            else if (r === 3) {
+            else if (action.r === 3) {
                 anchorX = Math.max(- data.maxBlockZ, Math.min(- data.minBlockZ, anchorX));
                 anchorZ = Math.min(data.maxBlockX, Math.max(data.minBlockX, anchorZ));
             }
@@ -379,7 +378,7 @@ class PlayerActionTemplate {
                     let j = coordinates.coordinates.y;
                     let k = coordinates.coordinates.z - anchorZ;
                     if (coordinates.chunck instanceof Chunck_V2) {
-                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, r)) {
+                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
                             PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
                         }
                         else {
@@ -403,7 +402,7 @@ class PlayerActionTemplate {
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
                         previewMesh.position.addInPlace(previewMeshOffset);
-                        previewMesh.rotation.y = Math.PI / 2 * r;
+                        previewMesh.rotation.y = Math.PI / 2 * action.r;
                     }
                 }
                 else {
@@ -425,7 +424,7 @@ class PlayerActionTemplate {
                     debugText = DebugText3D.CreateText("", previewMesh.position);
                 }
                 let text = "";
-                text += "r = " + r + "<br>";
+                text += "r = " + action.r + "<br>";
                 text += "anchorX = " + anchorX + "<br>";
                 text += "anchorZ = " + anchorZ + "<br>";
                 debugText.setText(text);
@@ -454,7 +453,7 @@ class PlayerActionTemplate {
                     brick.i = coordinates.coordinates.x - anchorX;
                     brick.j = coordinates.coordinates.y;
                     brick.k = coordinates.coordinates.z - anchorZ;
-                    brick.r = r;
+                    brick.r = action.r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
                         console.log("bravo");
                         if (await coordinates.chunck.addBrickSafe(brick)) {

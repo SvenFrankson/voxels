@@ -11,14 +11,15 @@ class Player extends BABYLON.Mesh {
 
     public inventory: Inventory;
 
-    private _inputLeft: boolean = false;
-    private _inputRight: boolean = false;
-    private _inputBack: boolean = false;
-    private _inputForward: boolean = false;
-
     public speed: number = 5;
+    public camSpeed: number = 20;
 
-    private _downSpeed: number = 0;
+    public camXTargetVelocity: number = 0;
+    public camYTargetVelocity: number = 0;
+    public camXVelocity: number = 0;
+    public camYVelocity: number = 0;
+
+    private _downVelocity: number = 0;
 
     public playerActionManager: PlayerActionManager;
     public currentAction: PlayerAction;
@@ -71,23 +72,11 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyUp(e);
                 }
             }
-            
-            if (e.keyCode === 81) {
-                this._inputLeft = false;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = false;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = false;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = false;
-            }
-            else if (e.keyCode === 32) {
-                this._downSpeed = -0.15;
-            }
         });
+
+        Main.InputManager.addMappedKeyDownListener(KeyInput.JUMP, () => {
+            this._downVelocity = - 0.15;
+        })
         
         Main.Canvas.addEventListener("keydown", (e) => {
             if (this.currentAction) {
@@ -95,35 +84,12 @@ class Player extends BABYLON.Mesh {
                     this.currentAction.onKeyDown(e);
                 }
             }
-
-            if (e.keyCode === 81) {
-                this._inputLeft = true;
-            }
-            else if (e.keyCode === 68) {
-                this._inputRight = true;
-            }
-            else if (e.keyCode === 83) {
-                this._inputBack = true;
-            }
-            else if (e.keyCode === 90) {
-                this._inputForward = true;
-            }
         });
 
-        let smoothnessX: number = 3;
-        let smoothnessXFactor: number = 1 / smoothnessX;
-        let smoothnessY: number = 3;
-        let smoothnessYFactor: number = 1 / smoothnessY;
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                let newRY = this.rotation.y + e.movementX / 200;
-                this.rotation.y = this.rotation.y * (1 - smoothnessYFactor) + newRY * smoothnessYFactor;
-                if (Main.Camera instanceof BABYLON.FreeCamera) {
-                    let newRX = Math.min(Math.max(
-                        Main.Camera.rotation.x + e.movementY / 200, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60
-                    )
-                    Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - smoothnessXFactor) + newRX * smoothnessXFactor;
-                }
+                this.camYTargetVelocity += e.movementX / 200;
+                this.camXTargetVelocity += e.movementY / 200;
             }
         });
 
@@ -175,6 +141,7 @@ class Player extends BABYLON.Mesh {
 
     public async takeBrick(): Promise<boolean> {
         let brick = await this.storeBrick();
+        let r = brick.r;
         if (brick) {
             this.currentAction = await PlayerActionTemplate.CreateBrickAction(
                 brick.reference,
@@ -185,6 +152,7 @@ class Player extends BABYLON.Mesh {
                     this.currentAction = undefined;
                 }
             );
+            this.currentAction.r = brick.r;
             return true;
         }
         return false;
@@ -206,23 +174,40 @@ class Player extends BABYLON.Mesh {
         let forward = this.getDirection(BABYLON.Axis.Z);
         let dt = this.getEngine().getDeltaTime() / 1000;
 
-        if (this._inputLeft) {
-            this.position.addInPlace(right.scale(-  this.speed * dt)); 
-        }
-        if (this._inputRight) {
-            this.position.addInPlace(right.scale( this.speed * dt)); 
-        }
-        if (this._inputBack) {
-            this.position.addInPlace(forward.scale(- this.speed * dt)); 
-        }
-        if (this._inputForward) {
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
             this.position.addInPlace(forward.scale( this.speed * dt)); 
         }
-        this.position.y -= this._downSpeed;
-        this._downSpeed += 0.1 * dt;
-        this._downSpeed *= 0.99;
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+            this.position.addInPlace(right.scale(-  this.speed * dt)); 
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+            this.position.addInPlace(forward.scale(- this.speed * dt)); 
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+            this.position.addInPlace(right.scale( this.speed * dt)); 
+        }
+        this.position.y -= this._downVelocity;
+        this._downVelocity += 0.1 * dt;
+        this._downVelocity *= 0.99;
+
+        this.rotation.y += this.camYVelocity * this.camSpeed * dt;
+        let dx = (this.camXTargetVelocity - this.camXVelocity) * this.camSpeed * dt;
+        this.camXVelocity += dx;
+        this.camXTargetVelocity -= dx;
         
-        Main.ChunckManager.foreachChunck(
+        let dy = (this.camYTargetVelocity - this.camYVelocity) * this.camSpeed * dt;
+        this.camYVelocity += dy;
+        this.camYTargetVelocity -= dy;
+
+        if (Main.Camera instanceof BABYLON.FreeCamera) {
+            Main.Camera.rotation.x += this.camXVelocity * this.camSpeed * dt;
+            Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60);
+        }
+        this.camYVelocity -= this.camYVelocity * this.camSpeed * dt;
+        this.camXVelocity -= this.camXVelocity * this.camSpeed * dt;
+        
+        
+        ChunckUtils.WorldPositionToChuncks(this.position).forEach(
             (chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
                 if (intersections) {
@@ -231,7 +216,7 @@ class Player extends BABYLON.Mesh {
                         let l = d.length();
                         d.normalize();
                         if (d.y > 0.8) {
-                            this._downSpeed = 0.0;
+                            this._downVelocity = 0.0;
                         }
                         d.scaleInPlace((0.5 - l) * 0.5);
                         this.position.addInPlace(d);
@@ -266,11 +251,19 @@ class Player extends BABYLON.Mesh {
     public updateBrickMode = () => {
         let right = this.getDirection(BABYLON.Axis.X);
         let forward = this.getDirection(BABYLON.Axis.Z);
-
-        if (this._inputLeft) { this.position.addInPlace(right.scale(-0.08)); }
-        if (this._inputRight) { this.position.addInPlace(right.scale(0.08)); }
-        if (this._inputBack) { this.position.addInPlace(forward.scale(-0.08)); }
-        if (this._inputForward) { this.position.addInPlace(forward.scale(0.08)); }
+        
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+            this.position.addInPlace(forward.scale(0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+            this.position.addInPlace(right.scale(- 0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+            this.position.addInPlace(forward.scale(- 0.08));
+        }
+        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+            this.position.addInPlace(right.scale(0.08));
+        }
         
         let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, - 1, 0));
         let pick = Main.Scene.pickWithRay(

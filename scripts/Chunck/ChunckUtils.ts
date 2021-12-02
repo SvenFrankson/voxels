@@ -56,12 +56,10 @@ class ChunckUtils {
         return pickInfo;
     }
 
-    public static WorldPositionToChuncks(world: BABYLON.Vector3, radius: number = 1.74): Chunck[] {
-        let sqrRadius = radius * radius;
-        
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+    public static WorldPositionToChuncks(world: BABYLON.Vector3, radius: number = 1): Chunck[] {
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
 
         let rMin = Math.floor(- radius);
         let rMax = Math.ceil(radius);
@@ -71,12 +69,9 @@ class ChunckUtils {
         for (let i = rMin; i <= rMax; i++) {
             for (let j = rMin; j <= rMax; j++) {
                 for (let k = rMin; k <= rMax; k++) {
-                    let dd = i * i + j * j + k * k;
-                    if (dd <= sqrRadius) {
-                        let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
-                        if (chunck) {
-                            chuncks.push(chunck);
-                        }
+                    let chunck = Main.ChunckManager.getChunck(I + i, J + j, K + k);
+                    if (chunck) {
+                        chuncks.push(chunck);
                     }
                 }
             }
@@ -86,9 +81,9 @@ class ChunckUtils {
     }
 
     public static WorldPositionToChunck(world: BABYLON.Vector3): Chunck {
-        let I = Math.floor(world.x / CHUNCK_SIZE);
-        let J = Math.floor(world.y / CHUNCK_SIZE);
-        let K = Math.floor(world.z / CHUNCK_SIZE);
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
 
         return Main.ChunckManager.getChunck(I, J, K);
     }
@@ -110,14 +105,14 @@ class ChunckUtils {
     }
 
     public static WorldPositionToChunckBlockCoordinates_V2(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
 
         let coordinates = world.clone();
-        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * 1.6)) / 2;
-        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * 0.96)) / 2;
-        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * 1.6)) / 2;
+        coordinates.x = Math.floor(2 * (coordinates.x - I * CHUNCK_SIZE * DX2)) / 2;
+        coordinates.y = Math.floor(2 * (coordinates.y - J * CHUNCK_SIZE * DY3)) / 2;
+        coordinates.z = Math.floor(2 * (coordinates.z - K * CHUNCK_SIZE * DX2)) / 2;
         
         return {
             chunck: Main.ChunckManager.getChunck(I, J, K),
@@ -126,14 +121,14 @@ class ChunckUtils {
     }
 
     public static WorldPositionToChunckBrickCoordinates_V2(world: BABYLON.Vector3): { chunck: Chunck, coordinates: BABYLON.Vector3 } {
-        let I = Math.floor(world.x / (CHUNCK_SIZE * 1.6));
-        let J = Math.floor(world.y / (CHUNCK_SIZE * 0.96));
-        let K = Math.floor(world.z / (CHUNCK_SIZE * 1.6));
+        let I = Math.floor(world.x / (CHUNCK_SIZE * DX2));
+        let J = Math.floor(world.y / (CHUNCK_SIZE * DY3));
+        let K = Math.floor(world.z / (CHUNCK_SIZE * DX2));
 
         let coordinates = world.clone();
-        coordinates.x -= I * CHUNCK_SIZE * 1.6;
-        coordinates.y -= J * CHUNCK_SIZE * 0.96;
-        coordinates.z -= K * CHUNCK_SIZE * 1.6;
+        coordinates.x -= I * CHUNCK_SIZE * DX2;
+        coordinates.y -= J * CHUNCK_SIZE * DY3;
+        coordinates.z -= K * CHUNCK_SIZE * DX2;
 
         coordinates.x = Math.round(coordinates.x / 0.8);
         coordinates.y = Math.floor(coordinates.y / 0.32);
@@ -250,9 +245,9 @@ class ChunckUtils {
                 localPickedPoint.z -= Math.sign(n.z) * DX;
             }
             let coordinates = new BABYLON.Vector3(
-                Math.round(localPickedPoint.x / 1.6),
-                Math.floor(localPickedPoint.y / 0.96) + 1,
-                Math.round(localPickedPoint.z / 1.6)
+                Math.round(localPickedPoint.x / DX2),
+                Math.floor(localPickedPoint.y / DY3) + 1,
+                Math.round(localPickedPoint.z / DX2)
             );
             if (!behindPickedFace) {
                 if (absN.x > absN.y && absN.x > absN.z) {

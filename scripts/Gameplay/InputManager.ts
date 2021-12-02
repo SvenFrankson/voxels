@@ -11,6 +11,11 @@ enum KeyInput {
     ACTION_SLOT_8,
     ACTION_SLOT_9,
     INVENTORY,
+    MOVE_FORWARD,
+    MOVE_LEFT,
+    MOVE_BACK,
+    MOVE_RIGHT,
+    JUMP
 }
 
 class InputManager {
@@ -37,6 +42,11 @@ class InputManager {
         this.keyInputMap.set("Digit8", KeyInput.ACTION_SLOT_8);
         this.keyInputMap.set("Digit9", KeyInput.ACTION_SLOT_9);
         this.keyInputMap.set("KeyI", KeyInput.INVENTORY);
+        this.keyInputMap.set("KeyW", KeyInput.MOVE_FORWARD);
+        this.keyInputMap.set("KeyA", KeyInput.MOVE_LEFT);
+        this.keyInputMap.set("KeyS", KeyInput.MOVE_BACK);
+        this.keyInputMap.set("KeyD", KeyInput.MOVE_RIGHT);
+        this.keyInputMap.set("Space", KeyInput.JUMP);
 
         window.addEventListener("keydown", (e) => {
             let keyInput = this.keyInputMap.get(e.code);
@@ -132,6 +142,10 @@ class InputManager {
                 listeners.splice(i, 1);
             }
         }
+    }
+
+    public isKeyInputDown(keyInput: KeyInput): boolean {
+        return this.keyInputDown.contains(keyInput);
     }
 
     public getkeyInputActionSlotDown(): KeyInput {
