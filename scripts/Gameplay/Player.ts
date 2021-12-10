@@ -12,10 +12,11 @@ class Player extends BABYLON.Mesh {
     public inventory: Inventory;
 
     public speed: number = 5;
-    public camSpeed: number = 20;
 
-    public camXTargetVelocity: number = 0;
-    public camYTargetVelocity: number = 0;
+    public camVario: number = 1.3;
+    public camSensitivity: number = 10;
+    public camMaxSpeed: number = 2 * Math.PI * 2;
+    
     public camXVelocity: number = 0;
     public camYVelocity: number = 0;
 
@@ -88,8 +89,19 @@ class Player extends BABYLON.Mesh {
 
         Main.Canvas.addEventListener("pointermove", (e) => {
             if (document.pointerLockElement) {
-                this.camYTargetVelocity += e.movementX / 200;
-                this.camXTargetVelocity += e.movementY / 200;
+                let s = Math.min(Main.Canvas.clientWidth, Main.Canvas.clientHeight) * 0.5;
+
+                let dY = MMath.Clamp(e.movementY / s, -1, 1);
+                dY = Math.sign(dY) * Math.pow(Math.abs(dY), this.camVario);
+                if (isFinite(dY)) {
+                    this.camXVelocity += dY * this.camSensitivity;
+                }
+
+                let dX = MMath.Clamp(e.movementX / s, -1, 1);
+                dX = Math.sign(dX) * Math.pow(Math.abs(dX), this.camVario);
+                if (isFinite(dX)) {
+                    this.camYVelocity += dX * this.camSensitivity;
+                }
             }
         });
 
@@ -190,21 +202,17 @@ class Player extends BABYLON.Mesh {
         this._downVelocity += 0.1 * dt;
         this._downVelocity *= 0.99;
 
-        this.rotation.y += this.camYVelocity * this.camSpeed * dt;
-        let dx = (this.camXTargetVelocity - this.camXVelocity) * this.camSpeed * dt;
-        this.camXVelocity += dx;
-        this.camXTargetVelocity -= dx;
-        
-        let dy = (this.camYTargetVelocity - this.camYVelocity) * this.camSpeed * dt;
-        this.camYVelocity += dy;
-        this.camYTargetVelocity -= dy;
+        let camYAmount = MMath.Clamp(this.camYVelocity, - this.camMaxSpeed * dt, this.camMaxSpeed * dt);
+        this.rotation.y += camYAmount;
+        this.camYVelocity = 0;
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {
-            Main.Camera.rotation.x += this.camXVelocity * this.camSpeed * dt;
+            
+            let camXAmount = MMath.Clamp(this.camXVelocity, - this.camMaxSpeed * dt, this.camMaxSpeed * dt);
+            Main.Camera.rotation.x += camXAmount;
+            this.camXVelocity = 0;
             Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60);
         }
-        this.camYVelocity -= this.camYVelocity * this.camSpeed * dt;
-        this.camXVelocity -= this.camXVelocity * this.camSpeed * dt;
         
         
         ChunckUtils.WorldPositionToChuncks(this.position).forEach(
