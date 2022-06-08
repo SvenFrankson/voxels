@@ -32,6 +32,7 @@ html, body {
     font-family: 'Courier New', Courier, monospace;
     background-color: rgba(0, 0, 0, 30%);
     padding: 10px;
+    pointer-events: none;
 }
 
 #chunck-editor {

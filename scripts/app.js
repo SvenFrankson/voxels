@@ -1168,7 +1168,7 @@ class BrickVertexData {
         }
         let brickData = await BrickDataManager.GetBrickData(brickReference);
         for (let i = 0; i < brickData.knobs.length; i++) {
-            BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
+            //BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
         }
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
@@ -1979,8 +1979,10 @@ class ChunckUtils {
         Main.Scene.meshes.forEach(m => {
             if (m.isPickable) {
                 let tryPick = ray.intersectsMesh(m, false);
-                if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                    pickInfo = tryPick;
+                if (tryPick.hit) {
+                    if (!pickInfo || pickInfo.distance > tryPick.distance) {
+                        pickInfo = tryPick;
+                    }
                 }
             }
         });
@@ -2002,8 +2004,10 @@ class ChunckUtils {
             meshes.forEach(m => {
                 if (m.isPickable) {
                     let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                        pickInfo = tryPick;
+                    if (tryPick.hit) {
+                        if (!pickInfo || pickInfo.distance > tryPick.distance) {
+                            pickInfo = tryPick;
+                        }
                     }
                 }
             });

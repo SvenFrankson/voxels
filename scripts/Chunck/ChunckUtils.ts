@@ -22,8 +22,10 @@ class ChunckUtils {
         Main.Scene.meshes.forEach(m => {
             if (m.isPickable) {
                 let tryPick = ray.intersectsMesh(m, false);
-                if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                    pickInfo = tryPick;
+                if (tryPick.hit) {
+                    if (!pickInfo || pickInfo.distance > tryPick.distance) {
+                        pickInfo = tryPick;
+                    }
                 }
             }
         });
@@ -47,8 +49,10 @@ class ChunckUtils {
             meshes.forEach(m => {
                 if (m.isPickable) {
                     let tryPick = ray.intersectsMesh(m, false);
-                    if (tryPick.hit && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x) && isFinite(tryPick.pickedPoint.x)) {
-                        pickInfo = tryPick;
+                    if (tryPick.hit) {
+                        if (!pickInfo || pickInfo.distance > tryPick.distance) {
+                            pickInfo = tryPick;
+                        }
                     }
                 }
             });
