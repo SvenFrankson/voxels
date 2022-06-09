@@ -16,6 +16,26 @@ class Math2D {
         return Math.abs(a1 - a2) < epsilon;
     }
 
+    public static Step(from: number, to: number, step: number = 1): number {
+        if (to > from) {
+            step = Math.abs(step);
+            let r = from + step;
+            if (r > to) {
+                return to;
+            }
+            return r;
+        }
+        else if (to < from) {
+            step = - Math.abs(step);
+            let r = from + step;
+            if (r < to) {
+                return to;
+            }
+            return r;
+        }
+        return from;
+    }
+
     public static StepFromToCirular(from: number, to: number, step: number = Math.PI / 60): number {
         while (from < 0) {
             from += 2 * Math.PI;

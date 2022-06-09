@@ -4110,10 +4110,14 @@ class Player extends BABYLON.Mesh {
         super("player");
         this.speed = 5;
         this.camVario = 1.3;
-        this.camSensitivity = 10;
+        this.camSensitivity = 2.5;
         this.camMaxSpeed = 2 * Math.PI * 2;
         this.camXVelocity = 0;
         this.camYVelocity = 0;
+        this.targetRX = 0;
+        this.targetRY = 0;
+        this.pointerDX = 0;
+        this.pointerDY = 0;
         this._downVelocity = 0;
         this.areNearChunckReady = false;
         this.update = () => {
@@ -4144,14 +4148,17 @@ class Player extends BABYLON.Mesh {
             this.position.y -= this._downVelocity;
             this._downVelocity += 0.1 * dt;
             this._downVelocity *= 0.99;
-            let camYAmount = MMath.Clamp(this.camYVelocity, -this.camMaxSpeed * dt, this.camMaxSpeed * dt);
-            this.rotation.y += camYAmount;
-            this.camYVelocity = 0;
+            let f = 0.8;
+            this.targetRY += this.pointerDX * this.camSensitivity / 1000;
+            this.pointerDX = 0;
+            this.rotation.y = this.rotation.y * (1 - f) + this.targetRY * f;
+            //this.rotation.y = Math2D.Step(this.rotation.y, this.targetRY, 4 * Math.PI * dt);
             if (Main.Camera instanceof BABYLON.FreeCamera) {
-                let camXAmount = MMath.Clamp(this.camXVelocity, -this.camMaxSpeed * dt, this.camMaxSpeed * dt);
-                Main.Camera.rotation.x += camXAmount;
-                this.camXVelocity = 0;
-                Main.Camera.rotation.x = Math.min(Math.max(Main.Camera.rotation.x, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                this.targetRX += this.pointerDY * this.camSensitivity / 1000;
+                this.targetRX = Math.min(Math.max(this.targetRX, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                this.pointerDY = 0;
+                Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - f) + this.targetRX * f;
+                //Main.Camera.rotation.x = Math2D.Step(Main.Camera.rotation.x, this.targetRX, 4 * Math.PI * dt);
             }
             ChunckUtils.WorldPositionToChuncks(this.position).forEach((chunck) => {
                 let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
@@ -4269,18 +4276,10 @@ class Player extends BABYLON.Mesh {
             }
         });
         Main.Canvas.addEventListener("pointermove", (e) => {
+            console.log(e.movementX + " " + e.movementY);
             if (document.pointerLockElement) {
-                let s = Math.min(Main.Canvas.clientWidth, Main.Canvas.clientHeight) * 0.5;
-                let dY = MMath.Clamp(e.movementY / s, -1, 1);
-                dY = Math.sign(dY) * Math.pow(Math.abs(dY), this.camVario);
-                if (isFinite(dY)) {
-                    this.camXVelocity += dY * this.camSensitivity;
-                }
-                let dX = MMath.Clamp(e.movementX / s, -1, 1);
-                dX = Math.sign(dX) * Math.pow(Math.abs(dX), this.camVario);
-                if (isFinite(dX)) {
-                    this.camYVelocity += dX * this.camSensitivity;
-                }
+                this.pointerDX += e.movementX;
+                this.pointerDY += e.movementY;
             }
         });
         Main.Canvas.addEventListener("pointerup", (e) => {
@@ -6597,6 +6596,25 @@ class Math2D {
             a2 -= 2 * Math.PI;
         }
         return Math.abs(a1 - a2) < epsilon;
+    }
+    static Step(from, to, step = 1) {
+        if (to > from) {
+            step = Math.abs(step);
+            let r = from + step;
+            if (r > to) {
+                return to;
+            }
+            return r;
+        }
+        else if (to < from) {
+            step = -Math.abs(step);
+            let r = from + step;
+            if (r < to) {
+                return to;
+            }
+            return r;
+        }
+        return from;
     }
     static StepFromToCirular(from, to, step = Math.PI / 60) {
         while (from < 0) {
