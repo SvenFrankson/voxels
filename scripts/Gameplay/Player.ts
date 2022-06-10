@@ -13,9 +13,10 @@ class Player extends BABYLON.Mesh {
 
     public speed: number = 5;
 
-    public camVario: number = 1.3;
-    public camSensitivity: number = 2.5;
-    public camMaxSpeed: number = 2 * Math.PI * 2;
+    public camVario: number = 1.6;
+    public camSensitivity: number = 1;
+    public camSmoothness = 0.5;
+    public camMaxSpeed: number = 1200; // in mouse pixels per second
     
     public camXVelocity: number = 0;
     public camYVelocity: number = 0;
@@ -198,17 +199,25 @@ class Player extends BABYLON.Mesh {
         this._downVelocity += 0.1 * dt;
         this._downVelocity *= 0.99;
 
-        let f = 0.8;
-        this.targetRY += this.pointerDX * this.camSensitivity / 1000;
+        let maxSpeed = this.camMaxSpeed * dt;
+        let pDX = this.pointerDX;
+        if (Math.abs(this.pointerDX) > maxSpeed) {
+            pDX = Math.sign(this.pointerDX) * maxSpeed;
+        }
+        this.targetRY += Math.sign(pDX) * Math.pow(Math.abs(pDX), this.camVario) * this.camSensitivity / 1000;
         this.pointerDX = 0;
-        this.rotation.y = this.rotation.y * (1 - f) + this.targetRY * f;
+        this.rotation.y = this.rotation.y * (1 - this.camSmoothness) + this.targetRY * this.camSmoothness;
         //this.rotation.y = Math2D.Step(this.rotation.y, this.targetRY, 4 * Math.PI * dt);
 
         if (Main.Camera instanceof BABYLON.FreeCamera) {
-            this.targetRX += this.pointerDY * this.camSensitivity / 1000;
+            let pDY = this.pointerDY;
+            if (Math.abs(this.pointerDY) > maxSpeed) {
+                pDY = Math.sign(this.pointerDY) * maxSpeed;
+            }
+            this.targetRX += Math.sign(pDY) * Math.pow(Math.abs(pDY), this.camVario) * this.camSensitivity / 1000;
             this.targetRX = Math.min(Math.max(this.targetRX, - Math.PI / 2 + Math.PI / 60), Math.PI / 2  - Math.PI / 60);
             this.pointerDY = 0;
-            Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - f) + this.targetRX * f;
+            Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - this.camSmoothness) + this.targetRX * this.camSmoothness;
             //Main.Camera.rotation.x = Math2D.Step(Main.Camera.rotation.x, this.targetRX, 4 * Math.PI * dt);
         }
         
