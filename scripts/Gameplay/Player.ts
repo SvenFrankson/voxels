@@ -316,7 +316,9 @@ class Player extends BABYLON.Mesh {
         this.position.y = data.position.y;
         this.position.z = data.position.z;
         (Main.Camera as BABYLON.FreeCamera).rotation.x = data.rX;
+        this.targetRX = data.rX;
         this.rotation.y = data.rY;
+        this.targetRY = data.rY;
         this.playerActionManager.deserialize(data.playerActionManager);
     }
 }
