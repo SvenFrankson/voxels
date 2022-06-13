@@ -4,7 +4,6 @@ var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 
-var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
@@ -48,12 +47,6 @@ class Chunck_V2 extends Chunck {
         }
 
         this.material = Main.terrainCellShadingMaterial;
-
-        if (GENERATE_TERRAIN_KNOBS) {
-            this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
-            this.knobsMesh.parent = this;
-            this.knobsMesh.material = Main.cellShadingMaterial;
-        }
     }
 
     public get barycenter(): BABYLON.Vector3 {
@@ -175,21 +168,6 @@ class Chunck_V2 extends Chunck {
                     }
                     
                     let data = ChunckVertexData.Get(ref);
-
-                    if (GENERATE_TERRAIN_KNOBS) {
-                        if (c0 && !c4) {
-                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                            if (c1 && !c5) {
-                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                                if (c3 && !c7 && c2 && !c6) {
-                                    BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                                }
-                            }
-                            if (c3 && !c7) {
-                                BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                            }
-                        }
-                    }
 
                     if (data) {
                         let l = positions.length / 3;
@@ -325,16 +303,6 @@ class Chunck_V2 extends Chunck {
         vertexData.colors = colors;
 
         vertexData.applyToMesh(this);
-
-        if (GENERATE_TERRAIN_KNOBS) {
-            let knobsVertexData = new BABYLON.VertexData();
-            knobsVertexData.positions = knobsPositions;
-            knobsVertexData.indices = knobsIndices;
-            knobsVertexData.normals = knobsNormals;
-            knobsVertexData.colors = knobsColors;
-    
-            knobsVertexData.applyToMesh(this.knobsMesh);
-        }
 
         this.updateBricks();
 

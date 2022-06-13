@@ -463,8 +463,7 @@ class Brick {
     }
 }
 class BrickData {
-    constructor(knobs = [], locks = [], covers = []) {
-        this.knobs = knobs;
+    constructor(locks = [], covers = []) {
         this.locks = locks;
         this.covers = covers;
         this.computeRotatedLocks();
@@ -543,23 +542,8 @@ class BrickDataManager {
             xhr.open('GET', "datas/constructs/" + constructName + ".json");
             xhr.onload = () => {
                 let data = JSON.parse(xhr.responseText);
-                let knobs = [];
                 let locks = [];
                 let covers = [];
-                if (data.knobs) {
-                    if (data.knobs.min && data.knobs.max) {
-                        for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
-                            for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
-                                for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
-                                    knobs.push(i, j, k);
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        knobs = data.knobs;
-                    }
-                }
                 if (data.locks) {
                     if (data.locks.min && data.locks.max) {
                         for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
@@ -591,7 +575,7 @@ class BrickDataManager {
                         covers = data.covers;
                     }
                 }
-                let brickData = new BrickData(knobs, locks, covers);
+                let brickData = new BrickData(locks, covers);
                 console.log(brickData);
                 resolve(brickData);
             };
@@ -607,23 +591,8 @@ class BrickDataManager {
                 for (let brickName in datas) {
                     console.log(brickName);
                     let data = datas[brickName];
-                    let knobs = [];
                     let locks = [];
                     let covers = [];
-                    if (data.knobs) {
-                        if (data.knobs.min && data.knobs.max) {
-                            for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
-                                for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
-                                    for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
-                                        knobs.push(i, j, k);
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            knobs = data.knobs;
-                        }
-                    }
                     if (data.locks) {
                         if (data.locks.min && data.locks.max) {
                             for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
@@ -655,7 +624,7 @@ class BrickDataManager {
                             covers = data.covers;
                         }
                     }
-                    let brickData = new BrickData(knobs, locks, covers);
+                    let brickData = new BrickData(locks, covers);
                     BrickDataManager._BrickDatas.set(brickName, brickData);
                     BrickDataManager.BrickNames.push(brickName);
                 }
@@ -694,7 +663,6 @@ class BrickDataManager {
                     let brickName = "brick-" + W + "x" + L;
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
-                            brickData.knobs.push(w, 3, l);
                             for (let h = 0; h < 3; h++) {
                                 brickData.locks.push(w, h, l);
                                 brickData.covers.push(w, h, l);
@@ -721,7 +689,6 @@ class BrickDataManager {
                     let plateName = "plate-" + W + "x" + L;
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
-                            plateData.knobs.push(w, 1, l);
                             plateData.locks.push(w, 0, l);
                             plateData.covers.push(w, 0, l);
                         }
@@ -733,7 +700,6 @@ class BrickDataManager {
                     plateName = "plate-4x4";
                     for (let w = 0; w < 4; w++) {
                         for (let l = 0; l < 4; l++) {
-                            plateData.knobs.push(w, 1, l);
                             plateData.locks.push(w, 0, l);
                             plateData.covers.push(w, 0, l);
                         }
@@ -753,7 +719,7 @@ class BrickDataManager {
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
-        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData([0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0], locks, []));
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(locks, []));
         locks = [];
         for (let w = 0; w < 6; w++) {
             for (let l = 0; l < 2; l++) {
@@ -763,7 +729,7 @@ class BrickDataManager {
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
-        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData([0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0], locks, []));
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(locks, []));
         let slopeLValues = [1, 2, 4, 6, 8];
         let slopeWValues = [2, 4];
         let slopeHValues = [1, 2, 4];
@@ -777,7 +743,6 @@ class BrickDataManager {
                     let brickData = new BrickData();
                     let brickName = "slope" + H + "-" + W + "x" + L;
                     for (let l = 0; l < L; l++) {
-                        brickData.knobs.push(W - 1, H * 3, l);
                         for (let w = 0; w < W; w++) {
                             for (let h = 0; h < H * 3; h++) {
                                 brickData.locks.push(w, h, l);
@@ -795,8 +760,6 @@ class BrickDataManager {
         for (let S = 2; S <= 10; S++) {
             let plateCurbData = new BrickData();
             let plateCurbName = "plateCurb-" + S + "x" + S;
-            plateCurbData.knobs.push(0, 1, 0);
-            plateCurbData.knobs.push(S - 1, 1, S - 1);
             plateCurbData.locks.push(0, 0, 0);
             plateCurbData.locks.push(S - 1, 0, S - 1);
             plateCurbData.covers.push(0, 0, 0);
@@ -821,8 +784,6 @@ class BrickDataManager {
         for (let S = 2; S <= 10; S++) {
             let brickCurbData = new BrickData();
             let brickCurbName = "brickCurb-" + S + "x" + S;
-            brickCurbData.knobs.push(0, 3, 0);
-            brickCurbData.knobs.push(S - 1, 3, S - 1);
             for (let h = 0; h < 3; h++) {
                 brickCurbData.locks.push(0, h, 0);
                 brickCurbData.locks.push(S - 1, h, S - 1);
@@ -850,21 +811,6 @@ BrickDataManager.BrickColors = new Map();
 BrickDataManager.BrickNames = [];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
-    static async _LoadKnobsVertexDatas() {
-        return new Promise(resolve => {
-            BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/knobs.babylon", "", Main.Scene, (meshes) => {
-                for (let i = 0; i < meshes.length; i++) {
-                    let mesh = meshes[i];
-                    if (mesh instanceof BABYLON.Mesh) {
-                        let lod = parseInt(mesh.name.replace("knob-lod", ""));
-                        BrickVertexData._KnobVertexDatas[lod] = BABYLON.VertexData.ExtractFromMesh(mesh);
-                        mesh.dispose();
-                    }
-                }
-                resolve();
-            });
-        });
-    }
     static async _LoadCubicTemplateVertexData() {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/cubic-template.babylon", "", Main.Scene, (meshes) => {
@@ -1104,38 +1050,7 @@ class BrickVertexData {
         }
     }
     static async InitializeData() {
-        await BrickVertexData._LoadKnobsVertexDatas();
         return true;
-    }
-    static AddKnob(x, y, z, positions, indices, normals, lod, colors, color) {
-        let l = positions.length / 3;
-        let data = BrickVertexData._KnobVertexDatas[lod];
-        if (data) {
-            for (let i = 0; i < data.positions.length / 3; i++) {
-                let kx = data.positions[3 * i];
-                let ky = data.positions[3 * i + 1];
-                let kz = data.positions[3 * i + 2];
-                positions.push(kx + x * DX, ky + y * DY, kz + z * DX);
-            }
-            for (let i = 0; i < data.normals.length / 3; i++) {
-                let knx = data.normals[3 * i];
-                let kny = data.normals[3 * i + 1];
-                let knz = data.normals[3 * i + 2];
-                normals.push(knx, kny, knz);
-                if (color) {
-                    if (kny >= 0.9) {
-                        colors.push(color.r * BrickVertexData.knobColorFactor, color.g * BrickVertexData.knobColorFactor, color.b * BrickVertexData.knobColorFactor, color.a);
-                    }
-                    else {
-                        colors.push(color.r, color.g, color.b, color.a);
-                    }
-                }
-            }
-            for (let i = 0; i < data.indices.length; i++) {
-                let kn = data.indices[i];
-                indices.push(kn + l);
-            }
-        }
     }
     static async GetBrickVertexData(brickName, lod) {
         let data = BrickVertexData._BrickVertexDatas.get(brickName + "-lod" + lod);
@@ -1167,9 +1082,6 @@ class BrickVertexData {
             colors.push(color.r, color.g, color.b, color.a);
         }
         let brickData = await BrickDataManager.GetBrickData(brickReference);
-        for (let i = 0; i < brickData.knobs.length; i++) {
-            //BrickVertexData.AddKnob(brickData.knobs[3 * i], brickData.knobs[3 * i + 1], brickData.knobs[3 * i + 2], positions, indices, normals, 0, colors, color);
-        }
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
         fullVertexData.normals = normals;
@@ -1181,8 +1093,6 @@ class BrickVertexData {
 BrickVertexData._CubicTemplateVertexData = [];
 BrickVertexData._CurbTemplateVertexData = [];
 BrickVertexData._BrickVertexDatas = new Map();
-BrickVertexData._KnobVertexDatas = [];
-BrickVertexData.knobColorFactor = 0.9;
 class Chunck extends BABYLON.Mesh {
     constructor(manager, i, j, k) {
         super("chunck_" + i + "_" + j + "_" + k);
@@ -2781,7 +2691,6 @@ class Chunck_V1 extends Chunck {
 var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
-var GENERATE_TERRAIN_KNOBS = false;
 var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
@@ -2861,11 +2770,6 @@ class Chunck_V2 extends Chunck {
             this.scaling.copyFromFloats(0.995, 0.995, 0.995);
         }
         this.material = Main.terrainCellShadingMaterial;
-        if (GENERATE_TERRAIN_KNOBS) {
-            this.knobsMesh = new BABYLON.Mesh(this.name + "_knobs");
-            this.knobsMesh.parent = this;
-            this.knobsMesh.material = Main.cellShadingMaterial;
-        }
     }
     get barycenter() {
         return this._barycenter;
@@ -2971,20 +2875,6 @@ class Chunck_V2 extends Chunck {
                         continue;
                     }
                     let data = ChunckVertexData.Get(ref);
-                    if (GENERATE_TERRAIN_KNOBS) {
-                        if (c0 && !c4) {
-                            BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                            if (c1 && !c5) {
-                                BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                                if (c3 && !c7 && c2 && !c6) {
-                                    BrickVertexData.AddKnob(2 * i + 1, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                                }
-                            }
-                            if (c3 && !c7) {
-                                BrickVertexData.AddKnob(2 * i, 3 * j, 2 * k + 1, knobsPositions, knobsIndices, knobsNormals, 0, knobsColors, c0.displayedColor);
-                            }
-                        }
-                    }
                     if (data) {
                         let l = positions.length / 3;
                         for (let n = 0; n < data.positions.length / 3; n++) {
@@ -3112,14 +3002,6 @@ class Chunck_V2 extends Chunck {
         vertexData.normals = normals;
         vertexData.colors = colors;
         vertexData.applyToMesh(this);
-        if (GENERATE_TERRAIN_KNOBS) {
-            let knobsVertexData = new BABYLON.VertexData();
-            knobsVertexData.positions = knobsPositions;
-            knobsVertexData.indices = knobsIndices;
-            knobsVertexData.normals = knobsNormals;
-            knobsVertexData.colors = knobsColors;
-            knobsVertexData.applyToMesh(this.knobsMesh);
-        }
         this.updateBricks();
         if (ACTIVE_DEBUG_CHUNCK) {
             Main.AddOnUpdateDebugCallback(this._updateDebug);
@@ -6063,16 +5945,16 @@ class PlayerTest extends Main {
             inventory.addItem(InventoryItem.Cube(CubeType.Sand));
         }
         let colors = [
-            "brightyellow",
-            "brightred",
-            "brightblue",
-            "brightgreen",
+            //"brightyellow",
+            //"brightred",
+            //"brightblue",
+            //"brightgreen",
             "white",
-            "black"
         ];
         let bricks = [
             "brick-1x1",
             "brick-2x2",
+            "brick-1x3",
             "brick-1x4",
             "brick-2x4",
             "brick-1x8",
@@ -6080,6 +5962,7 @@ class PlayerTest extends Main {
             "plate-1x1",
             "plate-2x2",
             "plate-2x3",
+            "plate-1x3",
             "plate-1x4",
             "plate-2x4",
             "plate-1x8",
@@ -6118,7 +6001,6 @@ class PlayerTest extends Main {
         }
         colors = [
             "white",
-            "black"
         ];
         bricks = [
             "plateCurb-2x2",
@@ -7400,26 +7282,6 @@ class Tile extends BABYLON.Mesh {
             uvs.push(x / TILE_LENGTH, z / TILE_LENGTH);
         }
     }
-    _addKnobs(positions, indices, normals, lod) {
-        for (let j = 0; j < TILE_SIZE; j++) {
-            for (let i = 0; i < TILE_SIZE; i++) {
-                let h00 = this.heights[i][j];
-                let h10 = this.heights[i + 1][j];
-                let h11 = this.heights[i + 1][j + 1];
-                let h01 = this.heights[i][j + 1];
-                BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
-                if (h00 === h10) {
-                    BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
-                }
-                if (h00 === h01) {
-                    BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
-                    if (h00 === h10 && h00 === h11) {
-                        BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
-                    }
-                }
-            }
-        }
-    }
     updateTerrainMesh(lod) {
         this.currentLOD = lod;
         let data = new BABYLON.VertexData();
@@ -7430,17 +7292,14 @@ class Tile extends BABYLON.Mesh {
         let indices = [];
         if (lod === 0) {
             this._generateFromMesh(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 0);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 1) {
             this._generateFromMesh(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 1);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 2) {
             this._generateFromData(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 2);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 3) {

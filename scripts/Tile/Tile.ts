@@ -182,28 +182,6 @@ class Tile extends BABYLON.Mesh {
         }
     }
 
-    private _addKnobs(positions: number[], indices: number[], normals: number[], lod: number): void {
-        for (let j = 0; j < TILE_SIZE; j++) {
-            for (let i = 0; i < TILE_SIZE; i++) {
-                let h00 = this.heights[i][j];
-                let h10 = this.heights[i + 1][j];
-                let h11 = this.heights[i + 1][j + 1];
-                let h01 = this.heights[i][j + 1];
-
-                BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
-                if (h00 === h10) {
-                    BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j, positions, indices, normals, lod);
-                }
-                if (h00 === h01) {
-                    BrickVertexData.AddKnob(2 * i, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
-                    if (h00 === h10 && h00 === h11) {
-                        BrickVertexData.AddKnob(2 * i + 1, this.heights[i][j] * 3, 2 * j + 1, positions, indices, normals, lod);
-                    }
-                }
-            }
-        }
-    }
-
     public updateTerrainMesh(lod: number): void {
         this.currentLOD = lod;
         let data = new BABYLON.VertexData();
@@ -215,17 +193,14 @@ class Tile extends BABYLON.Mesh {
 
         if (lod === 0) {
             this._generateFromMesh(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 0);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 1) {
             this._generateFromMesh(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 1);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 2) {
             this._generateFromData(positions, indices, normals);
-            this._addKnobs(positions, indices, normals, 2);
             this._generateUVS(positions, uvs);
         }
         else if (lod === 3) {

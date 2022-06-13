@@ -3,7 +3,6 @@ class BrickData {
     private _rotatedLocks: number[][];
 
     constructor(
-        public knobs: number[] = [],
         public locks: number[] = [],
         public covers: number[] = []
     ) {
@@ -99,23 +98,8 @@ class BrickDataManager {
             xhr.onload = () => {
                 let data = JSON.parse(xhr.responseText);
                 
-                let knobs = [];
                 let locks = [];
                 let covers = [];
-                if (data.knobs) {
-                    if (data.knobs.min && data.knobs.max) {
-                        for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
-                            for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
-                                for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
-                                    knobs.push(i, j, k);
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        knobs = data.knobs;
-                    }
-                }
                 if (data.locks) {
                     if (data.locks.min && data.locks.max) {
                         for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
@@ -147,7 +131,7 @@ class BrickDataManager {
                         covers = data.covers;
                     }
                 }
-                let brickData = new BrickData(knobs, locks, covers);
+                let brickData = new BrickData(locks, covers);
                 console.log(brickData);
                 resolve(brickData);
             }
@@ -164,23 +148,8 @@ class BrickDataManager {
                 for (let brickName in datas) {
                     console.log(brickName);
                     let data = datas[brickName];
-                    let knobs = [];
                     let locks = [];
                     let covers = [];
-                    if (data.knobs) {
-                        if (data.knobs.min && data.knobs.max) {
-                            for (let i = data.knobs.min[0]; i <= data.knobs.max[0]; i++) {
-                                for (let j = data.knobs.min[1]; j <= data.knobs.max[1]; j++) {
-                                    for (let k = data.knobs.min[2]; k <= data.knobs.max[2]; k++) {
-                                        knobs.push(i, j, k);
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            knobs = data.knobs;
-                        }
-                    }
                     if (data.locks) {
                         if (data.locks.min && data.locks.max) {
                             for (let i = data.locks.min[0]; i <= data.locks.max[0]; i++) {
@@ -212,7 +181,7 @@ class BrickDataManager {
                             covers = data.covers;
                         }
                     }
-                    let brickData = new BrickData(knobs, locks, covers);
+                    let brickData = new BrickData(locks, covers);
                     BrickDataManager._BrickDatas.set(brickName, brickData);
                     BrickDataManager.BrickNames.push(brickName);
                 }
@@ -254,7 +223,6 @@ class BrickDataManager {
                     let brickName = "brick-" + W + "x" + L;
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
-                            brickData.knobs.push(w, 3, l);
                             for (let h = 0; h < 3; h++) {
                                 brickData.locks.push(w, h, l);
                                 brickData.covers.push(w, h, l);
@@ -283,7 +251,6 @@ class BrickDataManager {
                     let plateName = "plate-" + W + "x" + L;
                     for (let w = 0; w < W; w++) {
                         for (let l = 0; l < L; l++) {
-                            plateData.knobs.push(w, 1, l);
                             plateData.locks.push(w, 0, l);
                             plateData.covers.push(w, 0, l);
                         }
@@ -296,7 +263,6 @@ class BrickDataManager {
                     plateName = "plate-4x4";
                     for (let w = 0; w < 4; w++) {
                         for (let l = 0; l < 4; l++) {
-                            plateData.knobs.push(w, 1, l);
                             plateData.locks.push(w, 0, l);
                             plateData.covers.push(w, 0, l);
                         }
@@ -318,7 +284,6 @@ class BrickDataManager {
         }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
         BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(
-            [0, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 0],
             locks,
             []
         ));
@@ -333,7 +298,6 @@ class BrickDataManager {
         }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
         BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(
-            [0, 9, 0, 1, 9, 0, 2, 9, 0, 3, 9, 0, 4, 9, 0, 5, 9, 0],
             locks,
             []
         ));
@@ -351,7 +315,6 @@ class BrickDataManager {
                     let brickData = new BrickData();
                     let brickName = "slope" + H + "-" + W + "x" + L;
                     for (let l = 0; l < L; l++) {
-                        brickData.knobs.push(W - 1, H * 3, l);
                         for (let w = 0; w < W; w++) {
                             for (let h = 0; h < H * 3; h++) {
                                 brickData.locks.push(w, h, l);
@@ -370,9 +333,6 @@ class BrickDataManager {
         for (let S = 2; S <= 10; S++) {
             let plateCurbData = new BrickData();
             let plateCurbName = "plateCurb-" + S + "x" + S;
-            
-            plateCurbData.knobs.push(0, 1, 0);
-            plateCurbData.knobs.push(S - 1, 1, S - 1);
             
             plateCurbData.locks.push(0, 0, 0);
             plateCurbData.locks.push(S - 1, 0, S - 1);
@@ -405,9 +365,6 @@ class BrickDataManager {
         for (let S = 2; S <= 10; S++) {
             let brickCurbData = new BrickData();
             let brickCurbName = "brickCurb-" + S + "x" + S;
-            
-            brickCurbData.knobs.push(0, 3, 0);
-            brickCurbData.knobs.push(S - 1, 3, S - 1);
 
             for (let h = 0; h < 3; h++) {
                 brickCurbData.locks.push(0, h, 0);

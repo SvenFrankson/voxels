@@ -111,17 +111,18 @@ class PlayerTest extends Main {
 		}
 
 		let colors = [
-			"brightyellow",
-			"brightred",
-			"brightblue",
-			"brightgreen",
+			//"brightyellow",
+			//"brightred",
+			//"brightblue",
+			//"brightgreen",
 			"white",
-			"black"
+			//"black"
 		];
 		
 		let bricks = [
 			"brick-1x1",
 			"brick-2x2",
+			"brick-1x3",
 			"brick-1x4",
 			"brick-2x4",
 			"brick-1x8",
@@ -129,6 +130,7 @@ class PlayerTest extends Main {
 			"plate-1x1",
 			"plate-2x2",
 			"plate-2x3",
+			"plate-1x3",
 			"plate-1x4",
 			"plate-2x4",
 			"plate-1x8",
@@ -170,7 +172,7 @@ class PlayerTest extends Main {
 		
 		colors = [
 			"white",
-			"black"
+			//"black"
 		];
 
 		bricks = [
