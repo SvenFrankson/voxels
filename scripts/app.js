@@ -2855,10 +2855,6 @@ class Chunck_V2 extends Chunck {
         let indices = [];
         let normals = [];
         let colors = [];
-        let knobsPositions = [];
-        let knobsIndices = [];
-        let knobsNormals = [];
-        let knobsColors = [];
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
                 for (let k = 0; k < CHUNCK_SIZE; k++) {
@@ -4560,11 +4556,6 @@ class PlayerActionTemplate {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
-                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
-                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
-                if (!hitKnob) {
-                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                }
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
@@ -4627,11 +4618,6 @@ class PlayerActionTemplate {
             let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                let hitKnob = TileUtils.IsKnobHit(world, pickInfo.getNormal(true));
-                document.getElementById("is-knob-hit").textContent = hitKnob ? "TRUE" : "FALSE";
-                if (!hitKnob) {
-                    world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                }
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 console.log(coordinates.chunck);
@@ -7492,35 +7478,7 @@ class TileManager {
         return tile;
     }
 }
-var KNOB_RADIUS_SQUARED = 0.24 * 0.24;
 class TileUtils {
-    static IsKnobHit(worldPosition, normal) {
-        if (normal && normal.y === 0) {
-            let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
-            if (dy < 0.17) {
-                let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
-                let dz = worldPosition.z - Math.round(worldPosition.z / DX) * DX;
-                let dd = dx * dx + dz * dz;
-                if (dd <= KNOB_RADIUS_SQUARED) {
-                    if (dd >= KNOB_RADIUS_SQUARED * 0.6) {
-                        return true;
-                    }
-                }
-            }
-        }
-        else if (normal && normal.y === 1) {
-            let dy = worldPosition.y - Math.floor(worldPosition.y / DY) * DY;
-            if (Math.abs(dy - 0.17) < 0.001) {
-                let dx = worldPosition.x - Math.round(worldPosition.x / DX) * DX;
-                let dz = worldPosition.z - Math.round(worldPosition.z / DX) * DX;
-                let dd = dx * dx + dz * dz;
-                if (dd <= KNOB_RADIUS_SQUARED) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 }
 var DATA_SIZE = 128;
 class WorldDataGenerator {

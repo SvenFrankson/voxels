@@ -1,16 +1,13 @@
 {
     "plateRound-1x1" : {
-        "knobs": [0, 1, 0],
         "locks": [0, 0, 0],
         "covers": "locks"
     },
     "brickRound-1x1" : {
-        "knobs": [0, 3, 0],
         "locks": [0, 0, 0, 0, 1, 0, 0, 2, 0],
         "covers": "locks"
     },
     "brickCornerRound-2x2": {
-        "knobs": [0, 3, 0, 1, 3, 1],
         "locks": {
             "min": [0, 0, 0],
             "max": [1, 2, 1]
@@ -18,7 +15,6 @@
         "covers": "locks"
     },
     "plateCornerRound-2x2": {
-        "knobs": [0, 1, 0, 1, 1, 1],
         "locks": {
             "min": [0, 0, 0],
             "max": [1, 0, 1]
@@ -33,7 +29,6 @@
         "covers": "locks"
     },
     "plateCornerRound-3x3": {
-        "knobs": [0, 1, 0, 1, 1, 0, 2, 1, 0, 1, 1, 1, 2, 1, 1, 2, 1, 2],
         "locks": {
             "min": [0, 0, 0],
             "max": [2, 0, 2]
@@ -48,15 +43,10 @@
         "covers": "locks"
     },
     "cone-1x1" : {
-        "knobs": [0, 3, 0],
         "locks": [0, 0, 0, 0, 1, 0, 0, 2, 0],
         "covers": "locks"
     },
     "brickRound-2x2" : {
-        "knobs": {
-            "min": [0, 3, 0],
-            "max": [1, 3, 1]
-        },
         "locks": {
             "min": [0, 0, 0],
             "max": [1, 2, 1]
@@ -64,10 +54,6 @@
         "covers": "locks"
     },
     "plateRound-2x2" : {
-        "knobs": {
-            "min": [0, 1, 0],
-            "max": [1, 1, 1]
-        },
         "locks": {
             "min": [0, 0, 0],
             "max": [1, 0, 1]
@@ -82,10 +68,6 @@
         "covers": "locks"
     },
     "windowRound-2x2" : {
-        "knobs": {
-            "min": [0, 6, 0],
-            "max": [1, 6, 0]
-        },
         "locks": {
             "min": [0, 0, 0],
             "max": [1, 5, 0]
@@ -93,10 +75,6 @@
         "covers": "locks"
     },
     "windowRound-4x2" : {
-        "knobs": {
-            "min": [0, 6, 0],
-            "max": [3, 6, 0]
-        },
         "locks": {
             "min": [0, 0, 0],
             "max": [3, 5, 0]

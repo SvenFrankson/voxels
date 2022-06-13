@@ -12,8 +12,6 @@ class Chunck_V2 extends Chunck {
 
     private _barycenter: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
-    public knobsMesh: BABYLON.Mesh;
-
     public bricks: Brick[] = [];
     public brickMeshes: BABYLON.Mesh[] = [];
 
@@ -144,11 +142,6 @@ class Chunck_V2 extends Chunck {
         let indices: number[] = [];
         let normals: number[] = [];
         let colors: number[] = [];
-
-        let knobsPositions: number[] = [];
-        let knobsIndices: number[] = [];
-        let knobsNormals: number[] = [];
-        let knobsColors: number[] = [];
 
         for (let i = 0; i < CHUNCK_SIZE; i++) {
             for (let j = 0; j < CHUNCK_SIZE; j++) {
