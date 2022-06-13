@@ -1081,7 +1081,6 @@ class BrickVertexData {
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(color.r, color.g, color.b, color.a);
         }
-        let brickData = await BrickDataManager.GetBrickData(brickReference);
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
         fullVertexData.normals = normals;
@@ -4556,6 +4555,7 @@ class PlayerActionTemplate {
                 document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
@@ -4618,6 +4618,7 @@ class PlayerActionTemplate {
             let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 console.log(coordinates.chunck);

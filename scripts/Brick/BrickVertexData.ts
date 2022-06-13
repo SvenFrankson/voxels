@@ -336,7 +336,6 @@ class BrickVertexData {
         for (let i = 0; i < positions.length / 3; i++) {
             colors.push(color.r, color.g, color.b, color.a);
         }
-        let brickData = await BrickDataManager.GetBrickData(brickReference);
         let fullVertexData = new BABYLON.VertexData();
         fullVertexData.positions = positions;
         fullVertexData.normals = normals;
