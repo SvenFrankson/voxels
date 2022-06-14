@@ -88,7 +88,32 @@ class BrickDataManager {
 
     public static BrickColorNames: string[] = [];
     public static BrickColors: Map<string, BABYLON.Color4> = new Map<string, BABYLON.Color4>();
-    public static BrickNames: string[] = [];
+    public static BrickNames: string[] = [
+        "plate-1x1",
+        "plate-1x2",
+        "plate-1x3",
+        "plate-1x4",
+        "plate-1x6",
+        "plate-1x8",
+        "plate-1x12",
+        
+        "plate-2x2",
+        "plate-2x3",
+        "plate-2x4",
+        "plate-2x6",
+        "plate-2x8",
+        "plate-2x12",
+        
+        "plate-4x4",
+
+        //"brick-1x1",
+        //"brick-1x2",
+        //"brick-1x3",
+        //"brick-1x4",
+        //"brick-1x6",
+        //"brick-1x8",
+        //"brick-1x12",
+    ];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
     private static async _LoadConstructBrickData(constructName: string): Promise<BrickData> {
@@ -140,6 +165,7 @@ class BrickDataManager {
     }
 
     public static async InitializeDataFromFile(): Promise<void> {
+        return;
         return new Promise<void>(resolve => {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', "bricksData.json");
@@ -191,28 +217,52 @@ class BrickDataManager {
         });
     }
 
+    private static MakePlateData(W: number, L: number): BrickData {
+        let plateData = new BrickData();
+        let plateName = "plate-" + W + "-" + L;
+        for (let w = 0; w < W; w++) {
+            for (let l = 0; l < L; l++) {
+                plateData.locks.push(w, 0, l);
+                plateData.covers.push(w, 0, l);
+            }
+        }
+        plateData.computeRotatedLocks();
+
+        return plateData;
+    }
+
     public static InitializeProceduralData(): void {
-        BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
-        BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
-        BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
-        BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
-        BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
-        BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
-        BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
-        BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
-        BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
-        BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
-        BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
-        BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
+        //BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
+        //BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
+        //BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
+        //BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
+        //BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
+        //BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
+        //BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
+        //BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
+        //BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
+        //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
+        //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
+        //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
-        BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
 
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
         });
 
-        let LValues = [1, 2, 3, 4, 6, 8];
-        let WValues = [1, 2];
+        let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate"); });
+        for (let i = 0; i < plateNames.length; i++) {
+            let plateName = plateNames[i];
+            let W = parseInt(plateName.split("-")[1]);
+            let L = parseInt(plateName.split("-")[2]);
+
+            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakePlateData(W, L));
+        }
+
+        /*
+        let LValues = [];
+        let WValues = [];
         for (let i = 0; i < LValues.length; i++) {
             let L = LValues[i];
             for (let j = 0; j < WValues.length; j++) {
@@ -378,6 +428,7 @@ class BrickDataManager {
             BrickDataManager._BrickDatas.set(brickCurbName, brickCurbData);
             BrickDataManager.BrickNames.push(brickCurbName);
         }
+        */
     }
 
     public static async GetBrickData(brickReference: IBrickReference): Promise<BrickData> {

@@ -583,6 +583,7 @@ class BrickDataManager {
         });
     }
     static async InitializeDataFromFile() {
+        return;
         return new Promise(resolve => {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', "bricksData.json");
@@ -633,26 +634,46 @@ class BrickDataManager {
             xhr.send();
         });
     }
+    static MakePlateData(W, L) {
+        let plateData = new BrickData();
+        let plateName = "plate-" + W + "-" + L;
+        for (let w = 0; w < W; w++) {
+            for (let l = 0; l < L; l++) {
+                plateData.locks.push(w, 0, l);
+                plateData.covers.push(w, 0, l);
+            }
+        }
+        plateData.computeRotatedLocks();
+        return plateData;
+    }
     static InitializeProceduralData() {
-        BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
-        BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
-        BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
-        BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
-        BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
-        BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
-        BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
-        BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
-        BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
-        BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
-        BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
-        BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
+        //BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
+        //BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
+        //BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
+        //BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
+        //BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
+        //BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
+        //BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
+        //BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
+        //BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
+        //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
+        //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
+        //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
-        BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
         BrickDataManager.BrickColors.forEach((color, name) => {
             BrickDataManager.BrickColorNames.push(name);
         });
-        let LValues = [1, 2, 3, 4, 6, 8];
-        let WValues = [1, 2];
+        let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate"); });
+        for (let i = 0; i < plateNames.length; i++) {
+            let plateName = plateNames[i];
+            let W = parseInt(plateName.split("-")[1]);
+            let L = parseInt(plateName.split("-")[2]);
+            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakePlateData(W, L));
+        }
+        /*
+        let LValues = [];
+        let WValues = [];
         for (let i = 0; i < LValues.length; i++) {
             let L = LValues[i];
             for (let j = 0; j < WValues.length; j++) {
@@ -672,6 +693,7 @@ class BrickDataManager {
                     brickData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(brickName, brickData);
                     BrickDataManager.BrickNames.push(brickName);
+    
                     // Tile
                     let tileData = new BrickData();
                     let tileName = "tile-" + W + "x" + L;
@@ -684,6 +706,7 @@ class BrickDataManager {
                     tileData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(tileName, tileData);
                     BrickDataManager.BrickNames.push(tileName);
+    
                     // Plate
                     let plateData = new BrickData();
                     let plateName = "plate-" + W + "x" + L;
@@ -696,6 +719,7 @@ class BrickDataManager {
                     plateData.computeRotatedLocks();
                     BrickDataManager._BrickDatas.set(plateName, plateData);
                     BrickDataManager.BrickNames.push(plateName);
+                    
                     plateData = new BrickData();
                     plateName = "plate-4x4";
                     for (let w = 0; w < 4; w++) {
@@ -710,6 +734,7 @@ class BrickDataManager {
                 }
             }
         }
+
         let locks = [];
         for (let w = 0; w < 6; w++) {
             for (let l = 0; l < 2; l++) {
@@ -719,7 +744,11 @@ class BrickDataManager {
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x2x2");
-        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(locks, []));
+        BrickDataManager._BrickDatas.set("windshield-6x2x2", new BrickData(
+            locks,
+            []
+        ));
+
         locks = [];
         for (let w = 0; w < 6; w++) {
             for (let l = 0; l < 2; l++) {
@@ -729,7 +758,11 @@ class BrickDataManager {
             }
         }
         BrickDataManager.BrickNames.push("windshield-6x3x2");
-        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(locks, []));
+        BrickDataManager._BrickDatas.set("windshield-6x3x2", new BrickData(
+            locks,
+            []
+        ));
+
         let slopeLValues = [1, 2, 4, 6, 8];
         let slopeWValues = [2, 4];
         let slopeHValues = [1, 2, 4];
@@ -756,44 +789,57 @@ class BrickDataManager {
                 }
             }
         }
+
         // PlateCurb
         for (let S = 2; S <= 10; S++) {
             let plateCurbData = new BrickData();
             let plateCurbName = "plateCurb-" + S + "x" + S;
+            
             plateCurbData.locks.push(0, 0, 0);
             plateCurbData.locks.push(S - 1, 0, S - 1);
+            
             plateCurbData.covers.push(0, 0, 0);
             plateCurbData.covers.push(S - 1, 0, S - 1);
+            
             plateCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(plateCurbName, plateCurbData);
             BrickDataManager.BrickNames.push(plateCurbName);
         }
+
         // TileCurb
         for (let S = 2; S <= 10; S++) {
             let tileCurbData = new BrickData();
             let tileCurbName = "tileCurb-" + S + "x" + S;
+            
             tileCurbData.locks.push(0, 0, 0);
             tileCurbData.locks.push(S - 1, 0, S - 1);
+            
             tileCurbData.covers.push(0, 0, 0);
             tileCurbData.covers.push(S - 1, 0, S - 1);
+            
             tileCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(tileCurbName, tileCurbData);
             BrickDataManager.BrickNames.push(tileCurbName);
         }
+
         // BrickCurb
         for (let S = 2; S <= 10; S++) {
             let brickCurbData = new BrickData();
             let brickCurbName = "brickCurb-" + S + "x" + S;
+
             for (let h = 0; h < 3; h++) {
                 brickCurbData.locks.push(0, h, 0);
                 brickCurbData.locks.push(S - 1, h, S - 1);
+
                 brickCurbData.covers.push(0, h, 0);
                 brickCurbData.covers.push(S - 1, h, S - 1);
             }
+            
             brickCurbData.computeRotatedLocks();
             BrickDataManager._BrickDatas.set(brickCurbName, brickCurbData);
             BrickDataManager.BrickNames.push(brickCurbName);
         }
+        */
     }
     static async GetBrickData(brickReference) {
         if (brickReference.name.startsWith("construct_")) {
@@ -808,8 +854,53 @@ class BrickDataManager {
 }
 BrickDataManager.BrickColorNames = [];
 BrickDataManager.BrickColors = new Map();
-BrickDataManager.BrickNames = [];
+BrickDataManager.BrickNames = [
+    "plate-1x1",
+    "plate-1x2",
+    "plate-1x3",
+    "plate-1x4",
+    "plate-1x6",
+    "plate-1x8",
+    "plate-1x12",
+    "plate-2x2",
+    "plate-2x3",
+    "plate-2x4",
+    "plate-2x6",
+    "plate-2x8",
+    "plate-2x12",
+    "plate-4x4",
+];
 BrickDataManager._BrickDatas = new Map();
+var BrickType;
+(function (BrickType) {
+    BrickType[BrickType["Concrete"] = 0] = "Concrete";
+    BrickType[BrickType["Steel"] = 1] = "Steel";
+})(BrickType || (BrickType = {}));
+class BrickList {
+}
+BrickList.Concrete = [
+    "plate-1x1",
+    "plate-1x2",
+    "plate-1x3",
+    "plate-1x4",
+    "plate-1x6",
+    "plate-1x8",
+    "plate-1x12",
+    "plate-2x2",
+    "plate-2x3",
+    "plate-2x4",
+    "plate-2x6",
+    "plate-2x8",
+    "plate-2x12",
+    "plate-4x4",
+    "brick-1x1",
+    "brick-1x2",
+    "brick-1x3",
+    "brick-1x4",
+    "brick-1x6",
+    "brick-1x8",
+    "brick-1x12",
+];
 class BrickVertexData {
     static async _LoadCubicTemplateVertexData() {
         return new Promise(resolve => {
@@ -5628,8 +5719,8 @@ class Miniature extends Main {
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
-                    this.runManyScreenShots();
-                    //this.runAllScreenShots();
+                    //this.runManyScreenShots();
+                    this.runAllScreenShots();
                     //await this.createBrick("brickCurb-6x6-brightred", true);
                 }, 100);
             }
@@ -5938,77 +6029,7 @@ class PlayerTest extends Main {
             //"brightgreen",
             "white",
         ];
-        let bricks = [
-            "brick-1x1",
-            "brick-2x2",
-            "brick-1x3",
-            "brick-1x4",
-            "brick-2x4",
-            "brick-1x8",
-            "brick-2x8",
-            "plate-1x1",
-            "plate-2x2",
-            "plate-2x3",
-            "plate-1x3",
-            "plate-1x4",
-            "plate-2x4",
-            "plate-1x8",
-            "plate-2x8",
-            "plate-4x4",
-            "cone-1x1",
-            "plateRound-1x1",
-            "brickRound-1x1",
-            "brickRound-2x2",
-            "plateRound-2x2",
-            "tileRound-2x2",
-            "windowRound-2x2",
-            "windowRound-4x2",
-            "brickCornerRound-2x2",
-            "plateCornerRound-2x2",
-            "tileCornerRound-2x2",
-            "plateCornerRound-3x3",
-            "tileCornerRound-3x3"
-        ];
-        BrickDataManager.BrickNames.forEach(n => {
-            if (n.indexOf("slope") != -1) {
-                bricks.push(n);
-            }
-        });
-        inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
-        inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color: "brightbluetransparent" }));
-        for (let i = 0; i < colors.length; i++) {
-            let color = colors[i];
-            for (let j = 0; j < bricks.length; j++) {
-                let brickName = bricks[j];
-                let count = Math.floor(Math.random() * 9 + 2);
-                for (let n = 0; n < count; n++) {
-                    inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
-                }
-            }
-        }
-        colors = [
-            "white",
-        ];
-        bricks = [
-            "plateCurb-2x2",
-            "plateCurb-3x3",
-            "plateCurb-4x4",
-            "plateCurb-5x5",
-            "plateCurb-6x6",
-            "plateCurb-7x7",
-            "plateCurb-8x8",
-            "plateCurb-9x9",
-            "plateCurb-10x10",
-            "brickCurb-2x2",
-            "brickCurb-3x3",
-            "brickCurb-4x4",
-            "brickCurb-5x5",
-            "brickCurb-6x6",
-            "brickCurb-7x7",
-            "brickCurb-8x8",
-            "brickCurb-9x9",
-            "brickCurb-10x10",
-        ];
+        let bricks = BrickDataManager.BrickNames;
         for (let i = 0; i < colors.length; i++) {
             let color = colors[i];
             for (let j = 0; j < bricks.length; j++) {

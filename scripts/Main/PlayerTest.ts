@@ -119,83 +119,8 @@ class PlayerTest extends Main {
 			//"black"
 		];
 		
-		let bricks = [
-			"brick-1x1",
-			"brick-2x2",
-			"brick-1x3",
-			"brick-1x4",
-			"brick-2x4",
-			"brick-1x8",
-			"brick-2x8",
-			"plate-1x1",
-			"plate-2x2",
-			"plate-2x3",
-			"plate-1x3",
-			"plate-1x4",
-			"plate-2x4",
-			"plate-1x8",
-			"plate-2x8",
-			"plate-4x4",
-			"cone-1x1",
-			"plateRound-1x1",
-			"brickRound-1x1",
-			"brickRound-2x2",
-			"plateRound-2x2",
-			"tileRound-2x2",
-			"windowRound-2x2",
-			"windowRound-4x2",
-			"brickCornerRound-2x2",
-			"plateCornerRound-2x2",
-			"tileCornerRound-2x2",
-			"plateCornerRound-3x3",
-			"tileCornerRound-3x3"
-		];
-		BrickDataManager.BrickNames.forEach(n => {
-			if (n.indexOf("slope") != -1) {
-				bricks.push(n);
-			}
-		});
+		let bricks = BrickDataManager.BrickNames;
 		
-		inventory.addItem(await InventoryItem.Brick({ name: "construct_bar_stool_red" }));
-		inventory.addItem(await InventoryItem.Brick({ name: "windshield-6x2x2", color : "brightbluetransparent" }));
-		
-		for (let i = 0; i < colors.length; i++) {
-			let color = colors[i];
-			for (let j = 0; j < bricks.length; j++) {
-				let brickName = bricks[j];
-				let count = Math.floor(Math.random() * 9 + 2);
-				for (let n = 0; n < count; n++) {
-					inventory.addItem(await InventoryItem.Brick({ name: brickName, color : color }));
-				}
-			}
-		}
-		
-		colors = [
-			"white",
-			//"black"
-		];
-
-		bricks = [
-			"plateCurb-2x2",
-			"plateCurb-3x3",
-			"plateCurb-4x4",
-			"plateCurb-5x5",
-			"plateCurb-6x6",
-			"plateCurb-7x7",
-			"plateCurb-8x8",
-			"plateCurb-9x9",
-			"plateCurb-10x10",
-			"brickCurb-2x2",
-			"brickCurb-3x3",
-			"brickCurb-4x4",
-			"brickCurb-5x5",
-			"brickCurb-6x6",
-			"brickCurb-7x7",
-			"brickCurb-8x8",
-			"brickCurb-9x9",
-			"brickCurb-10x10",
-		];
-
 		for (let i = 0; i < colors.length; i++) {
 			let color = colors[i];
 			for (let j = 0; j < bricks.length; j++) {

@@ -41,8 +41,8 @@ class Miniature extends Main {
 			if (document.pointerLockElement) {
 				setTimeout(
 					async () => {
-						this.runManyScreenShots();
-						//this.runAllScreenShots();
+						//this.runManyScreenShots();
+						this.runAllScreenShots();
 						//await this.createBrick("brickCurb-6x6-brightred", true);
 					},
 					100
