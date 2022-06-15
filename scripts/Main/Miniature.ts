@@ -3,6 +3,7 @@
 class Miniature extends Main {
 
 	public targets: BABYLON.Mesh[] = [];
+	public sizeMarkers: BABYLON.Mesh;
 
 	public updateCameraPosition(): void {
         if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
@@ -23,6 +24,27 @@ class Miniature extends Main {
             cameraPosition.scaleInPlace(size * 1.8);
             cameraPosition.addInPlace(Main.Camera.target);
             Main.Camera.setPosition(cameraPosition);
+
+			if (this.sizeMarkers) {
+				this.sizeMarkers.dispose();
+			}
+			this.sizeMarkers = new BABYLON.Mesh("size-markers");
+			let n = 0;
+			for (let x = bbox.minimum.x; x < bbox.maximum.x + DX05; x += DX) {
+				let plane = BABYLON.MeshBuilder.CreateGround("x", { width: 0.08, height: (n % 2 === 0) ? 0.8 : 0.4 });
+				plane.position.x = x;
+				plane.position.z = bbox.maximum.z + ((n % 2 === 0) ? 0.7 : 0.5);
+				plane.parent = this.sizeMarkers;
+				n++;
+			}
+			n = 0;
+			for (let z = bbox.minimum.z; z < bbox.maximum.z + DX05; z += DX) {
+				let plane = BABYLON.MeshBuilder.CreateGround("z", { width: (n % 2 === 0) ? 0.8 : 0.4, height: 0.08 });
+				plane.position.x = bbox.minimum.x - ((n % 2 === 0) ? 0.7 : 0.5);
+				plane.position.z = z;
+				plane.parent = this.sizeMarkers;
+				n++;
+			}
         }
     }
 
@@ -42,8 +64,8 @@ class Miniature extends Main {
 				setTimeout(
 					async () => {
 						//this.runManyScreenShots();
-						this.runAllScreenShots();
-						//await this.createBrick("brickCurb-6x6-brightred", true);
+						//this.runAllScreenShots();
+						await this.createBrick("plate-2x8-white", true);
 					},
 					100
 				);
