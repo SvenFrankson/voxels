@@ -106,13 +106,16 @@ class BrickDataManager {
         
         "plate-4x4",
 
-        //"brick-1x1",
-        //"brick-1x2",
-        //"brick-1x3",
-        //"brick-1x4",
-        //"brick-1x6",
-        //"brick-1x8",
-        //"brick-1x12",
+        "brick-1x1",
+        "brick-1x2",
+        "brick-1x3",
+        "brick-1x4",
+        "brick-1x6",
+        "brick-1x8",
+        "brick-1x12",
+
+        "pilar-2",
+        "pilar-4",
     ];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
@@ -217,18 +220,19 @@ class BrickDataManager {
         });
     }
 
-    private static MakePlateData(W: number, L: number): BrickData {
-        let plateData = new BrickData();
-        let plateName = "plate-" + W + "-" + L;
+    private static MakePlateData(W: number, L: number, H: number): BrickData {
+        let brickData = new BrickData();
         for (let w = 0; w < W; w++) {
             for (let l = 0; l < L; l++) {
-                plateData.locks.push(w, 0, l);
-                plateData.covers.push(w, 0, l);
+                for (let h = 0; h < H; h++) {
+                    brickData.locks.push(w, h, l);
+                    brickData.covers.push(w, h, l);
+                }
             }
         }
-        plateData.computeRotatedLocks();
+        brickData.computeRotatedLocks();
 
-        return plateData;
+        return brickData;
     }
 
     public static InitializeProceduralData(): void {
@@ -251,15 +255,31 @@ class BrickDataManager {
             BrickDataManager.BrickColorNames.push(name);
         });
 
-        let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate"); });
+        let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
             let plateName = plateNames[i];
             let W = parseInt(plateName.split("-")[1]);
             let L = parseInt(plateName.split("-")[2]);
 
-            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakePlateData(W, L));
+            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakePlateData(W, L, 1));
         }
 
+        let brickNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("brick-"); });
+        for (let i = 0; i < brickNames.length; i++) {
+            let brickName = brickNames[i];
+            let W = parseInt(brickName.split("-")[1]);
+            let L = parseInt(brickName.split("-")[2]);
+
+            BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakePlateData(W, L, 3));
+        }
+
+        let pilarNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("pilar-"); });
+        for (let i = 0; i < pilarNames.length; i++) {
+            let pilarName = pilarNames[i];
+            let H = parseInt(pilarName.split("-")[1]);
+
+            BrickDataManager._BrickDatas.set(pilarName, BrickDataManager.MakePlateData(1, 1, H * 3));
+        }
         /*
         let LValues = [];
         let WValues = [];

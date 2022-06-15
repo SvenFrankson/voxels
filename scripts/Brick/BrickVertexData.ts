@@ -271,6 +271,10 @@ class BrickVertexData {
             let l = parseInt(size.split("x")[1]);
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
+        else if (type === "pilar") {
+            let h = parseInt(size.split("x")[0]);
+            return BrickVertexData.GenerateFromCubicTemplate(1, h * 3, 1, lod);
+        }
         else if (type.indexOf("slope") != -1) {
             let w = parseInt(size.split("x")[0]);
             let l = parseInt(size.split("x")[1]);
