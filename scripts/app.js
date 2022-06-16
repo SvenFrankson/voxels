@@ -5730,7 +5730,7 @@ class Miniature extends Main {
             let bbox = this.targets[0].getBoundingInfo();
             Main.Camera.target.copyFrom(bbox.maximum).addInPlace(bbox.minimum).scaleInPlace(0.5);
             let cameraPosition = new BABYLON.Vector3(-1, 0.6, 0.8);
-            cameraPosition.scaleInPlace(size * 1.8);
+            cameraPosition.scaleInPlace(Math.pow(size, 0.6) * 3.2);
             cameraPosition.addInPlace(Main.Camera.target);
             Main.Camera.setPosition(cameraPosition);
             if (this.sizeMarkers) {
@@ -5738,19 +5738,37 @@ class Miniature extends Main {
             }
             this.sizeMarkers = new BABYLON.Mesh("size-markers");
             let n = 0;
-            for (let x = bbox.minimum.x; x < bbox.maximum.x + DX05; x += DX) {
-                let plane = BABYLON.MeshBuilder.CreateGround("x", { width: 0.08, height: (n % 2 === 0) ? 0.8 : 0.4 });
-                plane.position.x = x;
-                plane.position.z = bbox.maximum.z + ((n % 2 === 0) ? 0.7 : 0.5);
-                plane.parent = this.sizeMarkers;
+            for (let x = bbox.minimum.x; x < bbox.maximum.x - DX05; x += DX) {
+                let cylinder = BABYLON.MeshBuilder.CreateCylinder("x", { diameter: 0.04, height: (n % 2 === 0) ? 0.8 : 0.3 });
+                cylinder.material = this.sizeMarkerMaterial;
+                cylinder.position.x = x;
+                cylinder.position.z = bbox.maximum.z + ((n % 2 === 0) ? 0.6 : 0.35);
+                cylinder.rotation.x = Math.PI / 2;
+                cylinder.parent = this.sizeMarkers;
+                cylinder.layerMask = 1;
+                n++;
+            }
+            n = 0;
+            for (let y = bbox.minimum.y; y < bbox.maximum.y + DY05; y += DY) {
+                let cylinder = BABYLON.MeshBuilder.CreateCylinder("y", { diameter: 0.04, height: (n % 3 === 0) ? 0.8 : 0.3 });
+                cylinder.material = this.sizeMarkerMaterial;
+                cylinder.position.x = bbox.maximum.x;
+                cylinder.position.y = y;
+                cylinder.position.z = bbox.maximum.z + ((n % 3 === 0) ? 0.6 : 0.35);
+                cylinder.rotation.x = Math.PI / 2;
+                cylinder.parent = this.sizeMarkers;
+                cylinder.layerMask = 1;
                 n++;
             }
             n = 0;
             for (let z = bbox.minimum.z; z < bbox.maximum.z + DX05; z += DX) {
-                let plane = BABYLON.MeshBuilder.CreateGround("z", { width: (n % 2 === 0) ? 0.8 : 0.4, height: 0.08 });
-                plane.position.x = bbox.minimum.x - ((n % 2 === 0) ? 0.7 : 0.5);
-                plane.position.z = z;
-                plane.parent = this.sizeMarkers;
+                let cylinder = BABYLON.MeshBuilder.CreateCylinder("z", { diameter: 0.04, height: (n % 2 === 0) ? 0.8 : 0.3 });
+                cylinder.material = this.sizeMarkerMaterial;
+                cylinder.position.x = bbox.minimum.x - ((n % 2 === 0) ? 0.6 : 0.35);
+                cylinder.position.z = z;
+                cylinder.rotation.z = Math.PI / 2;
+                cylinder.parent = this.sizeMarkers;
+                cylinder.layerMask = 1;
                 n++;
             }
         }
@@ -5760,15 +5778,18 @@ class Miniature extends Main {
         await BrickVertexData.InitializeData();
         BrickDataManager.InitializeProceduralData();
         await BrickDataManager.InitializeDataFromFile();
+        this.sizeMarkerMaterial = new BABYLON.StandardMaterial("size-marker-material", Main.Scene);
+        this.sizeMarkerMaterial.specularColor.copyFromFloats(0, 0, 0);
+        this.sizeMarkerMaterial.diffuseColor.copyFromFloats(0, 0, 0);
         Main.Skybox.dispose();
-        Main.Scene.clearColor.copyFromFloats(0, 1, 0, 1);
+        Main.Scene.clearColor.copyFromFloats(0, 0, 0, 0);
         console.log("Miniature initialized.");
         let loop = () => {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
-                    //this.runAllScreenShots();
-                    await this.createBrick("plate-2x8-white", true);
+                    this.runAllScreenShots();
+                    //await this.createBrick("brick-2x8-white", true);
                 }, 100);
             }
             else {
@@ -5920,13 +5941,13 @@ class Miniature extends Main {
                             let r = data.data[4 * i];
                             let g = data.data[4 * i + 1];
                             let b = data.data[4 * i + 2];
-                            if (r === 0 && g === 255 && b === 0) {
+                            /*if (r === 0 && g === 255 && b === 0) {
                                 data.data[4 * i] = 0;
                                 data.data[4 * i + 1] = 0;
                                 data.data[4 * i + 2] = 0;
                                 data.data[4 * i + 3] = 0;
                             }
-                            else if (desaturate) {
+                            else*/ if (desaturate) {
                                 let desat = (r + g + b) / 3;
                                 desat = Math.floor(Math.sqrt(desat / 255) * 255);
                                 data.data[4 * i] = desat;
@@ -5935,6 +5956,7 @@ class Miniature extends Main {
                                 data.data[4 * i + 3] = 255;
                             }
                         }
+                        /*
                         for (let i = 0; i < data.data.length / 4; i++) {
                             let a = data.data[4 * i + 3];
                             if (a === 0) {
@@ -5962,6 +5984,7 @@ class Miniature extends Main {
                                 }
                             }
                         }
+                        */
                         context.putImageData(data, 0, 0);
                         var tmpLink = document.createElement('a');
                         let name = "Unknown";

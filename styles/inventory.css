@@ -73,7 +73,7 @@
     height: 64px;
     margin: 2px;
     margin-bottom: 0px;
-    background: black;
+    background: rgba(255, 255, 255, 50%);
     background-size: cover;
 }
 
