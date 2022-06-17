@@ -272,7 +272,7 @@ class BrickVertexData {
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
         else if (type === "pilar") {
-            let h = parseInt(size.split("x")[0]);
+            let h = parseInt(size);
             return BrickVertexData.GenerateFromCubicTemplate(1, h * 3, 1, lod);
         }
         else if (type.indexOf("slope") != -1) {
@@ -288,11 +288,11 @@ class BrickVertexData {
             }
         }
         else if (type === "plateCurb" || type === "tileCurb") {
-            let s = parseInt(size.split("x")[0]);
+            let s = parseInt(size);
             return await BrickVertexData.GenerateFromCurbTemplate(s, 1, lod);
         }
         else if (type === "brickCurb") {
-            let s = parseInt(size.split("x")[0]);
+            let s = parseInt(size);
             return await BrickVertexData.GenerateFromCurbTemplate(s, 3, lod);
         }
         else if (type.startsWith("construct_")) {

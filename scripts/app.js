@@ -634,18 +634,29 @@ class BrickDataManager {
             xhr.send();
         });
     }
-    static MakePlateData(W, L, H) {
-        let brickData = new BrickData();
+    static MakeCubeData(W, L, H) {
+        let cubeData = new BrickData();
         for (let w = 0; w < W; w++) {
             for (let l = 0; l < L; l++) {
                 for (let h = 0; h < H; h++) {
-                    brickData.locks.push(w, h, l);
-                    brickData.covers.push(w, h, l);
+                    cubeData.locks.push(w, h, l);
+                    cubeData.covers.push(w, h, l);
                 }
             }
         }
-        brickData.computeRotatedLocks();
-        return brickData;
+        cubeData.computeRotatedLocks();
+        return cubeData;
+    }
+    static MakeCurbData(W, H) {
+        let curbData = new BrickData();
+        for (let h = 0; h < H; h++) {
+            curbData.locks.push(0, h, 0);
+            curbData.locks.push(W - 1, h, W - 1);
+            curbData.covers.push(0, h, 0);
+            curbData.covers.push(W - 1, h, W - 1);
+        }
+        curbData.computeRotatedLocks();
+        return curbData;
     }
     static InitializeProceduralData() {
         //BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
@@ -670,20 +681,32 @@ class BrickDataManager {
             let plateName = plateNames[i];
             let W = parseInt(plateName.split("-")[1]);
             let L = parseInt(plateName.split("-")[2]);
-            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakePlateData(W, L, 1));
+            BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakeCubeData(W, L, 1));
         }
         let brickNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("brick-"); });
         for (let i = 0; i < brickNames.length; i++) {
             let brickName = brickNames[i];
             let W = parseInt(brickName.split("-")[1]);
             let L = parseInt(brickName.split("-")[2]);
-            BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakePlateData(W, L, 3));
+            BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakeCubeData(W, L, 3));
         }
         let pilarNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("pilar-"); });
         for (let i = 0; i < pilarNames.length; i++) {
             let pilarName = pilarNames[i];
             let H = parseInt(pilarName.split("-")[1]);
-            BrickDataManager._BrickDatas.set(pilarName, BrickDataManager.MakePlateData(1, 1, H * 3));
+            BrickDataManager._BrickDatas.set(pilarName, BrickDataManager.MakeCubeData(1, 1, H * 3));
+        }
+        let plateCurbs = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plateCurb-"); });
+        for (let i = 0; i < plateCurbs.length; i++) {
+            let brickName = plateCurbs[i];
+            let W = parseInt(brickName.split("-")[1]);
+            BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakeCurbData(W, 1));
+        }
+        let brickCurbs = BrickDataManager.BrickNames.filter(name => { return name.startsWith("brickCurb-"); });
+        for (let i = 0; i < brickCurbs.length; i++) {
+            let brickName = brickCurbs[i];
+            let W = parseInt(brickName.split("-")[1]);
+            BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakeCurbData(W, 3));
         }
         /*
         let LValues = [];
@@ -890,6 +913,12 @@ BrickDataManager.BrickNames = [
     "brick-1x6",
     "brick-1x8",
     "brick-1x12",
+    "plateCurb-2",
+    "plateCurb-3",
+    "plateCurb-4",
+    "brickCurb-2",
+    "brickCurb-3",
+    "brickCurb-4",
     "pilar-2",
     "pilar-4",
 ];
@@ -1134,7 +1163,7 @@ class BrickVertexData {
             return BrickVertexData.GenerateFromCubicTemplate(w, 1, l, lod);
         }
         else if (type === "pilar") {
-            let h = parseInt(size.split("x")[0]);
+            let h = parseInt(size);
             return BrickVertexData.GenerateFromCubicTemplate(1, h * 3, 1, lod);
         }
         else if (type.indexOf("slope") != -1) {
@@ -1150,11 +1179,11 @@ class BrickVertexData {
             }
         }
         else if (type === "plateCurb" || type === "tileCurb") {
-            let s = parseInt(size.split("x")[0]);
+            let s = parseInt(size);
             return await BrickVertexData.GenerateFromCurbTemplate(s, 1, lod);
         }
         else if (type === "brickCurb") {
-            let s = parseInt(size.split("x")[0]);
+            let s = parseInt(size);
             return await BrickVertexData.GenerateFromCurbTemplate(s, 3, lod);
         }
         else if (type.startsWith("construct_")) {
