@@ -86,8 +86,7 @@ class BrickData {
 
 class BrickDataManager {
 
-    public static BrickColorNames: string[] = [];
-    public static BrickColors: Map<string, BABYLON.Color4> = new Map<string, BABYLON.Color4>();
+    public static BrickColors: Map<BrickColor, BABYLON.Color4> = new Map<BrickColor, BABYLON.Color4>();
     public static BrickNames: string[] = [
         "plate-1x1",
         "plate-1x2",
@@ -272,12 +271,9 @@ class BrickDataManager {
         //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
         //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
         //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
-        BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
-
-        BrickDataManager.BrickColors.forEach((color, name) => {
-            BrickDataManager.BrickColorNames.push(name);
-        });
 
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {

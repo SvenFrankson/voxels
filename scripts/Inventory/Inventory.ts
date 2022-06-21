@@ -315,7 +315,7 @@ class Inventory {
                 this.hightlightButton(this._sortBrickColor);
                 currentSectionItems = currentSectionItems.sort(
                     (a, b) => {
-                        return a.brickReference.color.localeCompare(b.brickReference.color);
+                        return a.brickReference.color - b.brickReference.color;
                     }
                 )
             }
@@ -323,7 +323,7 @@ class Inventory {
                 this.hightlightButton(this._sortBrickColor);
                 currentSectionItems = currentSectionItems.sort(
                     (a, b) => {
-                        return - a.brickReference.color.localeCompare(b.brickReference.color);
+                        return a.brickReference.color - b.brickReference.color;
                     }
                 )
             }

@@ -388,12 +388,7 @@ class PlayerActionTemplate {
                                     data.applyToMesh(previewMesh);
                                 }
                             );
-                            if (brickReference.color && brickReference.color.indexOf("transparent") != -1) {
-                                previewMesh.material = Main.cellShadingTransparentMaterial;
-                            }
-                            else {
-                                previewMesh.material = Main.cellShadingMaterial;
-                            }
+                            previewMesh.material = Main.cellShadingMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);

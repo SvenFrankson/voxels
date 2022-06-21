@@ -22,12 +22,11 @@ class TileTest extends Main {
         inventory.initialize();
         
         for (let i = 0; i < 20; i++) {
-            let colors = BrickDataManager.BrickColorNames;
-            let color = colors[Math.floor(Math.random() * colors.length)];
+            let type = BrickType.Concrete;
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {
-                inventory.addItem(await InventoryItem.Brick({name: brickName, color: color }));
+                inventory.addItem(await InventoryItem.Brick({ name: brickName, type: type, color: Brick.DefaultColor(type) }));
             }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);

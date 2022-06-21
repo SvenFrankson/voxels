@@ -118,16 +118,20 @@ class PlayerTest extends Main {
 			"white",
 			//"black"
 		];
+
+		let types = [
+			BrickType.Concrete
+		]
 		
 		let bricks = BrickDataManager.BrickNames;
 		
-		for (let i = 0; i < colors.length; i++) {
-			let color = colors[i];
+		for (let i = 0; i < types.length; i++) {
+			let type = types[i];
 			for (let j = 0; j < bricks.length; j++) {
 				let brickName = bricks[j];
 				let count = Math.floor(Math.random() * 9 + 2);
 				for (let n = 0; n < count; n++) {
-					inventory.addItem(await InventoryItem.Brick({ name: brickName, color : color }));
+					inventory.addItem(await InventoryItem.Brick({ name: brickName, type: type, color: Brick.DefaultColor(type) }));
 				}
 			}
 		}

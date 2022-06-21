@@ -385,12 +385,7 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            if (brick.reference.color && brick.reference.color.indexOf("transparent") != -1) {
-                b.material = Main.cellShadingTransparentMaterial;
-            }
-            else {
-                b.material = Main.cellShadingMaterial;
-            }
+            b.material = Main.cellShadingMaterial;
             this.brickMeshes.push(b);
         }
         await this.updateLocks();

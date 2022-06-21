@@ -6,24 +6,54 @@ interface IBrickData {
     r: number;
 }
 
+enum BrickType {
+    None = 0,
+    Concrete,
+    Steel
+}
+
+enum BrickColor {
+    None = 0,
+    White,
+    Gray,
+    Black,
+}
+
 interface IBrickReference {
     name: string;
-    color?: string;
+    type: BrickType;
+    color: BrickColor;
 }
 
 class Brick {
 
+    public static DefaultColor(type: BrickType): BrickColor {
+        if (type === BrickType.None) {
+            return BrickColor.None;
+        }
+        else if (type === BrickType.Concrete) {
+            return BrickColor.Gray;
+        }
+        else if (type === BrickType.Steel) {
+            return BrickColor.Black;
+        }
+    }
+
     public static ParseReference(brickReference: string): IBrickReference {
         if (brickReference.startsWith("construct_")) {
             return {
-                name: brickReference
+                name: brickReference,
+                type: BrickType.None,
+                color: BrickColor.None,
             };
         }
         let splitRef = brickReference.split("-");
-        let color = splitRef.pop();
+        let color = parseInt(splitRef.pop());
+        let type = parseInt(splitRef.pop());
         let name = splitRef.join("-");
         return {
             name: name,
+            type: type,
             color: color
         };
     }
@@ -32,7 +62,7 @@ class Brick {
         if (brickReference.name.startsWith("construct_")) {
             return brickReference.name;
         }
-        return brickReference.name + "-" + brickReference.color;
+        return brickReference.name + "-" + brickReference.type.toFixed(0) + "-" + brickReference.color.toFixed(0);
     }
 
     public reference: IBrickReference;
@@ -99,7 +129,7 @@ class Brick {
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference.name + "-" + this.reference.color
+            reference: this.reference.name + "-" + this.reference.type.toFixed(0) + "-" + this.reference.color.toFixed(0)
         };
     }
 

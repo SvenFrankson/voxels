@@ -146,13 +146,10 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
-		let colors = BrickDataManager.BrickColorNames;
 		for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
 			let name = BrickDataManager.BrickNames[i];
-			for (let j = 0; j < colors.length; j++) {
-				let color = colors[j];
-				await this.createBrick(name + "-" + color);
-			}
+			let type = BrickType.Concrete;
+			await this.createBrick(name + "-" + type.toFixed(0) + "-" + Brick.DefaultColor(type).toFixed(0));
 		}
 		/*
         await this.createCube(CubeType.Dirt);

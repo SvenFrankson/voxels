@@ -353,6 +353,19 @@ class BlockVertexData {
         });
     }
 }
+var BrickType;
+(function (BrickType) {
+    BrickType[BrickType["None"] = 0] = "None";
+    BrickType[BrickType["Concrete"] = 1] = "Concrete";
+    BrickType[BrickType["Steel"] = 2] = "Steel";
+})(BrickType || (BrickType = {}));
+var BrickColor;
+(function (BrickColor) {
+    BrickColor[BrickColor["None"] = 0] = "None";
+    BrickColor[BrickColor["White"] = 1] = "White";
+    BrickColor[BrickColor["Gray"] = 2] = "Gray";
+    BrickColor[BrickColor["Black"] = 3] = "Black";
+})(BrickColor || (BrickColor = {}));
 class Brick {
     constructor() {
         this._i = 0;
@@ -360,17 +373,32 @@ class Brick {
         this._k = 0;
         this._r = 0;
     }
+    static DefaultColor(type) {
+        if (type === BrickType.None) {
+            return BrickColor.None;
+        }
+        else if (type === BrickType.Concrete) {
+            return BrickColor.Gray;
+        }
+        else if (type === BrickType.Steel) {
+            return BrickColor.Black;
+        }
+    }
     static ParseReference(brickReference) {
         if (brickReference.startsWith("construct_")) {
             return {
-                name: brickReference
+                name: brickReference,
+                type: BrickType.None,
+                color: BrickColor.None,
             };
         }
         let splitRef = brickReference.split("-");
-        let color = splitRef.pop();
+        let color = parseInt(splitRef.pop());
+        let type = parseInt(splitRef.pop());
         let name = splitRef.join("-");
         return {
             name: name,
+            type: type,
             color: color
         };
     }
@@ -378,7 +406,7 @@ class Brick {
         if (brickReference.name.startsWith("construct_")) {
             return brickReference.name;
         }
-        return brickReference.name + "-" + brickReference.color;
+        return brickReference.name + "-" + brickReference.type.toFixed(0) + "-" + brickReference.color.toFixed(0);
     }
     get tile() {
         return this._tile;
@@ -427,7 +455,7 @@ class Brick {
             j: this.j,
             k: this.k,
             r: this.r,
-            reference: this.reference.name + "-" + this.reference.color
+            reference: this.reference.name + "-" + this.reference.type.toFixed(0) + "-" + this.reference.color.toFixed(0)
         };
     }
     deserialize(data) {
@@ -671,11 +699,9 @@ class BrickDataManager {
         //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
         //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
         //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
-        BrickDataManager.BrickColors.set("white", BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
-        BrickDataManager.BrickColors.forEach((color, name) => {
-            BrickDataManager.BrickColorNames.push(name);
-        });
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
             let plateName = plateNames[i];
@@ -889,7 +915,6 @@ class BrickDataManager {
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
-BrickDataManager.BrickColorNames = [];
 BrickDataManager.BrickColors = new Map();
 BrickDataManager.BrickNames = [
     "plate-1x1",
@@ -923,36 +948,6 @@ BrickDataManager.BrickNames = [
     "pilar-4",
 ];
 BrickDataManager._BrickDatas = new Map();
-var BrickType;
-(function (BrickType) {
-    BrickType[BrickType["Concrete"] = 0] = "Concrete";
-    BrickType[BrickType["Steel"] = 1] = "Steel";
-})(BrickType || (BrickType = {}));
-class BrickList {
-}
-BrickList.Concrete = [
-    "plate-1x1",
-    "plate-1x2",
-    "plate-1x3",
-    "plate-1x4",
-    "plate-1x6",
-    "plate-1x8",
-    "plate-1x12",
-    "plate-2x2",
-    "plate-2x3",
-    "plate-2x4",
-    "plate-2x6",
-    "plate-2x8",
-    "plate-2x12",
-    "plate-4x4",
-    "brick-1x1",
-    "brick-1x2",
-    "brick-1x3",
-    "brick-1x4",
-    "brick-1x6",
-    "brick-1x8",
-    "brick-1x12",
-];
 class BrickVertexData {
     static async _LoadCubicTemplateVertexData() {
         return new Promise(resolve => {
@@ -3165,12 +3160,7 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            if (brick.reference.color && brick.reference.color.indexOf("transparent") != -1) {
-                b.material = Main.cellShadingTransparentMaterial;
-            }
-            else {
-                b.material = Main.cellShadingMaterial;
-            }
+            b.material = Main.cellShadingMaterial;
             this.brickMeshes.push(b);
         }
         await this.updateLocks();
@@ -4722,12 +4712,7 @@ class PlayerActionTemplate {
                             BrickVertexData.GetFullBrickVertexData(brickReference).then(data => {
                                 data.applyToMesh(previewMesh);
                             });
-                            if (brickReference.color && brickReference.color.indexOf("transparent") != -1) {
-                                previewMesh.material = Main.cellShadingTransparentMaterial;
-                            }
-                            else {
-                                previewMesh.material = Main.cellShadingMaterial;
-                            }
+                            previewMesh.material = Main.cellShadingMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -5236,13 +5221,13 @@ class Inventory {
             else if (this._brickSorting === BrickSortingOrder.ColorAsc) {
                 this.hightlightButton(this._sortBrickColor);
                 currentSectionItems = currentSectionItems.sort((a, b) => {
-                    return a.brickReference.color.localeCompare(b.brickReference.color);
+                    return a.brickReference.color - b.brickReference.color;
                 });
             }
             else if (this._brickSorting === BrickSortingOrder.ColorDesc) {
                 this.hightlightButton(this._sortBrickColor);
                 currentSectionItems = currentSectionItems.sort((a, b) => {
-                    return -a.brickReference.color.localeCompare(b.brickReference.color);
+                    return a.brickReference.color - b.brickReference.color;
                 });
             }
             else if (this._brickSorting === BrickSortingOrder.Recent) {
@@ -5869,13 +5854,10 @@ class Miniature extends Main {
         }
     }
     async runAllScreenShots() {
-        let colors = BrickDataManager.BrickColorNames;
         for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
             let name = BrickDataManager.BrickNames[i];
-            for (let j = 0; j < colors.length; j++) {
-                let color = colors[j];
-                await this.createBrick(name + "-" + color);
-            }
+            let type = BrickType.Concrete;
+            await this.createBrick(name + "-" + type.toFixed(0) + "-" + Brick.DefaultColor(type).toFixed(0));
         }
         /*
         await this.createCube(CubeType.Dirt);
@@ -6128,14 +6110,17 @@ class PlayerTest extends Main {
             //"brightgreen",
             "white",
         ];
+        let types = [
+            BrickType.Concrete
+        ];
         let bricks = BrickDataManager.BrickNames;
-        for (let i = 0; i < colors.length; i++) {
-            let color = colors[i];
+        for (let i = 0; i < types.length; i++) {
+            let type = types[i];
             for (let j = 0; j < bricks.length; j++) {
                 let brickName = bricks[j];
                 let count = Math.floor(Math.random() * 9 + 2);
                 for (let n = 0; n < count; n++) {
-                    inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
+                    inventory.addItem(await InventoryItem.Brick({ name: brickName, type: type, color: Brick.DefaultColor(type) }));
                 }
             }
         }
@@ -6322,12 +6307,11 @@ class TileTest extends Main {
         let inventory = new Inventory(player);
         inventory.initialize();
         for (let i = 0; i < 20; i++) {
-            let colors = BrickDataManager.BrickColorNames;
-            let color = colors[Math.floor(Math.random() * colors.length)];
+            let type = BrickType.Concrete;
             let brickName = BrickDataManager.BrickNames[Math.floor(Math.random() * BrickDataManager.BrickNames.length)];
             let count = Math.floor(Math.random() * 9 + 2);
             for (let n = 0; n < count; n++) {
-                inventory.addItem(await InventoryItem.Brick({ name: brickName, color: color }));
+                inventory.addItem(await InventoryItem.Brick({ name: brickName, type: type, color: Brick.DefaultColor(type) }));
             }
         }
         player.playerActionManager.linkAction(inventory.items[0].playerAction, 1);
