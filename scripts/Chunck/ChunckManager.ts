@@ -318,12 +318,7 @@ class ChunckManager {
         }
     }
 
-    public getChunckLock(chunck: Chunck_V2, i: number, j: number, k: number): boolean {
-        if (!chunck) {
-            debugger;
-            return true;
-        }
-
+    public getChunckLock(chunck: Chunck_V2, i: number, j: number, k: number): Brick {
         if (i < 0) {
             chunck = this.getChunck(chunck.i - 1, chunck.j, chunck.k) as Chunck_V2;
             return this.getChunckLock(chunck, i + DX_PER_CHUNCK, j, k);
@@ -352,37 +347,37 @@ class ChunckManager {
         return chunck.getLock(i, j, k);
     }
 
-    public setChunckLock(chunck: Chunck_V2, i: number, j: number, k: number, lock: boolean = true): void {
+    public setChunckLock(chunck: Chunck_V2, i: number, j: number, k: number, brick?: Brick): void {
         if (!chunck) {
             return;
         }
 
         if (i < 0) {
             chunck = this.getChunck(chunck.i - 1, j, k) as Chunck_V2;
-            return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, lock);
+            return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, brick);
         }
         if (i >= DX_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i + 1, j, k) as Chunck_V2;
-            return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, lock);
+            return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, brick);
         }
         if (j < 0) {
             chunck = this.getChunck(chunck.i, j - 1, k) as Chunck_V2;
-            return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, lock);
+            return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, brick);
         }
         if (j >= DY_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, j + 1, k) as Chunck_V2;
-            return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, lock);
+            return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, brick);
         }
         if (k < 0) {
             chunck = this.getChunck(chunck.i, j, k - 1) as Chunck_V2;
-            return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, lock);
+            return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, brick);
         }
         if (k >= DX_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, j, k + 1) as Chunck_V2;
-            return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, lock);
+            return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, brick);
         }
         
-        return chunck.setLock(i, j, k, lock);
+        return chunck.setLock(i, j, k, brick);
     }
 
     public redrawZone(IMin: number, JMin: number, KMin: number, IMax: number, JMax: number, KMax: number): void {

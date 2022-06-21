@@ -1871,10 +1871,6 @@ class ChunckManager {
         }
     }
     getChunckLock(chunck, i, j, k) {
-        if (!chunck) {
-            debugger;
-            return true;
-        }
         if (i < 0) {
             chunck = this.getChunck(chunck.i - 1, chunck.j, chunck.k);
             return this.getChunckLock(chunck, i + DX_PER_CHUNCK, j, k);
@@ -1901,35 +1897,35 @@ class ChunckManager {
         }
         return chunck.getLock(i, j, k);
     }
-    setChunckLock(chunck, i, j, k, lock = true) {
+    setChunckLock(chunck, i, j, k, brick) {
         if (!chunck) {
             return;
         }
         if (i < 0) {
             chunck = this.getChunck(chunck.i - 1, j, k);
-            return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, lock);
+            return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, brick);
         }
         if (i >= DX_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i + 1, j, k);
-            return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, lock);
+            return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, brick);
         }
         if (j < 0) {
             chunck = this.getChunck(chunck.i, j - 1, k);
-            return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, lock);
+            return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, brick);
         }
         if (j >= DY_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, j + 1, k);
-            return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, lock);
+            return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, brick);
         }
         if (k < 0) {
             chunck = this.getChunck(chunck.i, j, k - 1);
-            return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, lock);
+            return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, brick);
         }
         if (k >= DX_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, j, k + 1);
-            return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, lock);
+            return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, brick);
         }
-        return chunck.setLock(i, j, k, lock);
+        return chunck.setLock(i, j, k, brick);
     }
     redrawZone(IMin, JMin, KMin, IMax, JMax, KMax) {
         let iChunckMin = Math.floor(IMin / CHUNCK_SIZE);
@@ -2970,26 +2966,26 @@ class Chunck_V2 extends Chunck {
     getLockSafe(i, j, k) {
         return this.manager.getChunckLock(this, i, j, k);
     }
-    setLock(i, j, k, lock = true) {
-        if (lock) {
+    setLock(i, j, k, brick) {
+        if (brick) {
             if (!this._locks[i]) {
                 this._locks[i] = [];
             }
             if (!this._locks[i][j]) {
                 this._locks[i][j] = [];
             }
-            this._locks[i][j][k] = true;
+            this._locks[i][j][k] = brick;
         }
         else {
             if (this._locks[i]) {
                 if (this._locks[j]) {
-                    this._locks[i][j][k] = false;
+                    this._locks[i][j][k] = undefined;
                 }
             }
         }
     }
-    setLockSafe(i, j, k, lock = true) {
-        return this.manager.setChunckLock(this, i, j, k, lock);
+    setLockSafe(i, j, k, brick) {
+        return this.manager.setChunckLock(this, i, j, k, brick);
     }
     async generate() {
         let positions = [];
@@ -4756,7 +4752,6 @@ class PlayerActionTemplate {
                 console.log(coordinates.chunck);
                 console.log(coordinates.coordinates);
                 if (coordinates) {
-                    console.log("alpha");
                     let brick = new Brick();
                     brick.reference = brickReference;
                     brick.i = coordinates.coordinates.x - anchorX;
@@ -4764,9 +4759,7 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = action.r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        console.log("bravo");
                         if (await coordinates.chunck.addBrickSafe(brick)) {
-                            console.log("charly");
                             await coordinates.chunck.updateBricks();
                             onBrickAddedCallback();
                         }
@@ -4787,6 +4780,136 @@ class PlayerActionTemplate {
         };
         return action;
     }
+    /*
+    public static async PaintAction(color: BrickColor, onPaintAddedCallback = () => {}): Promise<PlayerAction> {
+        let action = new PlayerAction("paint-" + color.toFixed(0));
+
+        let debugText: DebugText3D;
+        let ctrlDown = false;
+
+        let t = 0;
+
+        action.iconUrl = "./datas/textures/miniatures/paint-red.png";
+
+        action.onKeyDown = (e: KeyboardEvent) => {
+            if (e.code === "ControlLeft") {
+                ctrlDown = true;
+            }
+        }
+
+        action.onKeyUp = (e: KeyboardEvent) => {
+            if (e.code === "KeyR") {
+                action.r = (action.r + 1) % 4;
+            }
+            else if (e.code === "ControlLeft") {
+                ctrlDown = false;
+            }
+        }
+
+        action.onWheel = (e: WheelEvent) => {
+            e.preventDefault();
+        }
+
+        action.onUpdate = () => {
+            t += Main.Engine.getDeltaTime();
+            if (t >= ADD_BRICK_ANIMATION_DURATION) {
+                t = 0;
+            }
+            
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
+            if (pickInfo && pickInfo.hit) {
+                document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
+                document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
+                let world = pickInfo.pickedPoint.clone();
+                world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                if (coordinates) {
+                    let i = coordinates.coordinates.x;
+                    let j = coordinates.coordinates.y;
+                    let k = coordinates.coordinates.z;
+                    if (coordinates.chunck instanceof Chunck_V2) {
+                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
+                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
+                        }
+                        else {
+                            previewMeshOffset.copyFromFloats(0, 0, 0);
+                        }
+                        if (!previewMesh) {
+                            previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                            previewMesh.isPickable = false;
+                            BrickVertexData.GetFullBrickVertexData(brickReference).then(
+                                data => {
+                                    data.applyToMesh(previewMesh);
+                                }
+                            );
+                            previewMesh.material = Main.cellShadingMaterial;
+                        }
+                        previewMesh.position.copyFrom(coordinates.chunck.position);
+                        previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
+                        previewMesh.position.addInPlace(previewMeshOffset);
+                        previewMesh.rotation.y = Math.PI / 2 * action.r;
+                    }
+                }
+            }
+
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                if (!debugText) {
+                    debugText = DebugText3D.CreateText("", coordinates.chunck.position);
+                }
+                let text = "";
+                text += "r = " + action.r + "<br>";
+                text += "anchorX = " + anchorX + "<br>";
+                text += "anchorZ = " + anchorZ + "<br>";
+                debugText.setText(text);
+            }
+        }
+
+        action.onClick = async () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
+            if (pickInfo && pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                console.log(coordinates.chunck);
+                console.log(coordinates.coordinates);
+                if (coordinates) {
+                    let brick = new Brick();
+                    brick.reference = brickReference;
+                    brick.i = coordinates.coordinates.x - anchorX;
+                    brick.j = coordinates.coordinates.y;
+                    brick.k = coordinates.coordinates.z - anchorZ;
+                    brick.r = action.r;
+                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
+                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                            await coordinates.chunck.updateBricks();
+                            onBrickAddedCallback();
+                        }
+                    }
+                }
+            }
+        }
+
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                if (debugText) {
+                    debugText.dispose();
+                }
+            }
+        }
+        
+        return action;
+    }
+    */
     static CreateMountainAction(r, h, roughness) {
         let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";

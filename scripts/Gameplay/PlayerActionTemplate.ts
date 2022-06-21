@@ -434,7 +434,6 @@ class PlayerActionTemplate {
                 console.log(coordinates.chunck);
                 console.log(coordinates.coordinates);
                 if (coordinates) {
-                    console.log("alpha");
                     let brick = new Brick();
                     brick.reference = brickReference;
                     brick.i = coordinates.coordinates.x - anchorX;
@@ -442,9 +441,7 @@ class PlayerActionTemplate {
                     brick.k = coordinates.coordinates.z - anchorZ;
                     brick.r = action.r;
                     if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        console.log("bravo");
                         if (await coordinates.chunck.addBrickSafe(brick)) {
-                            console.log("charly");
                             await coordinates.chunck.updateBricks();
                             onBrickAddedCallback();
                         }
@@ -467,6 +464,137 @@ class PlayerActionTemplate {
         
         return action;
     }
+
+    /*
+    public static async PaintAction(color: BrickColor, onPaintAddedCallback = () => {}): Promise<PlayerAction> {
+        let action = new PlayerAction("paint-" + color.toFixed(0));
+
+        let debugText: DebugText3D;
+        let ctrlDown = false;
+
+        let t = 0;
+
+        action.iconUrl = "./datas/textures/miniatures/paint-red.png";
+
+        action.onKeyDown = (e: KeyboardEvent) => {
+            if (e.code === "ControlLeft") {
+                ctrlDown = true;
+            }
+        }
+
+        action.onKeyUp = (e: KeyboardEvent) => {
+            if (e.code === "KeyR") {
+                action.r = (action.r + 1) % 4;
+            }
+            else if (e.code === "ControlLeft") {
+                ctrlDown = false;
+            }
+        }
+
+        action.onWheel = (e: WheelEvent) => {
+            e.preventDefault();
+        }
+
+        action.onUpdate = () => {
+            t += Main.Engine.getDeltaTime();
+            if (t >= ADD_BRICK_ANIMATION_DURATION) {
+                t = 0;
+            }
+            
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
+            if (pickInfo && pickInfo.hit) {
+                document.getElementById("picked-mesh").innerText = pickInfo.pickedMesh ? pickInfo.pickedMesh.name : "";
+                document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
+                let world = pickInfo.pickedPoint.clone();
+                world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                if (coordinates) {
+                    let i = coordinates.coordinates.x;
+                    let j = coordinates.coordinates.y;
+                    let k = coordinates.coordinates.z;
+                    if (coordinates.chunck instanceof Chunck_V2) {
+                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
+                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
+                        }
+                        else {
+                            previewMeshOffset.copyFromFloats(0, 0, 0);
+                        }
+                        if (!previewMesh) {
+                            previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
+                            previewMesh.isPickable = false;
+                            BrickVertexData.GetFullBrickVertexData(brickReference).then(
+                                data => {
+                                    data.applyToMesh(previewMesh);
+                                }
+                            );
+                            previewMesh.material = Main.cellShadingMaterial;
+                        }
+                        previewMesh.position.copyFrom(coordinates.chunck.position);
+                        previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
+                        previewMesh.position.addInPlace(previewMeshOffset);
+                        previewMesh.rotation.y = Math.PI / 2 * action.r;
+                    }
+                }
+            }
+
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                if (!debugText) {
+                    debugText = DebugText3D.CreateText("", coordinates.chunck.position);
+                }
+                let text = "";
+                text += "r = " + action.r + "<br>";
+                text += "anchorX = " + anchorX + "<br>";
+                text += "anchorZ = " + anchorZ + "<br>";
+                debugText.setText(text);
+            }
+        }
+
+        action.onClick = async () => {
+            let x = Main.Engine.getRenderWidth() * 0.5;
+            let y = Main.Engine.getRenderHeight() * 0.5;
+            let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
+            if (pickInfo && pickInfo.hit) {
+                let world = pickInfo.pickedPoint.clone();
+                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
+                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
+                console.log(coordinates.chunck);
+                console.log(coordinates.coordinates);
+                if (coordinates) {
+                    let brick = new Brick();
+                    brick.reference = brickReference;
+                    brick.i = coordinates.coordinates.x - anchorX;
+                    brick.j = coordinates.coordinates.y;
+                    brick.k = coordinates.coordinates.z - anchorZ;
+                    brick.r = action.r;
+                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
+                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                            await coordinates.chunck.updateBricks();
+                            onBrickAddedCallback();
+                        }
+                    }
+                }
+            }
+        }
+
+        action.onUnequip = () => {
+            if (previewMesh) {
+                previewMesh.dispose();
+                previewMesh = undefined;
+            }
+            if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                if (debugText) {
+                    debugText.dispose();
+                }
+            }
+        }
+        
+        return action;
+    }
+    */
 
     public static CreateMountainAction(r: number, h: number, roughness: number): PlayerAction {
         let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);

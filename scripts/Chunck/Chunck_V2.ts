@@ -15,7 +15,7 @@ class Chunck_V2 extends Chunck {
     public bricks: Brick[] = [];
     public brickMeshes: BABYLON.Mesh[] = [];
 
-    private _locks: boolean[][][] = [];
+    private _locks: Brick[][][] = [];
 
     private _debugText: DebugText3D;
     private _debugOrigin: DebugCross;
@@ -101,7 +101,7 @@ class Chunck_V2 extends Chunck {
         }
     }
 
-    public getLock(i: number, j: number, k: number): boolean {
+    public getLock(i: number, j: number, k: number): Brick {
         if (this._locks[i]) {
             if (this._locks[i][j]) {
                 return this._locks[i][j][k];
@@ -109,31 +109,31 @@ class Chunck_V2 extends Chunck {
         }
     }
 
-    public getLockSafe(i: number, j: number, k: number): boolean {
+    public getLockSafe(i: number, j: number, k: number): Brick {
         return this.manager.getChunckLock(this, i, j, k);
     }
 
-    public setLock(i: number, j: number, k: number, lock: boolean = true): void {
-        if (lock) {
+    public setLock(i: number, j: number, k: number, brick?: Brick): void {
+        if (brick) {
             if (!this._locks[i]) {
                 this._locks[i] = [];
             } 
             if (!this._locks[i][j]) {
                 this._locks[i][j] = [];
             } 
-            this._locks[i][j][k] = true;
+            this._locks[i][j][k] = brick;
         }
         else {
             if (this._locks[i]) {
                 if (this._locks[j]) {
-                    this._locks[i][j][k] = false;
+                    this._locks[i][j][k] = undefined;
                 }
             }
         }
     }
 
-    public setLockSafe(i: number, j: number, k: number, lock: boolean = true): void {
-        return this.manager.setChunckLock(this, i, j, k, lock);
+    public setLockSafe(i: number, j: number, k: number, brick?: Brick): void {
+        return this.manager.setChunckLock(this, i, j, k, brick);
     }
 
     public static HasLoged: boolean = false;
