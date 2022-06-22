@@ -473,7 +473,7 @@ class PlayerActionTemplate {
 
         let t = 0;
 
-        action.iconUrl = "./datas/textures/miniatures/paint-red.png";
+        action.iconUrl = "./datas/textures/miniatures/paint-bucket.png";
 
         action.onKeyDown = (e: KeyboardEvent) => {
             if (e.code === "ControlLeft") {

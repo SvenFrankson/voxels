@@ -365,6 +365,9 @@ var BrickColor;
     BrickColor[BrickColor["White"] = 1] = "White";
     BrickColor[BrickColor["Gray"] = 2] = "Gray";
     BrickColor[BrickColor["Black"] = 3] = "Black";
+    BrickColor[BrickColor["Red"] = 4] = "Red";
+    BrickColor[BrickColor["Green"] = 5] = "Green";
+    BrickColor[BrickColor["Blue"] = 6] = "Blue";
 })(BrickColor || (BrickColor = {}));
 class Brick {
     constructor() {
@@ -708,6 +711,9 @@ class BrickDataManager {
         //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Red, BABYLON.Color4.FromInts(255, 0, 0, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Green, BABYLON.Color4.FromInts(0, 255, 0, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Blue, BABYLON.Color4.FromInts(0, 0, 255, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
@@ -4797,7 +4803,7 @@ class PlayerActionTemplate {
         let debugText;
         let ctrlDown = false;
         let t = 0;
-        action.iconUrl = "./datas/textures/miniatures/paint-red.png";
+        action.iconUrl = "./datas/textures/miniatures/paint-bucket.png";
         action.onKeyDown = (e) => {
             if (e.code === "ControlLeft") {
                 ctrlDown = true;
@@ -5093,7 +5099,7 @@ class InventoryItem {
     static Paint(color) {
         let it = new InventoryItem();
         it.section = InventorySection.Action;
-        it.name = "Paint-red";
+        it.name = "Paint-" + color.toFixed(0);
         it.playerAction = PlayerActionTemplate.PaintAction(color);
         it.iconUrl = it.playerAction.iconUrl;
         return it;
@@ -6203,7 +6209,9 @@ class PlayerTest extends Main {
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Sand));
         }
-        inventory.addItem(InventoryItem.Paint(BrickColor.White));
+        BrickDataManager.BrickColors.forEach((color4, brickColor) => {
+            inventory.addItem(InventoryItem.Paint(brickColor));
+        });
         let types = [
             BrickType.Concrete
         ];

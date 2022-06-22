@@ -17,6 +17,9 @@ enum BrickColor {
     White,
     Gray,
     Black,
+    Red,
+    Green,
+    Blue,
 }
 
 interface IBrickReference {

@@ -112,7 +112,9 @@ class PlayerTest extends Main {
 			inventory.addItem(InventoryItem.Cube(CubeType.Sand));
 		}
 
-		inventory.addItem(InventoryItem.Paint(BrickColor.White));
+		BrickDataManager.BrickColors.forEach((color4, brickColor) => {
+			inventory.addItem(InventoryItem.Paint(brickColor));
+		});
 
 		let types = [
 			BrickType.Concrete

@@ -51,7 +51,7 @@ class InventoryItem {
     public static Paint(color: BrickColor): InventoryItem {
         let it = new InventoryItem();
         it.section = InventorySection.Action;
-        it.name = "Paint-red";
+        it.name = "Paint-" + color.toFixed(0);
         it.playerAction = PlayerActionTemplate.PaintAction(color);
         it.iconUrl = it.playerAction.iconUrl;
         return it;
