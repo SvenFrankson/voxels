@@ -705,16 +705,19 @@ class BrickDataManager {
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
             let plateName = plateNames[i];
-            let W = parseInt(plateName.split("-")[1]);
-            let L = parseInt(plateName.split("-")[2]);
+            let size = plateName.split("-")[1];
+            let W = parseInt(size.split("x")[0]);
+            let L = parseInt(size.split("x")[1]);
             BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakeCubeData(W, L, 1));
         }
         let brickNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("brick-"); });
         for (let i = 0; i < brickNames.length; i++) {
             let brickName = brickNames[i];
-            let W = parseInt(brickName.split("-")[1]);
-            let L = parseInt(brickName.split("-")[2]);
+            let size = brickName.split("-")[1];
+            let W = parseInt(size.split("x")[0]);
+            let L = parseInt(size.split("x")[1]);
             BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakeCubeData(W, L, 3));
+            console.log(BrickDataManager._BrickDatas.get(brickName));
         }
         let pilarNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("pilar-"); });
         for (let i = 0; i < pilarNames.length; i++) {
@@ -3167,11 +3170,13 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
+            console.log(brick.reference.name);
+            console.log(data);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
                 let jj = locks[3 * n + 1];
                 let kk = locks[3 * n + 2];
-                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk);
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
             }
         }
         if (ACTIVE_DEBUG_CHUNCK_LOCK) {

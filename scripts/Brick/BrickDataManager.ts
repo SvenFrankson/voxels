@@ -278,8 +278,9 @@ class BrickDataManager {
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
             let plateName = plateNames[i];
-            let W = parseInt(plateName.split("-")[1]);
-            let L = parseInt(plateName.split("-")[2]);
+            let size = plateName.split("-")[1];
+            let W = parseInt(size.split("x")[0]);
+            let L = parseInt(size.split("x")[1]);
 
             BrickDataManager._BrickDatas.set(plateName, BrickDataManager.MakeCubeData(W, L, 1));
         }
@@ -287,10 +288,12 @@ class BrickDataManager {
         let brickNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("brick-"); });
         for (let i = 0; i < brickNames.length; i++) {
             let brickName = brickNames[i];
-            let W = parseInt(brickName.split("-")[1]);
-            let L = parseInt(brickName.split("-")[2]);
+            let size = brickName.split("-")[1];
+            let W = parseInt(size.split("x")[0]);
+            let L = parseInt(size.split("x")[1]);
 
             BrickDataManager._BrickDatas.set(brickName, BrickDataManager.MakeCubeData(W, L, 3));
+            console.log(BrickDataManager._BrickDatas.get(brickName));
         }
 
         let pilarNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("pilar-"); });

@@ -397,11 +397,13 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
+            console.log(brick.reference.name);
+            console.log(data);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
                 let jj = locks[3 * n + 1];
                 let kk = locks[3 * n + 2];
-                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk);
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
             }
         }
         if (ACTIVE_DEBUG_CHUNCK_LOCK) {
