@@ -444,6 +444,13 @@ class Brick {
     set r(v) {
         this._r = v;
     }
+    setColor(color) {
+        this.reference = {
+            name: this.reference.name,
+            type: this.reference.type,
+            color: color
+        };
+    }
     setCoordinates(coordinates) {
         this.i = coordinates.x;
         this.j = coordinates.y;
@@ -4785,42 +4792,33 @@ class PlayerActionTemplate {
         };
         return action;
     }
-    /*
-    public static async PaintAction(color: BrickColor, onPaintAddedCallback = () => {}): Promise<PlayerAction> {
+    static PaintAction(color, onPaintAddedCallback = () => { }) {
         let action = new PlayerAction("paint-" + color.toFixed(0));
-
-        let debugText: DebugText3D;
+        let debugText;
         let ctrlDown = false;
-
         let t = 0;
-
         action.iconUrl = "./datas/textures/miniatures/paint-red.png";
-
-        action.onKeyDown = (e: KeyboardEvent) => {
+        action.onKeyDown = (e) => {
             if (e.code === "ControlLeft") {
                 ctrlDown = true;
             }
-        }
-
-        action.onKeyUp = (e: KeyboardEvent) => {
+        };
+        action.onKeyUp = (e) => {
             if (e.code === "KeyR") {
                 action.r = (action.r + 1) % 4;
             }
             else if (e.code === "ControlLeft") {
                 ctrlDown = false;
             }
-        }
-
-        action.onWheel = (e: WheelEvent) => {
+        };
+        action.onWheel = (e) => {
             e.preventDefault();
-        }
-
+        };
         action.onUpdate = () => {
             t += Main.Engine.getDeltaTime();
             if (t >= ADD_BRICK_ANIMATION_DURATION) {
                 t = 0;
             }
-            
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
@@ -4829,92 +4827,58 @@ class PlayerActionTemplate {
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
                 world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
                     let i = coordinates.coordinates.x;
                     let j = coordinates.coordinates.y;
                     let k = coordinates.coordinates.z;
                     if (coordinates.chunck instanceof Chunck_V2) {
-                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
-                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
+                        let brick = coordinates.chunck.getLockSafe(i, j, k);
+                        if (brick) {
                         }
-                        else {
-                            previewMeshOffset.copyFromFloats(0, 0, 0);
+                        if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                            if (!debugText) {
+                                debugText = DebugText3D.CreateText("", coordinates.chunck.position);
+                            }
+                            let text = "";
+                            text += "r = " + action.r + "<br>";
+                            debugText.setText(text);
                         }
-                        if (!previewMesh) {
-                            previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
-                            previewMesh.isPickable = false;
-                            BrickVertexData.GetFullBrickVertexData(brickReference).then(
-                                data => {
-                                    data.applyToMesh(previewMesh);
-                                }
-                            );
-                            previewMesh.material = Main.cellShadingMaterial;
-                        }
-                        previewMesh.position.copyFrom(coordinates.chunck.position);
-                        previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
-                        previewMesh.position.addInPlace(previewMeshOffset);
-                        previewMesh.rotation.y = Math.PI / 2 * action.r;
                     }
                 }
             }
-
-            if (ACTIVE_DEBUG_PLAYER_ACTION) {
-                if (!debugText) {
-                    debugText = DebugText3D.CreateText("", coordinates.chunck.position);
-                }
-                let text = "";
-                text += "r = " + action.r + "<br>";
-                text += "anchorX = " + anchorX + "<br>";
-                text += "anchorZ = " + anchorZ + "<br>";
-                debugText.setText(text);
-            }
-        }
-
+        };
         action.onClick = async () => {
             let x = Main.Engine.getRenderWidth() * 0.5;
             let y = Main.Engine.getRenderHeight() * 0.5;
             let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
-                console.log(coordinates.chunck);
-                console.log(coordinates.coordinates);
                 if (coordinates) {
-                    let brick = new Brick();
-                    brick.reference = brickReference;
-                    brick.i = coordinates.coordinates.x - anchorX;
-                    brick.j = coordinates.coordinates.y;
-                    brick.k = coordinates.coordinates.z - anchorZ;
-                    brick.r = action.r;
-                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                    let i = coordinates.coordinates.x;
+                    let j = coordinates.coordinates.y;
+                    let k = coordinates.coordinates.z;
+                    if (coordinates.chunck instanceof Chunck_V2) {
+                        let brick = coordinates.chunck.getLockSafe(i, j, k);
+                        if (brick) {
+                            brick.setColor(color);
                             await coordinates.chunck.updateBricks();
-                            onBrickAddedCallback();
                         }
                     }
                 }
             }
-        }
-
+        };
         action.onUnequip = () => {
-            if (previewMesh) {
-                previewMesh.dispose();
-                previewMesh = undefined;
-            }
             if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (debugText) {
                     debugText.dispose();
                 }
             }
-        }
-        
+        };
         return action;
     }
-    */
     static CreateMountainAction(r, h, roughness) {
         let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);
         action.iconUrl = "./datas/textures/miniatures/move-arrow.png";
@@ -5124,6 +5088,14 @@ class InventoryItem {
         it.name = "Cube-" + cubeType;
         it.playerAction = PlayerActionTemplate.CreateCubeAction(cubeType);
         it.iconUrl = "./datas/textures/miniatures/" + ChunckUtils.CubeTypeToString(cubeType) + "-miniature.png";
+        return it;
+    }
+    static Paint(color) {
+        let it = new InventoryItem();
+        it.section = InventorySection.Action;
+        it.name = "Paint-red";
+        it.playerAction = PlayerActionTemplate.PaintAction(color);
+        it.iconUrl = it.playerAction.iconUrl;
         return it;
     }
 }
@@ -6231,13 +6203,7 @@ class PlayerTest extends Main {
         for (let i = 0; i <= Math.random() * 100; i++) {
             inventory.addItem(InventoryItem.Cube(CubeType.Sand));
         }
-        let colors = [
-            //"brightyellow",
-            //"brightred",
-            //"brightblue",
-            //"brightgreen",
-            "white",
-        ];
+        inventory.addItem(InventoryItem.Paint(BrickColor.White));
         let types = [
             BrickType.Concrete
         ];

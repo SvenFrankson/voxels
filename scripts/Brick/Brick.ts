@@ -90,6 +90,7 @@ class Brick {
     public set i(v: number) {
         this._i = v;
     }
+
     private _j: number = 0;
     public get j(): number {
         return this._j;
@@ -97,6 +98,7 @@ class Brick {
     public set j(v: number) {
         this._j = v;
     }
+
     private _k: number = 0;
     public get k(): number {
         return this._k;
@@ -104,12 +106,21 @@ class Brick {
     public set k(v: number) {
         this._k = v;
     }
+
     private _r: number = 0;
     public get r(): number {
         return this._r;
     }
     public set r(v: number) {
         this._r = v;
+    }
+
+    public setColor(color: BrickColor) {
+        this.reference = {
+            name: this.reference.name,
+            type: this.reference.type,
+            color: color
+        }
     }
 
     private _debugText: DebugText3D;

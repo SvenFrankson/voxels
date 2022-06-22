@@ -95,6 +95,8 @@ class PlayerTest extends Main {
 		inventoryCreateMountainLarge.playerAction = PlayerActionTemplate.CreateMountainAction(5, 5, 0.6);
 		inventory.addItem(inventoryCreateMountainLarge);
 
+		
+
 		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Dirt), 1);
 		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Rock), 2);
 		PlayerTest.Player.playerActionManager.linkAction(PlayerActionTemplate.CreateCubeAction(CubeType.Sand), 3);
@@ -110,14 +112,7 @@ class PlayerTest extends Main {
 			inventory.addItem(InventoryItem.Cube(CubeType.Sand));
 		}
 
-		let colors = [
-			//"brightyellow",
-			//"brightred",
-			//"brightblue",
-			//"brightgreen",
-			"white",
-			//"black"
-		];
+		inventory.addItem(InventoryItem.Paint(BrickColor.White));
 
 		let types = [
 			BrickType.Concrete

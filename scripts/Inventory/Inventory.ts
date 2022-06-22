@@ -47,6 +47,15 @@ class InventoryItem {
         it.iconUrl = "./datas/textures/miniatures/" + ChunckUtils.CubeTypeToString(cubeType) + "-miniature.png";
         return it;
     }
+
+    public static Paint(color: BrickColor): InventoryItem {
+        let it = new InventoryItem();
+        it.section = InventorySection.Action;
+        it.name = "Paint-red";
+        it.playerAction = PlayerActionTemplate.PaintAction(color);
+        it.iconUrl = it.playerAction.iconUrl;
+        return it;
+    }
 }
 
 enum BrickSortingOrder {

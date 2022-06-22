@@ -465,8 +465,7 @@ class PlayerActionTemplate {
         return action;
     }
 
-    /*
-    public static async PaintAction(color: BrickColor, onPaintAddedCallback = () => {}): Promise<PlayerAction> {
+    public static PaintAction(color: BrickColor, onPaintAddedCallback = () => {}): PlayerAction {
         let action = new PlayerAction("paint-" + color.toFixed(0));
 
         let debugText: DebugText3D;
@@ -509,46 +508,27 @@ class PlayerActionTemplate {
                 document.getElementById("picked-point").innerText = pickInfo.pickedPoint ? (pickInfo.pickedPoint.x.toFixed(2) + " " + pickInfo.pickedPoint.y.toFixed(2) + " " + pickInfo.pickedPoint.z.toFixed(2)) : "";
                 let world = pickInfo.pickedPoint.clone();
                 world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
                 if (coordinates) {
                     let i = coordinates.coordinates.x;
                     let j = coordinates.coordinates.y;
                     let k = coordinates.coordinates.z;
                     if (coordinates.chunck instanceof Chunck_V2) {
-                        if (!coordinates.chunck.canAddBrickDataAt(data, i, j, k, action.r)) {
-                            PlayerActionTemplate._animationCannotAddBrick(t, previewMeshOffset);
+                        let brick = coordinates.chunck.getLockSafe(i, j, k);
+                        if (brick) {
+
                         }
-                        else {
-                            previewMeshOffset.copyFromFloats(0, 0, 0);
+                        
+                        if (ACTIVE_DEBUG_PLAYER_ACTION) {
+                            if (!debugText) {
+                                debugText = DebugText3D.CreateText("", coordinates.chunck.position);
+                            }
+                            let text = "";
+                            text += "r = " + action.r + "<br>";
+                            debugText.setText(text);
                         }
-                        if (!previewMesh) {
-                            previewMesh = BABYLON.MeshBuilder.CreateBox("preview-mesh", { size: DX });
-                            previewMesh.isPickable = false;
-                            BrickVertexData.GetFullBrickVertexData(brickReference).then(
-                                data => {
-                                    data.applyToMesh(previewMesh);
-                                }
-                            );
-                            previewMesh.material = Main.cellShadingMaterial;
-                        }
-                        previewMesh.position.copyFrom(coordinates.chunck.position);
-                        previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
-                        previewMesh.position.addInPlace(previewMeshOffset);
-                        previewMesh.rotation.y = Math.PI / 2 * action.r;
                     }
                 }
-            }
-
-            if (ACTIVE_DEBUG_PLAYER_ACTION) {
-                if (!debugText) {
-                    debugText = DebugText3D.CreateText("", coordinates.chunck.position);
-                }
-                let text = "";
-                text += "r = " + action.r + "<br>";
-                text += "anchorX = " + anchorX + "<br>";
-                text += "anchorZ = " + anchorZ + "<br>";
-                debugText.setText(text);
             }
         }
 
@@ -558,22 +538,17 @@ class PlayerActionTemplate {
             let pickInfo = ChunckUtils.ScenePickAround(PlayerTest.Player.position, x, y);
             if (pickInfo && pickInfo.hit) {
                 let world = pickInfo.pickedPoint.clone();
-                world.addInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
-                //let coordinates = ChunckUtils.WorldPositionToTileBrickCoordinates(world);
+                world.subtractInPlace(pickInfo.getNormal(true).multiplyInPlace(new BABYLON.Vector3(DX / 4, DY / 4, DX / 4)));
                 let coordinates = ChunckUtils.WorldPositionToChunckBrickCoordinates_V2(world);
-                console.log(coordinates.chunck);
-                console.log(coordinates.coordinates);
                 if (coordinates) {
-                    let brick = new Brick();
-                    brick.reference = brickReference;
-                    brick.i = coordinates.coordinates.x - anchorX;
-                    brick.j = coordinates.coordinates.y;
-                    brick.k = coordinates.coordinates.z - anchorZ;
-                    brick.r = action.r;
-                    if (coordinates.chunck && coordinates.chunck instanceof Chunck_V2) {
-                        if (await coordinates.chunck.addBrickSafe(brick)) {
+                    let i = coordinates.coordinates.x;
+                    let j = coordinates.coordinates.y;
+                    let k = coordinates.coordinates.z;
+                    if (coordinates.chunck instanceof Chunck_V2) {
+                        let brick = coordinates.chunck.getLockSafe(i, j, k);
+                        if (brick) {
+                            brick.setColor(color);
                             await coordinates.chunck.updateBricks();
-                            onBrickAddedCallback();
                         }
                     }
                 }
@@ -581,10 +556,6 @@ class PlayerActionTemplate {
         }
 
         action.onUnequip = () => {
-            if (previewMesh) {
-                previewMesh.dispose();
-                previewMesh = undefined;
-            }
             if (ACTIVE_DEBUG_PLAYER_ACTION) {
                 if (debugText) {
                     debugText.dispose();
@@ -594,7 +565,6 @@ class PlayerActionTemplate {
         
         return action;
     }
-    */
 
     public static CreateMountainAction(r: number, h: number, roughness: number): PlayerAction {
         let action = new PlayerAction("create-mountain-" + r + "-" + h + "-" + roughness);
