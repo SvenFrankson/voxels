@@ -152,6 +152,10 @@ class PlayerTest extends Main {
             Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
 		}
+
+		let bucket = new WorldItem("paint-bucket");
+		bucket.position.y = 3;
+		bucket.instantiate();
 		return;
 		setTimeout(
 			async () => {

@@ -6243,6 +6243,9 @@ class PlayerTest extends Main {
             Main.Camera.position.y = 3.5;
             //Main.Camera.position.z = - 3;
         }
+        let bucket = new WorldItem("paint-bucket");
+        bucket.position.y = 3;
+        bucket.instantiate();
         return;
         setTimeout(async () => {
             let walker = new Walker("walker");
@@ -8176,5 +8179,20 @@ class TreeMeshBuilder {
         data.colors = colors;
         data.uvs = uvs;
         return data;
+    }
+}
+class WorldItem extends BABYLON.Mesh {
+    constructor(name) {
+        super(name);
+    }
+    async instantiate() {
+        let data = await VertexDataLoader.instance.get(this.name);
+        if (data.length === 1) {
+            data[0].applyToMesh(this);
+        }
+        let material = new BABYLON.StandardMaterial("test", this.getScene());
+        material.specularColor.copyFromFloats(0, 0, 0);
+        material.diffuseTexture = new BABYLON.Texture("datas/meshes/" + this.name + ".png", this.getScene());
+        this.material = material;
     }
 }
