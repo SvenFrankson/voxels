@@ -156,6 +156,13 @@ class PlayerTest extends Main {
 		let bucket = new WorldItem("paint-bucket");
 		bucket.position.y = 3;
 		bucket.instantiate();
+
+		
+		let bucketR = new WorldItem("paint-bucket", BrickColor.Red);
+		bucketR.position.x = 3;
+		bucketR.position.y = 3;
+		bucketR.instantiate();
+
 		return;
 		setTimeout(
 			async () => {

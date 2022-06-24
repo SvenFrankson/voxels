@@ -1,6 +1,9 @@
 class WorldItem extends BABYLON.Mesh {
 
-    constructor(name: string) {
+    constructor(
+        name: string,
+        public color: BrickColor = BrickColor.None
+    ) {
         super(name);
     }
 
@@ -11,7 +14,12 @@ class WorldItem extends BABYLON.Mesh {
         }
         let material = new BABYLON.StandardMaterial("test", this.getScene());
         material.specularColor.copyFromFloats(0, 0, 0);
-        material.diffuseTexture = new BABYLON.Texture("datas/meshes/" + this.name + ".png", this.getScene());
+        if (this.color === BrickColor.None) {
+            material.diffuseTexture = new BABYLON.Texture("datas/meshes/" + this.name + ".png", this.getScene());
+        }
+        else {
+            material.diffuseTexture = await ColorizedTextureLoader.instance.get(this.name, this.color);
+        }
         this.material = material;
     }
 }

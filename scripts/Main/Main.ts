@@ -214,6 +214,7 @@ class Main {
 
 		Main.ChunckManager = new ChunckManager();
 		new VertexDataLoader(Main.Scene);
+		new ColorizedTextureLoader(Main.Scene);
 
 		Main.MenuManager = new MenuManager();
 		Main.MenuManager.initialize();
