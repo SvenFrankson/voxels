@@ -87,6 +87,7 @@ class BrickData {
 class BrickDataManager {
 
     public static BrickColors: Map<BrickColor, BABYLON.Color4> = new Map<BrickColor, BABYLON.Color4>();
+    public static BrickColorIndexes: BrickColor[] = [];
     public static BrickNames: string[] = [
         "plate-1x1",
         "plate-1x2",
@@ -277,6 +278,11 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set(BrickColor.Green, BABYLON.Color4.FromInts(0, 255, 0, 255));
         BrickDataManager.BrickColors.set(BrickColor.Blue, BABYLON.Color4.FromInts(0, 0, 255, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+
+        BrickDataManager.BrickColorIndexes = [];
+        BrickDataManager.BrickColors.forEach((color4, color) => {
+            BrickDataManager.BrickColorIndexes.push(color);
+        })
 
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {

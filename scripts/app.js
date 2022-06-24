@@ -781,6 +781,10 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set(BrickColor.Green, BABYLON.Color4.FromInts(0, 255, 0, 255));
         BrickDataManager.BrickColors.set(BrickColor.Blue, BABYLON.Color4.FromInts(0, 0, 255, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        BrickDataManager.BrickColorIndexes = [];
+        BrickDataManager.BrickColors.forEach((color4, color) => {
+            BrickDataManager.BrickColorIndexes.push(color);
+        });
         let plateNames = BrickDataManager.BrickNames.filter(name => { return name.startsWith("plate-"); });
         for (let i = 0; i < plateNames.length; i++) {
             let plateName = plateNames[i];
@@ -998,6 +1002,7 @@ class BrickDataManager {
     }
 }
 BrickDataManager.BrickColors = new Map();
+BrickDataManager.BrickColorIndexes = [];
 BrickDataManager.BrickNames = [
     "plate-1x1",
     "plate-1x2",
@@ -4869,7 +4874,7 @@ class PlayerActionTemplate {
         let debugText;
         let ctrlDown = false;
         let t = 0;
-        action.iconUrl = "./datas/textures/miniatures/paint-bucket.png";
+        action.iconUrl = "./datas/textures/miniatures/paint-bucket-" + color.toFixed(0) + "-miniature.png";
         action.onKeyDown = (e) => {
             if (e.code === "ControlLeft") {
                 ctrlDown = true;
@@ -5975,8 +5980,9 @@ class Miniature extends Main {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
-                    this.runAllScreenShots();
+                    //this.runAllScreenShots();
                     //await this.createBrick("brick-2x8-white", true);
+                    this.runPaintBucketsScreenShots();
                 }, 100);
             }
             else {
@@ -6042,6 +6048,13 @@ class Miniature extends Main {
         }
         */
     }
+    async runPaintBucketsScreenShots() {
+        for (let i = 0; i < BrickDataManager.BrickColorIndexes.length; i++) {
+            let color = BrickDataManager.BrickColorIndexes[i];
+            await this.createWorldItem("paint-bucket", color);
+        }
+        ;
+    }
     async createCube(cubeType) {
         let chunck = Main.ChunckManager.createChunck(0, 0, 0);
         this.targets = [chunck];
@@ -6097,6 +6110,23 @@ class Miniature extends Main {
                     await this.makeScreenShot(brickReferenceStr, false);
                     if (!keepAlive) {
                         mesh.dispose();
+                    }
+                    resolve();
+                }, 200);
+            }, 200);
+        });
+    }
+    async createWorldItem(name, color, keepAlive) {
+        let item = new WorldItem(name, color);
+        await item.instantiate();
+        this.targets = [item];
+        return new Promise(resolve => {
+            setTimeout(() => {
+                this.updateCameraPosition();
+                setTimeout(async () => {
+                    await this.makeScreenShot(name + "-" + color.toFixed(0), false);
+                    if (!keepAlive) {
+                        item.dispose();
                     }
                     resolve();
                 }, 200);

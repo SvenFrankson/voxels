@@ -87,8 +87,9 @@ class Miniature extends Main {
 				setTimeout(
 					async () => {
 						//this.runManyScreenShots();
-						this.runAllScreenShots();
+						//this.runAllScreenShots();
 						//await this.createBrick("brick-2x8-white", true);
+						this.runPaintBucketsScreenShots();
 					},
 					100
 				);
@@ -160,6 +161,13 @@ class Miniature extends Main {
 			await this.createBlock(reference);
 		}
 		*/
+	}
+
+	public async runPaintBucketsScreenShots(): Promise<void> {
+		for (let i = 0; i < BrickDataManager.BrickColorIndexes.length; i++) {
+			let color = BrickDataManager.BrickColorIndexes[i];
+			await this.createWorldItem("paint-bucket", color);
+		};
 	}
 
 	public async createCube(cubeType: CubeType): Promise<void> {
@@ -249,6 +257,34 @@ class Miniature extends Main {
 								await this.makeScreenShot(brickReferenceStr, false);
 								if (!keepAlive) {
 									mesh.dispose();
+								}
+                                resolve();
+                            },
+                            200
+                        )
+                    },
+                    200
+                )
+            }
+        )
+	}
+
+	public async createWorldItem(name: string, color?: BrickColor, keepAlive?: boolean): Promise<void> {
+		let item = new WorldItem(name, color);
+		await item.instantiate();
+		
+		this.targets = [item];
+		
+		return new Promise<void>(
+            resolve => {
+                setTimeout(
+                    () => {
+                        this.updateCameraPosition();
+                        setTimeout(
+                            async () => {
+								await this.makeScreenShot(name + "-" + color.toFixed(0), false);
+								if (!keepAlive) {
+									item.dispose();
 								}
                                 resolve();
                             },
