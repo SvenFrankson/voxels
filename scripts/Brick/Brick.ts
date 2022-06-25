@@ -18,8 +18,19 @@ enum BrickColor {
     Gray,
     Black,
     Red,
+    Orange,
+    Gold,
+    Yellow,
     Green,
+    Mint,
+    Turquoise,
+    Aqua,
+    Azure,
     Blue,
+    Indigo,
+    Purple,
+    Fushia,
+    Pink
 }
 
 interface IBrickReference {
