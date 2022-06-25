@@ -87,6 +87,7 @@ class BrickData {
 class BrickDataManager {
 
     public static BrickColors: Map<BrickColor, BABYLON.Color4> = new Map<BrickColor, BABYLON.Color4>();
+    public static BrickColorIRLNames: Map<BrickColor, string> = new Map<BrickColor, string>();
     public static BrickColorIndexes: BrickColor[] = [];
     public static BrickNames: string[] = [
         "plate-1x1",
@@ -260,21 +261,9 @@ class BrickDataManager {
     }
 
     public static InitializeProceduralData(): void {
-        //BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
-        //BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
-        //BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
-        //BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
-        //BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
-        //BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
-        //BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
-        //BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
-        //BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
-        //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
-        //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
-        //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
-        //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Black, BABYLON.Color4.FromInts(60, 60, 60, 255));
 
         BrickDataManager.BrickColors.set(BrickColor.Red, BABYLON.Color4.FromHexString("#EC2D01FF"));
         BrickDataManager.BrickColors.set(BrickColor.Orange, BABYLON.Color4.FromHexString("#FF6600FF"));
@@ -291,6 +280,26 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set(BrickColor.Purple, BABYLON.Color4.FromHexString("#9F00FFFF"));
         BrickDataManager.BrickColors.set(BrickColor.Fushia, BABYLON.Color4.FromHexString("#DF00FFFF"));
         BrickDataManager.BrickColors.set(BrickColor.Pink, BABYLON.Color4.FromHexString("#FF007FFF"));
+
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.White, "White");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Gray, "Gray");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Black, "Black");
+
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Red, "Tomato Red");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Orange, "Blaze Orange");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Gold, "Selective Yellow");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Yellow, "ArtyClick Yellow");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Lemon, "Bright Yellow Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Green, "Highlighter Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Mint, "ArtyClick Ocean Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Turquoise, "ArtyClick Turquoise");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Aqua, "Neon Blue");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Azure, "Azure");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Blue, "ArtyClick Ocean Blue");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Indigo, "ArtyClick Ultramarine");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Purple, "Vivid Violet");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Fushia, "Phlox");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Pink, "ArtyClick Crimson");
 
         BrickDataManager.BrickColorIndexes = [];
         BrickDataManager.BrickColors.forEach((color4, color) => {
