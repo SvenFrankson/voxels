@@ -428,12 +428,24 @@ var BrickType;
 var BrickColor;
 (function (BrickColor) {
     BrickColor[BrickColor["None"] = 0] = "None";
-    BrickColor[BrickColor["White"] = 1] = "White";
-    BrickColor[BrickColor["Gray"] = 2] = "Gray";
-    BrickColor[BrickColor["Black"] = 3] = "Black";
-    BrickColor[BrickColor["Red"] = 4] = "Red";
-    BrickColor[BrickColor["Green"] = 5] = "Green";
-    BrickColor[BrickColor["Blue"] = 6] = "Blue";
+    BrickColor[BrickColor["Red"] = 1] = "Red";
+    BrickColor[BrickColor["Orange"] = 2] = "Orange";
+    BrickColor[BrickColor["Gold"] = 3] = "Gold";
+    BrickColor[BrickColor["Yellow"] = 4] = "Yellow";
+    BrickColor[BrickColor["Lemon"] = 5] = "Lemon";
+    BrickColor[BrickColor["Green"] = 6] = "Green";
+    BrickColor[BrickColor["Mint"] = 7] = "Mint";
+    BrickColor[BrickColor["Turquoise"] = 8] = "Turquoise";
+    BrickColor[BrickColor["Aqua"] = 9] = "Aqua";
+    BrickColor[BrickColor["Azure"] = 10] = "Azure";
+    BrickColor[BrickColor["Blue"] = 11] = "Blue";
+    BrickColor[BrickColor["Indigo"] = 12] = "Indigo";
+    BrickColor[BrickColor["Purple"] = 13] = "Purple";
+    BrickColor[BrickColor["Fushia"] = 14] = "Fushia";
+    BrickColor[BrickColor["Pink"] = 15] = "Pink";
+    BrickColor[BrickColor["White"] = 16] = "White";
+    BrickColor[BrickColor["Gray"] = 17] = "Gray";
+    BrickColor[BrickColor["Black"] = 18] = "Black";
 })(BrickColor || (BrickColor = {}));
 class Brick {
     constructor() {
@@ -777,10 +789,22 @@ class BrickDataManager {
         //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
-        BrickDataManager.BrickColors.set(BrickColor.Red, BABYLON.Color4.FromInts(255, 0, 0, 255));
-        BrickDataManager.BrickColors.set(BrickColor.Green, BABYLON.Color4.FromInts(0, 255, 0, 255));
-        BrickDataManager.BrickColors.set(BrickColor.Blue, BABYLON.Color4.FromInts(0, 0, 255, 255));
         //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Red, BABYLON.Color4.FromHexString("#EC2D01FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Orange, BABYLON.Color4.FromHexString("#FF6600FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Gold, BABYLON.Color4.FromHexString("#FFBA00FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Yellow, BABYLON.Color4.FromHexString("#FFFF00FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Lemon, BABYLON.Color4.FromHexString("#9DFF00FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Green, BABYLON.Color4.FromHexString("#1BFC06FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Mint, BABYLON.Color4.FromHexString("#00FF7FFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Turquoise, BABYLON.Color4.FromHexString("#00FFBFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Aqua, BABYLON.Color4.FromHexString("#04D9FFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Azure, BABYLON.Color4.FromHexString("#069AF3FF"));
+        BrickDataManager.BrickColors.set(BrickColor.Blue, BABYLON.Color4.FromHexString("#003FFFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Indigo, BABYLON.Color4.FromHexString("#3F00FFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Purple, BABYLON.Color4.FromHexString("#9F00FFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Fushia, BABYLON.Color4.FromHexString("#DF00FFFF"));
+        BrickDataManager.BrickColors.set(BrickColor.Pink, BABYLON.Color4.FromHexString("#FF007FFF"));
         BrickDataManager.BrickColorIndexes = [];
         BrickDataManager.BrickColors.forEach((color4, color) => {
             BrickDataManager.BrickColorIndexes.push(color);

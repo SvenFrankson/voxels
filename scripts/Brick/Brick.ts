@@ -14,13 +14,11 @@ enum BrickType {
 
 enum BrickColor {
     None = 0,
-    White,
-    Gray,
-    Black,
     Red,
     Orange,
     Gold,
     Yellow,
+    Lemon,
     Green,
     Mint,
     Turquoise,
@@ -30,7 +28,10 @@ enum BrickColor {
     Indigo,
     Purple,
     Fushia,
-    Pink
+    Pink,
+    White,
+    Gray,
+    Black,
 }
 
 interface IBrickReference {
