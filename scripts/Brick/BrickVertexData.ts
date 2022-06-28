@@ -146,23 +146,89 @@ class BrickVertexData {
         let positions = [...BrickVertexData._CubicTemplateVertexData[lod].positions];
         let indices = [...BrickVertexData._CubicTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CubicTemplateVertexData[lod].normals];
+        let uvs = [...BrickVertexData._CubicTemplateVertexData[lod].uvs];
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
             if (x > 0) {
-                positions[3 * i] = x + (w - 1) * DX;
+                positions[3 * i] += (w - 1) * DX;
             }
+
             if (y > DY * 0.5) {
-                positions[3 * i + 1] = y + (h - 1) * DY;
+                positions[3 * i + 1] += (h - 1) * DY;
             }
+
             if (z > 0) {
-                positions[3 * i + 2] = z + (l - 1) * DX;
+                positions[3 * i + 2] += (l - 1) * DX;
             }
+
+            let nx = normals[3 * i];
+            let ny = normals[3 * i + 1];
+            let nz = normals[3 * i + 2];
+
+            let uvScale = 0.2;
+            if (ny > 0.9) {
+                // top
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (z > 0) {
+                    uvs[2 * i + 1] += (l - 1);
+                }
+            }
+            else if (ny < - 0.9) {
+                // bottom
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (z < 0) {
+                    uvs[2 * i + 1] += (l - 1);
+                }
+            }
+            else if (Math.abs(nz) < 0.1 && nx > 0) {
+                // right
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+                if (z > 0) {
+                    uvs[2 * i] += (l - 1);
+                }
+            }
+            else if (Math.abs(nz) < 0.1 && nx < 0) {
+                // left
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+                if (z < 0) {
+                    uvs[2 * i] += (l - 1);
+                }
+            }
+            else if (nz > 0) {
+                // front
+                if (x < 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+            }
+            else {
+                // back
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+            }
+            uvs[2 * i] *= uvScale;
+            uvs[2 * i + 1] *= uvScale;
         }
         data.positions = positions;
         data.indices = indices;
         data.normals = normals;
+        data.uvs = uvs;
         return data;
     }
 
@@ -174,6 +240,7 @@ class BrickVertexData {
         let positions = [...BrickVertexData._CurbTemplateVertexData[lod].positions];
         let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
+        let uvs = [...BrickVertexData._CurbTemplateVertexData[lod].uvs];
 
         let VCOUNT = lod === 0 ? 7 : 5;
         let directions: number[] = [];
@@ -225,6 +292,7 @@ class BrickVertexData {
         data.positions = positions;
         data.indices = indices;
         data.normals = normals;
+        data.uvs = uvs;
         return data;
     }
 
@@ -327,7 +395,7 @@ class BrickVertexData {
         return data;
     }
     
-    public static async GetFullBrickVertexData(brickReference: IBrickReference): Promise<BABYLON.VertexData> {
+    public static async GetFullBrickVertexData(brickReference: IBrickReference, translateUVX: number = 0, translateUVY: number = 0, rotateUVA: number = 0): Promise<BABYLON.VertexData> {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         if (brickReference.name.startsWith("construct_")) {
             return vertexData;
@@ -335,6 +403,23 @@ class BrickVertexData {
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
+        let uvs = [...vertexData.uvs];
+        if (translateUVX != 0 || translateUVY != 0) {
+            for (let i = 0; i < uvs.length / 2; i++) {
+                uvs[2 * i] += translateUVX;
+                uvs[2 * i + 1] += translateUVY;
+            }
+        }
+        if (rotateUVA != 0) {
+            let cosa = Math.cos(rotateUVA);
+            let sina = Math.sin(rotateUVA);
+            for (let i = 0; i < uvs.length / 2; i++) {
+                let u = uvs[2 * i];
+                let v = uvs[2 * i + 1];
+                uvs[2 * i] = cosa * u + sina * v;
+                uvs[2 * i + 1] = sina * u - cosa * v;
+            }
+        }
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
@@ -345,6 +430,7 @@ class BrickVertexData {
         fullVertexData.normals = normals;
         fullVertexData.indices = indices;
         fullVertexData.colors = colors;
+        fullVertexData.uvs = uvs;
         return fullVertexData;
     }
 }

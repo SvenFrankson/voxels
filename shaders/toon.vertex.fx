@@ -9,6 +9,7 @@ attribute vec4 color;
 // Uniforms
 uniform mat4 world;
 uniform mat4 worldViewProjection;
+uniform sampler2D diffuseTexture;
 
 // Varying
 varying vec3 vPositionW;
@@ -22,7 +23,7 @@ void main(void) {
 
     vPositionW = vec3(world * vec4(position, 1.0));
     vNormalW = normalize(vec3(world * vec4(normal, 0.0)));
-
+    
     vUV = uv;
     vColor = color;
 }

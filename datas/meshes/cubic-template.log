@@ -1,14 +1,15 @@
-Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
+Exporter version: 6.4.5, Blender version: 2.90.1
 ========= Conversion from Blender to Babylon.js =========
 	Scene settings used :
-		inline textures     :  false
+		Inline textures     :  false
 		Material Type       :  PBR
 		Positions Precision :  4
 		Normals Precision   :  3
 		UVs Precision       :  3
 		Vert Color Precision:  3
 		Mat Weight Precision:  2
-		texture directory   :  C:\Users\svent\Documents\SvenFrankson\voxels\datas\meshes\
+		Keep Z-up r-handed  :  no
+		Texture directory   :  C:\Users\svent\Documents\Sven Frankson\voxels\datas\meshes\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  cubic-template-lod0
@@ -19,7 +20,7 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num uvs            :  244
 		num uvs2           :  0
 		num colors         :  0
-		num indices        :  132
+		num triangles      :  44
 	processing begun of mesh:  cubic-template-lod1
 		WARNING: No materials have been assigned: 
 		num positions      :  29
@@ -28,10 +29,10 @@ Exporter version: 6.2.0, Blender version: 2.80 (sub 75)
 		num uvs            :  58
 		num uvs2           :  0
 		num colors         :  0
-		num indices        :  36
+		num triangles      :  12
 ========= Writing of JSON file started =========
 	writing mesh:  cubic-template-lod0
 	writing mesh:  cubic-template-lod1
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.1262 secs
+elapsed time:  0 min, 0.013 secs

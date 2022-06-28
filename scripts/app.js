@@ -775,21 +775,9 @@ class BrickDataManager {
         return curbData;
     }
     static InitializeProceduralData() {
-        //BrickDataManager.BrickColors.set("brightyellow", BABYLON.Color4.FromInts(255, 205, 3, 255));
-        //BrickDataManager.BrickColors.set("brightorange", BABYLON.Color4.FromInts(245, 125, 32, 255));
-        //BrickDataManager.BrickColors.set("brightred", BABYLON.Color4.FromInts(221, 26, 33, 255));
-        //BrickDataManager.BrickColors.set("brightpurple", BABYLON.Color4.FromInts(233, 93, 162, 255));
-        //BrickDataManager.BrickColors.set("brightblue", BABYLON.Color4.FromInts(0, 108, 183, 255));
-        //BrickDataManager.BrickColors.set("brightbluetransparent", BABYLON.Color4.FromInts(0, 108, 183, 192));
-        //BrickDataManager.BrickColors.set("darkazur", BABYLON.Color4.FromInts(0, 163, 218, 255));
-        //BrickDataManager.BrickColors.set("yellowishgreen", BABYLON.Color4.FromInts(204, 225, 151, 255));
-        //BrickDataManager.BrickColors.set("brightgreen", BABYLON.Color4.FromInts(0, 175, 77, 255));
-        //BrickDataManager.BrickColors.set("brightyellowishgreen", BABYLON.Color4.FromInts(154, 202, 60, 255));
-        //BrickDataManager.BrickColors.set("redishbrown", BABYLON.Color4.FromInts(105, 46, 20, 255));
-        //BrickDataManager.BrickColors.set("nougat", BABYLON.Color4.FromInts(222, 139, 95, 255));
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
-        //BrickDataManager.BrickColors.set("black", BABYLON.Color4.FromInts(50, 52, 51, 255));
+        BrickDataManager.BrickColors.set(BrickColor.Black, BABYLON.Color4.FromInts(60, 60, 60, 255));
         BrickDataManager.BrickColors.set(BrickColor.Red, BABYLON.Color4.FromHexString("#EC2D01FF"));
         BrickDataManager.BrickColors.set(BrickColor.Orange, BABYLON.Color4.FromHexString("#FF6600FF"));
         BrickDataManager.BrickColors.set(BrickColor.Gold, BABYLON.Color4.FromHexString("#FFBA00FF"));
@@ -805,6 +793,24 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set(BrickColor.Purple, BABYLON.Color4.FromHexString("#9F00FFFF"));
         BrickDataManager.BrickColors.set(BrickColor.Fushia, BABYLON.Color4.FromHexString("#DF00FFFF"));
         BrickDataManager.BrickColors.set(BrickColor.Pink, BABYLON.Color4.FromHexString("#FF007FFF"));
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.White, "White");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Gray, "Gray");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Black, "Black");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Red, "Tomato Red");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Orange, "Blaze Orange");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Gold, "Selective Yellow");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Yellow, "ArtyClick Yellow");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Lemon, "Bright Yellow Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Green, "Highlighter Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Mint, "ArtyClick Ocean Green");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Turquoise, "ArtyClick Turquoise");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Aqua, "Neon Blue");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Azure, "Azure");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Blue, "ArtyClick Ocean Blue");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Indigo, "ArtyClick Ultramarine");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Purple, "Vivid Violet");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Fushia, "Phlox");
+        BrickDataManager.BrickColorIRLNames.set(BrickColor.Pink, "ArtyClick Crimson");
         BrickDataManager.BrickColorIndexes = [];
         BrickDataManager.BrickColors.forEach((color4, color) => {
             BrickDataManager.BrickColorIndexes.push(color);
@@ -1026,6 +1032,7 @@ class BrickDataManager {
     }
 }
 BrickDataManager.BrickColors = new Map();
+BrickDataManager.BrickColorIRLNames = new Map();
 BrickDataManager.BrickColorIndexes = [];
 BrickDataManager.BrickNames = [
     "plate-1x1",
@@ -1158,23 +1165,85 @@ class BrickVertexData {
         let positions = [...BrickVertexData._CubicTemplateVertexData[lod].positions];
         let indices = [...BrickVertexData._CubicTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CubicTemplateVertexData[lod].normals];
+        let uvs = [...BrickVertexData._CubicTemplateVertexData[lod].uvs];
         for (let i = 0; i < positions.length / 3; i++) {
             let x = positions[3 * i];
             let y = positions[3 * i + 1];
             let z = positions[3 * i + 2];
             if (x > 0) {
-                positions[3 * i] = x + (w - 1) * DX;
+                positions[3 * i] += (w - 1) * DX;
             }
             if (y > DY * 0.5) {
-                positions[3 * i + 1] = y + (h - 1) * DY;
+                positions[3 * i + 1] += (h - 1) * DY;
             }
             if (z > 0) {
-                positions[3 * i + 2] = z + (l - 1) * DX;
+                positions[3 * i + 2] += (l - 1) * DX;
             }
+            let nx = normals[3 * i];
+            let ny = normals[3 * i + 1];
+            let nz = normals[3 * i + 2];
+            let uvScale = 0.2;
+            if (ny > 0.9) {
+                // top
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (z > 0) {
+                    uvs[2 * i + 1] += (l - 1);
+                }
+            }
+            else if (ny < -0.9) {
+                // bottom
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (z < 0) {
+                    uvs[2 * i + 1] += (l - 1);
+                }
+            }
+            else if (Math.abs(nz) < 0.1 && nx > 0) {
+                // right
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+                if (z > 0) {
+                    uvs[2 * i] += (l - 1);
+                }
+            }
+            else if (Math.abs(nz) < 0.1 && nx < 0) {
+                // left
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+                if (z < 0) {
+                    uvs[2 * i] += (l - 1);
+                }
+            }
+            else if (nz > 0) {
+                // front
+                if (x < 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+            }
+            else {
+                // back
+                if (x > 0) {
+                    uvs[2 * i] += (w - 1);
+                }
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+            }
+            uvs[2 * i] *= uvScale;
+            uvs[2 * i + 1] *= uvScale;
         }
         data.positions = positions;
         data.indices = indices;
         data.normals = normals;
+        data.uvs = uvs;
         return data;
     }
     static async GenerateFromCurbTemplate(s, h, lod) {
@@ -1185,6 +1254,7 @@ class BrickVertexData {
         let positions = [...BrickVertexData._CurbTemplateVertexData[lod].positions];
         let indices = [...BrickVertexData._CurbTemplateVertexData[lod].indices];
         let normals = [...BrickVertexData._CurbTemplateVertexData[lod].normals];
+        let uvs = [...BrickVertexData._CurbTemplateVertexData[lod].uvs];
         let VCOUNT = lod === 0 ? 7 : 5;
         let directions = [];
         for (let i = 0; i < VCOUNT; i++) {
@@ -1225,6 +1295,7 @@ class BrickVertexData {
         data.positions = positions;
         data.indices = indices;
         data.normals = normals;
+        data.uvs = uvs;
         return data;
     }
     static async GenerateFromSlopeTemplate(w, h, l, lod) {
@@ -1321,7 +1392,7 @@ class BrickVertexData {
         }
         return data;
     }
-    static async GetFullBrickVertexData(brickReference) {
+    static async GetFullBrickVertexData(brickReference, translateUVX = 0, translateUVY = 0, rotateUVA = 0) {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         if (brickReference.name.startsWith("construct_")) {
             return vertexData;
@@ -1329,6 +1400,23 @@ class BrickVertexData {
         let positions = [...vertexData.positions];
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
+        let uvs = [...vertexData.uvs];
+        if (translateUVX != 0 || translateUVY != 0) {
+            for (let i = 0; i < uvs.length / 2; i++) {
+                uvs[2 * i] += translateUVX;
+                uvs[2 * i + 1] += translateUVY;
+            }
+        }
+        if (rotateUVA != 0) {
+            let cosa = Math.cos(rotateUVA);
+            let sina = Math.sin(rotateUVA);
+            for (let i = 0; i < uvs.length / 2; i++) {
+                let u = uvs[2 * i];
+                let v = uvs[2 * i + 1];
+                uvs[2 * i] = cosa * u + sina * v;
+                uvs[2 * i + 1] = sina * u - cosa * v;
+            }
+        }
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
@@ -1339,6 +1427,7 @@ class BrickVertexData {
         fullVertexData.normals = normals;
         fullVertexData.indices = indices;
         fullVertexData.colors = colors;
+        fullVertexData.uvs = uvs;
         return fullVertexData;
     }
 }
@@ -3262,7 +3351,7 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let b = new BABYLON.Mesh("brick-" + i);
             brick.mesh = b;
-            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference);
+            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference, Math.random(), Math.random(), Math.random() * 2 * Math.PI);
             vertexData.applyToMesh(b);
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
@@ -6659,10 +6748,18 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             fragment: "toon",
         }, {
             attributes: ["position", "normal", "uv", "color"],
-            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
+            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "diffuseTexture"],
             needAlphaBlending: transparent
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
+        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
+    }
+    get diffuseTexture() {
+        return this._diffuseTexture;
+    }
+    set diffuseTexture(tex) {
+        this._diffuseTexture = tex;
+        this.setTexture("diffuseTexture", this._diffuseTexture);
     }
 }
 var ACTIVE_DEBUG_CHUNCK_INTERSECTION = false;

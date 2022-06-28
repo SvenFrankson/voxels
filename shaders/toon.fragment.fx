@@ -7,7 +7,7 @@ varying vec4 vColor;
 varying vec2 vUV;
 
 // Refs
-uniform sampler2D textureSampler;
+uniform sampler2D diffuseTexture;
 uniform vec3 lightInvDirW;
 
 void main(void) {
@@ -30,7 +30,7 @@ void main(void) {
     float ndl = dot(vNormalW, lightInvDirW);
 
     float a = vColor.a;
-    vec4 color = vColor;
+    vec4 color = vColor * texture2D(diffuseTexture, vUV);
 
     if (ndl > ToonThresholds[0])
     {
@@ -56,15 +56,6 @@ void main(void) {
     {
         color *= ToonBrightnessLevels[5];
     }
-
-    /*
-    if (abs(vPositionW.x - round(vPositionW.x)) < 0.005) {
-        color = vec3(0.);
-    }
-    if (abs(vPositionW.z - round(vPositionW.z)) < 0.005) {
-        color = vec3(0.);
-    }
-    */
     
     gl_FragColor = vec4(color.rgb, a);
 }
