@@ -67,7 +67,8 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             }
         );
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
-        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
+        //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
+        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
     }
 
     private _diffuseTexture: BABYLON.Texture;

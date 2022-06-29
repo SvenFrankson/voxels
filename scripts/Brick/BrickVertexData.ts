@@ -167,7 +167,6 @@ class BrickVertexData {
             let ny = normals[3 * i + 1];
             let nz = normals[3 * i + 2];
 
-            let uvScale = 0.2;
             if (ny > 0.9) {
                 // top
                 if (x > 0) {
@@ -222,8 +221,6 @@ class BrickVertexData {
                     uvs[2 * i + 1] += (h - 1) * DY / DX;
                 }
             }
-            uvs[2 * i] *= uvScale;
-            uvs[2 * i + 1] *= uvScale;
         }
         data.positions = positions;
         data.indices = indices;
@@ -263,6 +260,41 @@ class BrickVertexData {
                     positions[3 * i] = x + directions[2 * j] * (s - 2) * DX;
                     positions[3 * i + 2] = z + directions[2 * j + 1] * (s - 2) * DX;
                     break;
+                }
+            }
+
+            x = positions[3 * i];
+            z = positions[3 * i + 2];
+
+            let nx = normals[3 * i];
+            let ny = normals[3 * i + 1];
+            let nz = normals[3 * i + 2];
+            
+            if (ny > 0.9) {
+                // top
+                uvs[2 * i] = x / DX;
+                uvs[2 * i + 1] = z / DX;
+            }
+            else if (ny < - 0.9) {
+                // bottom
+                uvs[2 * i] = x / DX;
+                uvs[2 * i + 1] = - z / DX;
+            }
+            else {
+                if (y > DY * 0.5) {
+                    uvs[2 * i + 1] += (h - 1) * DY / DX;
+                }
+
+                if (Math.abs(nx) < 0.1 || Math.abs(nz) < 0.1) {
+                    // ends
+                }
+                else if (nx + nz > 0) {
+                    // outside
+                    uvs[2 * i] *= s / 2;
+                }
+                else if (nx + nz < 0) {
+                    // inside
+                    uvs[2 * i] *= s / 2;
                 }
             }
         }
@@ -404,6 +436,7 @@ class BrickVertexData {
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
         let uvs = [...vertexData.uvs];
+        /*
         if (translateUVX != 0 || translateUVY != 0) {
             for (let i = 0; i < uvs.length / 2; i++) {
                 uvs[2 * i] += translateUVX;
@@ -420,6 +453,7 @@ class BrickVertexData {
                 uvs[2 * i + 1] = sina * u - cosa * v;
             }
         }
+        */
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
