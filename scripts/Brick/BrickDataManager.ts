@@ -125,6 +125,7 @@ class BrickDataManager {
 
         "pilar-2",
         "pilar-4",
+        "pilar-6",
     ];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
