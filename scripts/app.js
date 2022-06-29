@@ -6139,9 +6139,9 @@ class Miniature extends Main {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
-                    //this.runAllScreenShots();
+                    this.runAllScreenShots();
                     //await this.createBrick("brick-1x8-1-1", true);
-                    this.runPaintBucketsScreenShots();
+                    //this.runPaintBucketsScreenShots();
                     //await this.createWorldItem("paint-bucket", BrickColor.Red, true);
                 }, 100);
             }
