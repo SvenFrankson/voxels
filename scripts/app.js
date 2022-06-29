@@ -1420,7 +1420,7 @@ class BrickVertexData {
         }
         return data;
     }
-    static async GetFullBrickVertexData(brickReference, translateUVX = 0, translateUVY = 0, rotateUVA = 0) {
+    static async GetFullBrickVertexData(brickReference, translateUVX = 0, translateUVY = 0, rotateUVA = 0, scaleUV = 1) {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         if (brickReference.name.startsWith("construct_")) {
             return vertexData;
@@ -1429,10 +1429,11 @@ class BrickVertexData {
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
         let uvs = [...vertexData.uvs];
-        /*
         if (translateUVX != 0 || translateUVY != 0) {
             for (let i = 0; i < uvs.length / 2; i++) {
+                uvs[2 * i] *= scaleUV;
                 uvs[2 * i] += translateUVX;
+                uvs[2 * i + 1] *= scaleUV;
                 uvs[2 * i + 1] += translateUVY;
             }
         }
@@ -1446,7 +1447,6 @@ class BrickVertexData {
                 uvs[2 * i + 1] = sina * u - cosa * v;
             }
         }
-        */
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
@@ -3381,7 +3381,7 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let b = new BABYLON.Mesh("brick-" + i);
             brick.mesh = b;
-            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference, Math.random(), Math.random(), Math.random() * 2 * Math.PI);
+            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference, Math.random(), Math.random(), Math.random() * 2 * Math.PI, 0.3);
             vertexData.applyToMesh(b);
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
@@ -6782,8 +6782,8 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             needAlphaBlending: transparent
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
-        //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
-        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
+        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
+        //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
     }
     get diffuseTexture() {
         return this._diffuseTexture;

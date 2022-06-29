@@ -427,7 +427,7 @@ class BrickVertexData {
         return data;
     }
     
-    public static async GetFullBrickVertexData(brickReference: IBrickReference, translateUVX: number = 0, translateUVY: number = 0, rotateUVA: number = 0): Promise<BABYLON.VertexData> {
+    public static async GetFullBrickVertexData(brickReference: IBrickReference, translateUVX: number = 0, translateUVY: number = 0, rotateUVA: number = 0, scaleUV: number = 1): Promise<BABYLON.VertexData> {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         if (brickReference.name.startsWith("construct_")) {
             return vertexData;
@@ -436,10 +436,11 @@ class BrickVertexData {
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
         let uvs = [...vertexData.uvs];
-        /*
         if (translateUVX != 0 || translateUVY != 0) {
             for (let i = 0; i < uvs.length / 2; i++) {
+                uvs[2 * i] *= scaleUV;
                 uvs[2 * i] += translateUVX;
+                uvs[2 * i + 1] *= scaleUV;
                 uvs[2 * i + 1] += translateUVY;
             }
         }
@@ -453,7 +454,6 @@ class BrickVertexData {
                 uvs[2 * i + 1] = sina * u - cosa * v;
             }
         }
-        */
         let colors = [];
         let color = BrickDataManager.BrickColors.get(brickReference.color);
         for (let i = 0; i < positions.length / 3; i++) {
