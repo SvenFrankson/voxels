@@ -2113,7 +2113,7 @@ class ChunckManager {
         }
         if (j < 0) {
             chunck = this.getChunck(chunck.i, chunck.j - 1, chunck.k);
-            return this.getChunckLock(chunck, i, j + DX_PER_CHUNCK, k);
+            return this.getChunckLock(chunck, i, j + DY_PER_CHUNCK, k);
         }
         if (j >= DY_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, chunck.j + 1, chunck.k);
@@ -2130,31 +2130,28 @@ class ChunckManager {
         return chunck.getLock(i, j, k);
     }
     setChunckLock(chunck, i, j, k, brick) {
-        if (!chunck) {
-            return;
-        }
         if (i < 0) {
-            chunck = this.getChunck(chunck.i - 1, j, k);
+            chunck = this.getChunck(chunck.i - 1, chunck.j, chunck.k);
             return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, brick);
         }
         if (i >= DX_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i + 1, j, k);
+            chunck = this.getChunck(chunck.i + 1, chunck.j, chunck.k);
             return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, brick);
         }
         if (j < 0) {
-            chunck = this.getChunck(chunck.i, j - 1, k);
+            chunck = this.getChunck(chunck.i, chunck.j - 1, chunck.k);
             return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, brick);
         }
         if (j >= DY_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i, j + 1, k);
+            chunck = this.getChunck(chunck.i, chunck.j + 1, chunck.k);
             return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, brick);
         }
         if (k < 0) {
-            chunck = this.getChunck(chunck.i, j, k - 1);
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k - 1);
             return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, brick);
         }
         if (k >= DX_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i, j, k + 1);
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k + 1);
             return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, brick);
         }
         return chunck.setLock(i, j, k, brick);
@@ -3102,23 +3099,24 @@ class Chunck_V2 extends Chunck {
         };
         this._updateDebugLock = () => {
             if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
-                if (!this._debugLocks) {
-                    let positions = [];
-                    for (let i = 0; i < this._locks.length; i++) {
-                        if (this._locks[i]) {
-                            for (let j = 0; j < this._locks[i].length; j++) {
-                                if (this._locks[i][j]) {
-                                    for (let k = 0; k < this._locks[i][j].length; k++) {
-                                        if (this._locks[i][j][k]) {
-                                            positions.push(new BABYLON.Vector3(this.position.x + i * DX, this.position.y + j * DY + DY * 0.5, this.position.z + k * DX));
-                                        }
+                if (this._debugLocks) {
+                    this._debugLocks.dispose();
+                }
+                let positions = [];
+                for (let i = 0; i < this._locks.length; i++) {
+                    if (this._locks[i]) {
+                        for (let j = 0; j < this._locks[i].length; j++) {
+                            if (this._locks[i][j]) {
+                                for (let k = 0; k < this._locks[i][j].length; k++) {
+                                    if (this._locks[i][j][k]) {
+                                        positions.push(new BABYLON.Vector3(this.position.x + i * DX, this.position.y + j * DY + DY * 0.5, this.position.z + k * DX));
                                     }
                                 }
                             }
                         }
                     }
-                    this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
                 }
+                this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
             }
             else {
                 if (this._debugLocks) {
@@ -3168,11 +3166,19 @@ class Chunck_V2 extends Chunck {
         }
         return true;
     }
-    addBrick(brick) {
+    async addBrick(brick) {
         let i = this.bricks.indexOf(brick);
         if (i === -1) {
             this.bricks.push(brick);
             brick.chunck = this;
+            let data = await BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
+            }
             this.isEmpty = false;
         }
     }
@@ -3183,9 +3189,17 @@ class Chunck_V2 extends Chunck {
         }
         return false;
     }
-    removeBrick(brick) {
+    async removeBrick(brick) {
         let index = this.bricks.indexOf(brick);
         if (index != -1) {
+            let data = await BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, undefined);
+            }
             this.bricks.splice(index, 1);
         }
     }
@@ -3211,7 +3225,7 @@ class Chunck_V2 extends Chunck {
         }
         else {
             if (this._locks[i]) {
-                if (this._locks[j]) {
+                if (this._locks[i][j]) {
                     this._locks[i][j][k] = undefined;
                 }
             }
@@ -3221,10 +3235,6 @@ class Chunck_V2 extends Chunck {
         return this.manager.setChunckLock(this, i, j, k, brick);
     }
     async generate() {
-        if (this.i === -1 && this.j === 0 && this.k === -2) {
-            console.log("update -1 0 -2");
-            console.log("with " + this.bricks.length + " bricks");
-        }
         let positions = [];
         let indices = [];
         let normals = [];
@@ -3395,27 +3405,6 @@ class Chunck_V2 extends Chunck {
             b.parent = this;
             b.material = Main.cellShadingMaterial;
             this.brickMeshes.push(b);
-        }
-        await this.updateLocks();
-    }
-    async updateLocks() {
-        this._locks = [];
-        for (let i = 0; i < this.bricks.length; i++) {
-            let brick = this.bricks[i];
-            let data = await BrickDataManager.GetBrickData(brick.reference);
-            let locks = data.getLocks(brick.r);
-            for (let n = 0; n < locks.length / 3; n++) {
-                let ii = locks[3 * n];
-                let jj = locks[3 * n + 1];
-                let kk = locks[3 * n + 2];
-                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
-            }
-        }
-        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
-            if (this._debugLocks) {
-                this._debugLocks.dispose();
-                this._debugLocks = undefined;
-            }
         }
     }
 }
@@ -4574,7 +4563,7 @@ class Player extends BABYLON.Mesh {
     }
     async storeBrick() {
         if (this.aimedObject && this.aimedObject instanceof Brick) {
-            this.aimedObject.chunck.removeBrick(this.aimedObject);
+            await this.aimedObject.chunck.removeBrick(this.aimedObject);
             await this.aimedObject.chunck.updateBricks();
             return this.aimedObject;
         }

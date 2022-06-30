@@ -144,7 +144,7 @@ class Player extends BABYLON.Mesh {
 
     public async storeBrick(): Promise<Brick> {
         if (this.aimedObject && this.aimedObject instanceof Brick) {
-            this.aimedObject.chunck.removeBrick(this.aimedObject);
+            await this.aimedObject.chunck.removeBrick(this.aimedObject);
             await this.aimedObject.chunck.updateBricks();
             return this.aimedObject;
         }

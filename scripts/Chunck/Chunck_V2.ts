@@ -78,11 +78,19 @@ class Chunck_V2 extends Chunck {
         return true;
     }
 
-    public addBrick(brick: Brick): void {
+    public async addBrick(brick: Brick): Promise<void> {
         let i = this.bricks.indexOf(brick);
         if (i === -1) {
             this.bricks.push(brick);
             brick.chunck = this;
+            let data = await BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
+            }
             this.isEmpty = false;
         }
     }
@@ -95,9 +103,17 @@ class Chunck_V2 extends Chunck {
         return false;
     }
 
-    public removeBrick(brick: Brick): void {
+    public async removeBrick(brick: Brick): Promise<void> {
         let index = this.bricks.indexOf(brick);
         if (index != -1) {
+            let data = await BrickDataManager.GetBrickData(brick.reference);
+            let locks = data.getLocks(brick.r);
+            for (let n = 0; n < locks.length / 3; n++) {
+                let ii = locks[3 * n];
+                let jj = locks[3 * n + 1];
+                let kk = locks[3 * n + 2];
+                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, undefined);
+            }
             this.bricks.splice(index, 1);
         }
     }
@@ -126,7 +142,7 @@ class Chunck_V2 extends Chunck {
         }
         else {
             if (this._locks[i]) {
-                if (this._locks[j]) {
+                if (this._locks[i][j]) {
                     this._locks[i][j][k] = undefined;
                 }
             }
@@ -139,10 +155,6 @@ class Chunck_V2 extends Chunck {
 
     public static HasLoged: boolean = false;
     public async generate(): Promise<void> {
-        if (this.i === - 1 && this.j === 0 && this.k === -2) {
-            console.log("update -1 0 -2");
-            console.log("with " + this.bricks.length + " bricks");
-        }
         let positions: number[] = [];
         let indices: number[] = [];
         let normals: number[] = [];
@@ -347,27 +359,28 @@ class Chunck_V2 extends Chunck {
     
     private _updateDebugLock = () => {
         if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
-            if (!this._debugLocks) {
-                let positions: BABYLON.Vector3[] = [];
-                for (let i = 0; i < this._locks.length; i++) {
-                    if (this._locks[i]) {
-                        for (let j = 0; j < this._locks[i].length; j++) {
-                            if (this._locks[i][j]) {
-                                for (let k = 0; k < this._locks[i][j].length; k++) {
-                                    if (this._locks[i][j][k]) {
-                                        positions.push(new BABYLON.Vector3(
-                                            this.position.x + i * DX,
-                                            this.position.y + j * DY + DY * 0.5,
-                                            this.position.z + k * DX
-                                        ));
-                                    }
+            if (this._debugLocks) {
+                this._debugLocks.dispose();
+            }
+            let positions: BABYLON.Vector3[] = [];
+            for (let i = 0; i < this._locks.length; i++) {
+                if (this._locks[i]) {
+                    for (let j = 0; j < this._locks[i].length; j++) {
+                        if (this._locks[i][j]) {
+                            for (let k = 0; k < this._locks[i][j].length; k++) {
+                                if (this._locks[i][j][k]) {
+                                    positions.push(new BABYLON.Vector3(
+                                        this.position.x + i * DX,
+                                        this.position.y + j * DY + DY * 0.5,
+                                        this.position.z + k * DX
+                                    ));
                                 }
                             }
                         }
                     }
                 }
-                this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
             }
+            this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
         }
         else {
             if (this._debugLocks) {
@@ -392,28 +405,6 @@ class Chunck_V2 extends Chunck {
             b.parent = this;
             b.material = Main.cellShadingMaterial;
             this.brickMeshes.push(b);
-        }
-        await this.updateLocks();
-    }
-
-    public async updateLocks(): Promise<void> {
-        this._locks = [];
-        for (let i = 0; i < this.bricks.length; i++) {
-            let brick = this.bricks[i];
-            let data = await BrickDataManager.GetBrickData(brick.reference);
-            let locks = data.getLocks(brick.r);
-            for (let n = 0; n < locks.length / 3; n++) {
-                let ii = locks[3 * n];
-                let jj = locks[3 * n + 1];
-                let kk = locks[3 * n + 2];
-                this.setLockSafe(brick.i + ii, brick.j + jj, brick.k + kk, brick);
-            }
-        }
-        if (ACTIVE_DEBUG_CHUNCK_LOCK) {
-            if (this._debugLocks) {
-                this._debugLocks.dispose();
-                this._debugLocks = undefined;
-            }
         }
     }
 }

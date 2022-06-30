@@ -329,7 +329,7 @@ class ChunckManager {
         }
         if (j < 0) {
             chunck = this.getChunck(chunck.i, chunck.j - 1, chunck.k) as Chunck_V2;
-            return this.getChunckLock(chunck, i, j + DX_PER_CHUNCK, k);
+            return this.getChunckLock(chunck, i, j + DY_PER_CHUNCK, k);
         }
         if (j >= DY_PER_CHUNCK) {
             chunck = this.getChunck(chunck.i, chunck.j + 1, chunck.k) as Chunck_V2;
@@ -348,32 +348,28 @@ class ChunckManager {
     }
 
     public setChunckLock(chunck: Chunck_V2, i: number, j: number, k: number, brick?: Brick): void {
-        if (!chunck) {
-            return;
-        }
-
         if (i < 0) {
-            chunck = this.getChunck(chunck.i - 1, j, k) as Chunck_V2;
+            chunck = this.getChunck(chunck.i - 1, chunck.j, chunck.k) as Chunck_V2;
             return this.setChunckLock(chunck, i + DX_PER_CHUNCK, j, k, brick);
         }
         if (i >= DX_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i + 1, j, k) as Chunck_V2;
+            chunck = this.getChunck(chunck.i + 1, chunck.j, chunck.k) as Chunck_V2;
             return this.setChunckLock(chunck, i - DX_PER_CHUNCK, j, k, brick);
         }
         if (j < 0) {
-            chunck = this.getChunck(chunck.i, j - 1, k) as Chunck_V2;
+            chunck = this.getChunck(chunck.i, chunck.j - 1, chunck.k) as Chunck_V2;
             return this.setChunckLock(chunck, i, j + DY_PER_CHUNCK, k, brick);
         }
         if (j >= DY_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i, j + 1, k) as Chunck_V2;
+            chunck = this.getChunck(chunck.i, chunck.j + 1, chunck.k) as Chunck_V2;
             return this.setChunckLock(chunck, i, j - DY_PER_CHUNCK, k, brick);
         }
         if (k < 0) {
-            chunck = this.getChunck(chunck.i, j, k - 1) as Chunck_V2;
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k - 1) as Chunck_V2;
             return this.setChunckLock(chunck, i, j, k + DX_PER_CHUNCK, brick);
         }
         if (k >= DX_PER_CHUNCK) {
-            chunck = this.getChunck(chunck.i, j, k + 1) as Chunck_V2;
+            chunck = this.getChunck(chunck.i, chunck.j, chunck.k + 1) as Chunck_V2;
             return this.setChunckLock(chunck, i, j, k - DX_PER_CHUNCK, brick);
         }
         
