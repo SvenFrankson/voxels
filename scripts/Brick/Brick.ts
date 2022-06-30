@@ -9,7 +9,8 @@ interface IBrickData {
 enum BrickType {
     None = 0,
     Concrete,
-    Steel
+    Steel,
+    Plastic
 }
 
 enum BrickColor {
