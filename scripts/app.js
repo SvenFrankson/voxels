@@ -1064,6 +1064,7 @@ BrickDataManager.BrickNames = [
     "brickCurb-4",
     "pilar-2",
     "pilar-4",
+    "pilar-6",
 ];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
@@ -3059,7 +3060,7 @@ var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 var ACTIVE_DEBUG_CHUNCK = false;
-var ACTIVE_DEBUG_CHUNCK_LOCK = false;
+var ACTIVE_DEBUG_CHUNCK_LOCK = true;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
@@ -3171,6 +3172,7 @@ class Chunck_V2 extends Chunck {
         if (i === -1) {
             this.bricks.push(brick);
             brick.chunck = this;
+            this.isEmpty = false;
         }
     }
     async addBrickSafe(brick) {
@@ -3218,6 +3220,10 @@ class Chunck_V2 extends Chunck {
         return this.manager.setChunckLock(this, i, j, k, brick);
     }
     async generate() {
+        if (this.i === -1 && this.j === 0 && this.k === -2) {
+            console.log("update -1 0 -2");
+            console.log("with " + this.bricks.length + " bricks");
+        }
         let positions = [];
         let indices = [];
         let normals = [];
@@ -3397,8 +3403,6 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
-            console.log(brick.reference.name);
-            console.log(data);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
                 let jj = locks[3 * n + 1];
@@ -4481,6 +4485,7 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager = new PlayerActionManager(this);
         // debug
         //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+        Player.DEBUG_INSTANCE = this;
     }
     get aimedObject() {
         return this._aimedObject;
@@ -4527,7 +4532,6 @@ class Player extends BABYLON.Mesh {
             }
         });
         Main.Canvas.addEventListener("pointermove", (e) => {
-            console.log(e.movementX + " " + e.movementY);
             if (document.pointerLockElement) {
                 this.pointerDX += e.movementX;
                 this.pointerDY += e.movementY;
@@ -4608,6 +4612,10 @@ class Player extends BABYLON.Mesh {
         this.rotation.y = data.rY;
         this.targetRY = data.rY;
         this.playerActionManager.deserialize(data.playerActionManager);
+    }
+    // Debug
+    static DEBUG_CurrentChunck() {
+        return ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(Player.DEBUG_INSTANCE.position).chunck;
     }
 }
 var ACTIVE_DEBUG_PLAYER_ACTION = true;
@@ -6139,8 +6147,8 @@ class Miniature extends Main {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
-                    this.runAllScreenShots();
-                    //await this.createBrick("brick-1x8-1-1", true);
+                    //this.runAllScreenShots();
+                    await this.createBrick("pilar-6-1-17", true);
                     //this.runPaintBucketsScreenShots();
                     //await this.createWorldItem("paint-bucket", BrickColor.Red, true);
                 }, 100);

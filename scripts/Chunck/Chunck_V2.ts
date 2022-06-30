@@ -5,7 +5,7 @@ var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 
 var ACTIVE_DEBUG_CHUNCK = false;
-var ACTIVE_DEBUG_CHUNCK_LOCK = false;
+var ACTIVE_DEBUG_CHUNCK_LOCK = true;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 
 class Chunck_V2 extends Chunck {
@@ -83,6 +83,7 @@ class Chunck_V2 extends Chunck {
         if (i === -1) {
             this.bricks.push(brick);
             brick.chunck = this;
+            this.isEmpty = false;
         }
     }
 
@@ -138,6 +139,10 @@ class Chunck_V2 extends Chunck {
 
     public static HasLoged: boolean = false;
     public async generate(): Promise<void> {
+        if (this.i === - 1 && this.j === 0 && this.k === -2) {
+            console.log("update -1 0 -2");
+            console.log("with " + this.bricks.length + " bricks");
+        }
         let positions: number[] = [];
         let indices: number[] = [];
         let normals: number[] = [];
@@ -397,8 +402,6 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let data = await BrickDataManager.GetBrickData(brick.reference);
             let locks = data.getLocks(brick.r);
-            console.log(brick.reference.name);
-            console.log(data);
             for (let n = 0; n < locks.length / 3; n++) {
                 let ii = locks[3 * n];
                 let jj = locks[3 * n + 1];

@@ -9,6 +9,8 @@ interface IPlayerData {
 
 class Player extends BABYLON.Mesh {
 
+    public static DEBUG_INSTANCE: Player;
+
     public inventory: Inventory;
 
     public speed: number = 5;
@@ -41,6 +43,7 @@ class Player extends BABYLON.Mesh {
         this.playerActionManager = new PlayerActionManager(this);
         // debug
         //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
+        Player.DEBUG_INSTANCE = this;
     }
 
     public get aimedObject(): Brick {
@@ -95,7 +98,6 @@ class Player extends BABYLON.Mesh {
         });
 
         Main.Canvas.addEventListener("pointermove", (e) => {
-            console.log(e.movementX  + " " + e.movementY);
             if (document.pointerLockElement) {
                 this.pointerDX += e.movementX;
                 this.pointerDY += e.movementY;
@@ -320,5 +322,10 @@ class Player extends BABYLON.Mesh {
         this.rotation.y = data.rY;
         this.targetRY = data.rY;
         this.playerActionManager.deserialize(data.playerActionManager);
+    }
+
+    // Debug
+    public static DEBUG_CurrentChunck(): Chunck {
+        return ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(Player.DEBUG_INSTANCE.position).chunck;
     }
 }
