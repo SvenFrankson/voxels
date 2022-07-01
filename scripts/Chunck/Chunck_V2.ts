@@ -5,7 +5,7 @@ var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 
 var ACTIVE_DEBUG_CHUNCK = false;
-var ACTIVE_DEBUG_CHUNCK_LOCK = true;
+var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 
 class Chunck_V2 extends Chunck {

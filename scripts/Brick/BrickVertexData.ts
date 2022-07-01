@@ -352,7 +352,7 @@ class BrickVertexData {
         if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "brickCornerRound" || type === "tileCornerRound" || type === "plateCornerRound" || type === "cone") {
             return "round";
         }
-        if (type === "windowRound") {
+        if (type === "doorRound" || type === "windowRound" || type === "windowRoundCurb") {
             return "window";
         }
         return type;

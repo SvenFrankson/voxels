@@ -700,7 +700,6 @@ class BrickDataManager {
         });
     }
     static async InitializeDataFromFile() {
-        return;
         return new Promise(resolve => {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', "bricksData.json");
@@ -1066,6 +1065,10 @@ BrickDataManager.BrickNames = [
     "pilar-2",
     "pilar-4",
     "pilar-6",
+    "windowRound-2",
+    "windowRound-4",
+    "windowRoundCurb-3",
+    "doorRound-4"
 ];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
@@ -1351,7 +1354,7 @@ class BrickVertexData {
         if (type === "brickRound" || type === "tileRound" || type === "plateRound" || type === "brickCornerRound" || type === "tileCornerRound" || type === "plateCornerRound" || type === "cone") {
             return "round";
         }
-        if (type === "windowRound") {
+        if (type === "doorRound" || type === "windowRound" || type === "windowRoundCurb") {
             return "window";
         }
         return type;
@@ -3058,7 +3061,7 @@ var CHUNCK_SIZE = 8;
 var DX_PER_CHUNCK = CHUNCK_SIZE * 2;
 var DY_PER_CHUNCK = CHUNCK_SIZE * 3;
 var ACTIVE_DEBUG_CHUNCK = false;
-var ACTIVE_DEBUG_CHUNCK_LOCK = true;
+var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 class Chunck_V2 extends Chunck {
     constructor(manager, i, j, k) {
@@ -6137,8 +6140,8 @@ class Miniature extends Main {
             if (document.pointerLockElement) {
                 setTimeout(async () => {
                     //this.runManyScreenShots();
-                    //this.runAllScreenShots();
-                    await this.createBrick("pilar-6-1-17", true);
+                    this.runAllScreenShots();
+                    //await this.createBrick("pilar-6-1-17", true);
                     //this.runPaintBucketsScreenShots();
                     //await this.createWorldItem("paint-bucket", BrickColor.Red, true);
                 }, 100);

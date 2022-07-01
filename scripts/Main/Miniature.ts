@@ -106,8 +106,8 @@ class Miniature extends Main {
 				setTimeout(
 					async () => {
 						//this.runManyScreenShots();
-						//this.runAllScreenShots();
-						await this.createBrick("pilar-6-1-17", true);
+						this.runAllScreenShots();
+						//await this.createBrick("pilar-6-1-17", true);
 						//this.runPaintBucketsScreenShots();
 						//await this.createWorldItem("paint-bucket", BrickColor.Red, true);
 					},

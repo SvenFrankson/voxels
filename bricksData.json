@@ -1,83 +1,26 @@
 {
-    "plateRound-1x1" : {
-        "locks": [0, 0, 0],
+    "windowRoundCurb-3" : {
+        "locks": [],
         "covers": "locks"
     },
-    "brickRound-1x1" : {
-        "locks": [0, 0, 0, 0, 1, 0, 0, 2, 0],
-        "covers": "locks"
-    },
-    "brickCornerRound-2x2": {
+    "windowRound-2" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [1, 2, 1]
+            "max": [1, 8, 0]
         },
         "covers": "locks"
     },
-    "plateCornerRound-2x2": {
+    "windowRound-4" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [1, 0, 1]
+            "max": [3, 8, 0]
         },
         "covers": "locks"
     },
-    "tileCornerRound-2x2": {
+    "doorRound-4" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [1, 0, 1]
-        },
-        "covers": "locks"
-    },
-    "plateCornerRound-3x3": {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [2, 0, 2]
-        },
-        "covers": "locks"
-    },
-    "tileCornerRound-3x3": {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [2, 0, 2]
-        },
-        "covers": "locks"
-    },
-    "cone-1x1" : {
-        "locks": [0, 0, 0, 0, 1, 0, 0, 2, 0],
-        "covers": "locks"
-    },
-    "brickRound-2x2" : {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [1, 2, 1]
-        },
-        "covers": "locks"
-    },
-    "plateRound-2x2" : {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [1, 0, 1]
-        },
-        "covers": "locks"
-    },
-    "tileRound-2x2" : {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [1, 0, 1]
-        },
-        "covers": "locks"
-    },
-    "windowRound-2x2" : {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [1, 5, 0]
-        },
-        "covers": "locks"
-    },
-    "windowRound-4x2" : {
-        "locks": {
-            "min": [0, 0, 0],
-            "max": [3, 5, 0]
+            "max": [3, 17, 0]
         },
         "covers": "locks"
     }

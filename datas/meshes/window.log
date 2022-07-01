@@ -12,7 +12,7 @@ Exporter version: 6.4.5, Blender version: 2.90.1
 		Texture directory   :  C:\Users\svent\Documents\Sven Frankson\voxels\datas\meshes\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
-	processing begun of mesh:  windowRound-4x2-lod0
+	processing begun of mesh:  windowRound-4-lod0
 		WARNING: No materials have been assigned: 
 		num positions      :  339
 		num normals        :  339
@@ -21,7 +21,7 @@ Exporter version: 6.4.5, Blender version: 2.90.1
 		num uvs2           :  0
 		num colors         :  0
 		num triangles      :  266
-	processing begun of mesh:  windowRound-2x2-lod0
+	processing begun of mesh:  windowRound-2-lod0
 		WARNING: No materials have been assigned: 
 		num positions      :  339
 		num normals        :  339
@@ -30,9 +30,29 @@ Exporter version: 6.4.5, Blender version: 2.90.1
 		num uvs2           :  0
 		num colors         :  0
 		num triangles      :  266
+	processing begun of mesh:  doorRound-4-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  339
+		num normals        :  339
+		num tangents       :  0
+		num uvs            :  678
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  266
+	processing begun of mesh:  windowRoundCurb-3-lod0
+		WARNING: No materials have been assigned: 
+		num positions      :  584
+		num normals        :  584
+		num tangents       :  0
+		num uvs            :  1168
+		num uvs2           :  0
+		num colors         :  0
+		num triangles      :  464
 ========= Writing of JSON file started =========
-	writing mesh:  windowRound-4x2-lod0
-	writing mesh:  windowRound-2x2-lod0
+	writing mesh:  windowRound-4-lod0
+	writing mesh:  windowRound-2-lod0
+	writing mesh:  doorRound-4-lod0
+	writing mesh:  windowRoundCurb-3-lod0
 ========= Writing of JSON file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0436 secs
+elapsed time:  0 min, 0.0638 secs

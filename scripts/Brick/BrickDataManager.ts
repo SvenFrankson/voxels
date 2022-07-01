@@ -126,6 +126,11 @@ class BrickDataManager {
         "pilar-2",
         "pilar-4",
         "pilar-6",
+
+        "windowRound-2",
+        "windowRound-4",
+        "windowRoundCurb-3",
+        "doorRound-4"
     ];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
@@ -178,7 +183,6 @@ class BrickDataManager {
     }
 
     public static async InitializeDataFromFile(): Promise<void> {
-        return;
         return new Promise<void>(resolve => {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', "bricksData.json");
