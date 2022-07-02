@@ -301,7 +301,7 @@ class Tree extends BABYLON.Mesh {
             let data = BABYLON.VertexData.ExtractFromMesh(mergedMesh);
             mergedMesh.dispose();
             data.applyToMesh(this);
-            this.material = Main.cellShadingMaterial;
+            this.material = Main.concreteMaterial;
         }
     }
 }

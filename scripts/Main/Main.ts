@@ -13,12 +13,22 @@ class Main {
 	public static MenuManager: MenuManager;
 	public static InputManager: InputManager;
 
-    public static _cellShadingMaterial: ToonMaterial;
-	public static get cellShadingMaterial(): ToonMaterial {
-		if (!Main._cellShadingMaterial) {
-			Main._cellShadingMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+    public static _concreteMaterial: ToonMaterial;
+	public static get concreteMaterial(): ToonMaterial {
+		if (!Main._concreteMaterial) {
+			Main._concreteMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+			Main._concreteMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", Main.Scene));
 		}
-		return Main._cellShadingMaterial;
+		return Main._concreteMaterial;
+	}
+
+	public static _steelMaterial: ToonMaterial;
+	public static get steelMaterial(): ToonMaterial {
+		if (!Main._steelMaterial) {
+			Main._steelMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+			Main._steelMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/steel.png", Main.Scene));
+		}
+		return Main._steelMaterial;
 	}
 	
     public static _cellShadingTransparentMaterial: ToonMaterial;

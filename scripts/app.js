@@ -229,7 +229,7 @@ class Block extends BABYLON.Mesh {
         this._j = 0;
         this._k = 0;
         this._r = 0;
-        this.material = Main.cellShadingMaterial;
+        this.material = Main.concreteMaterial;
     }
     get chunck() {
         return this._chunck;
@@ -3406,7 +3406,12 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            b.material = Main.cellShadingMaterial;
+            if (brick.reference.type === BrickType.Concrete) {
+                b.material = Main.concreteMaterial;
+            }
+            else if (brick.reference.type === BrickType.Steel) {
+                b.material = Main.steelMaterial;
+            }
             this.brickMeshes.push(b);
         }
     }
@@ -3799,11 +3804,11 @@ class Walker extends BABYLON.Mesh {
     async instantiate() {
         let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45", "#243a40");
         this.leftFoot = new BABYLON.Mesh("left-foot");
-        this.leftFoot.material = Main.cellShadingMaterial;
+        this.leftFoot.material = Main.concreteMaterial;
         data[1].applyToMesh(this.leftFoot);
         this.leftFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.rightFoot = new BABYLON.Mesh("right-foot");
-        this.rightFoot.material = Main.cellShadingMaterial;
+        this.rightFoot.material = Main.concreteMaterial;
         data[1].applyToMesh(this.rightFoot);
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.leftFootJoin = new BABYLON.Mesh("left-foot-join", this.getScene());
@@ -3813,7 +3818,7 @@ class Walker extends BABYLON.Mesh {
         this.rightFootJoin.position.copyFromFloats(0, 0.12, -0.3);
         this.rightFootJoin.parent = this.rightFoot;
         this.body = new BABYLON.Mesh("body");
-        this.body.material = Main.cellShadingMaterial;
+        this.body.material = Main.concreteMaterial;
         data[0].applyToMesh(this.body);
         this.body.rotationQuaternion = BABYLON.Quaternion.Identity();
         this.leftHipJoin = new BABYLON.Mesh("left-hip-join", this.getScene());
@@ -3823,17 +3828,17 @@ class Walker extends BABYLON.Mesh {
         this.rightHipJoin.position.copyFromFloats(1, -0.75, 0);
         this.rightHipJoin.parent = this.body;
         this.leftLeg = new BABYLON.Mesh("left-leg", this.getScene());
-        this.leftLeg.material = Main.cellShadingMaterial;
+        this.leftLeg.material = Main.concreteMaterial;
         data[3].applyToMesh(this.leftLeg);
         this.leftHip = new BABYLON.Mesh("left-leg", this.getScene());
-        this.leftHip.material = Main.cellShadingMaterial;
+        this.leftHip.material = Main.concreteMaterial;
         data[2].applyToMesh(this.leftHip);
         this.leftKnee = new BABYLON.Mesh("left-knee", this.getScene());
         this.rightLeg = new BABYLON.Mesh("right-leg", this.getScene());
-        this.rightLeg.material = Main.cellShadingMaterial;
+        this.rightLeg.material = Main.concreteMaterial;
         data[3].applyToMesh(this.rightLeg);
         this.rightHip = new BABYLON.Mesh("right-leg", this.getScene());
-        this.rightHip.material = Main.cellShadingMaterial;
+        this.rightHip.material = Main.concreteMaterial;
         data[2].applyToMesh(this.rightHip);
         this.rightKnee = new BABYLON.Mesh("right-knee", this.getScene());
         let wait = async (t) => {
@@ -4941,7 +4946,7 @@ class PlayerActionTemplate {
                             BrickVertexData.GetFullBrickVertexData(brickReference).then(data => {
                                 data.applyToMesh(previewMesh);
                             });
-                            previewMesh.material = Main.cellShadingMaterial;
+                            previewMesh.material = Main.concreteMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
@@ -5607,11 +5612,19 @@ class Main {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
-    static get cellShadingMaterial() {
-        if (!Main._cellShadingMaterial) {
-            Main._cellShadingMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+    static get concreteMaterial() {
+        if (!Main._concreteMaterial) {
+            Main._concreteMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+            Main._concreteMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", Main.Scene));
         }
-        return Main._cellShadingMaterial;
+        return Main._concreteMaterial;
+    }
+    static get steelMaterial() {
+        if (!Main._steelMaterial) {
+            Main._steelMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
+            Main._steelMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/steel.png", Main.Scene));
+        }
+        return Main._steelMaterial;
     }
     static get cellShadingTransparentMaterial() {
         if (!Main._cellShadingTransparentMaterial) {
@@ -6783,7 +6796,6 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             needAlphaBlending: transparent
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
-        this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", scene));
         //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
     }
     get diffuseTexture() {
@@ -7801,7 +7813,7 @@ class Tile extends BABYLON.Mesh {
             b.position.copyFromFloats(brick.i * DX, brick.k * DY, brick.j * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            b.material = Main.cellShadingMaterial;
+            b.material = Main.concreteMaterial;
         }
     }
     serialize() {
@@ -8417,7 +8429,7 @@ class Tree extends BABYLON.Mesh {
             let data = BABYLON.VertexData.ExtractFromMesh(mergedMesh);
             mergedMesh.dispose();
             data.applyToMesh(this);
-            this.material = Main.cellShadingMaterial;
+            this.material = Main.concreteMaterial;
         }
     }
 }

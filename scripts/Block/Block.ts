@@ -62,7 +62,7 @@ class Block extends BABYLON.Mesh {
 
     constructor() {
         super("block");
-        this.material = Main.cellShadingMaterial;
+        this.material = Main.concreteMaterial;
     }
 
     public highlight() {

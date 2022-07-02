@@ -28,12 +28,12 @@ class Walker extends BABYLON.Mesh {
     public async instantiate(): Promise<void> {
         let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45", "#243a40");
         this.leftFoot = new BABYLON.Mesh("left-foot");
-        this.leftFoot.material = Main.cellShadingMaterial;
+        this.leftFoot.material = Main.concreteMaterial;
         data[1].applyToMesh(this.leftFoot);
         this.leftFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
         this.rightFoot = new BABYLON.Mesh("right-foot");
-        this.rightFoot.material = Main.cellShadingMaterial;
+        this.rightFoot.material = Main.concreteMaterial;
         data[1].applyToMesh(this.rightFoot);
         this.rightFoot.rotationQuaternion = BABYLON.Quaternion.Identity();
 
@@ -46,7 +46,7 @@ class Walker extends BABYLON.Mesh {
         this.rightFootJoin.parent = this.rightFoot;
 
         this.body = new BABYLON.Mesh("body");
-        this.body.material = Main.cellShadingMaterial;
+        this.body.material = Main.concreteMaterial;
         data[0].applyToMesh(this.body);
         this.body.rotationQuaternion = BABYLON.Quaternion.Identity();
 
@@ -59,19 +59,19 @@ class Walker extends BABYLON.Mesh {
         this.rightHipJoin.parent = this.body;
 
         this.leftLeg = new BABYLON.Mesh("left-leg", this.getScene());
-        this.leftLeg.material = Main.cellShadingMaterial;
+        this.leftLeg.material = Main.concreteMaterial;
         data[3].applyToMesh(this.leftLeg);
         this.leftHip = new BABYLON.Mesh("left-leg", this.getScene());
-        this.leftHip.material = Main.cellShadingMaterial;
+        this.leftHip.material = Main.concreteMaterial;
         data[2].applyToMesh(this.leftHip);
 
         this.leftKnee = new BABYLON.Mesh("left-knee", this.getScene());
 
         this.rightLeg = new BABYLON.Mesh("right-leg", this.getScene());
-        this.rightLeg.material = Main.cellShadingMaterial;
+        this.rightLeg.material = Main.concreteMaterial;
         data[3].applyToMesh(this.rightLeg);
         this.rightHip = new BABYLON.Mesh("right-leg", this.getScene());
-        this.rightHip.material = Main.cellShadingMaterial;
+        this.rightHip.material = Main.concreteMaterial;
         data[2].applyToMesh(this.rightHip);
 
         this.rightKnee = new BABYLON.Mesh("right-knee", this.getScene());

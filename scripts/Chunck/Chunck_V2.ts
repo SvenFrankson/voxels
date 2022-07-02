@@ -403,7 +403,12 @@ class Chunck_V2 extends Chunck {
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;
             b.parent = this;
-            b.material = Main.cellShadingMaterial;
+            if (brick.reference.type === BrickType.Concrete) {
+                b.material = Main.concreteMaterial;
+            }
+            else if (brick.reference.type === BrickType.Steel) {
+                b.material = Main.steelMaterial;
+            }
             this.brickMeshes.push(b);
         }
     }

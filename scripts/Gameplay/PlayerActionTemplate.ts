@@ -388,7 +388,7 @@ class PlayerActionTemplate {
                                     data.applyToMesh(previewMesh);
                                 }
                             );
-                            previewMesh.material = Main.cellShadingMaterial;
+                            previewMesh.material = Main.concreteMaterial;
                         }
                         previewMesh.position.copyFrom(coordinates.chunck.position);
                         previewMesh.position.addInPlaceFromFloats(i * DX, j * DY, k * DX);
