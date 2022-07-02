@@ -167,10 +167,11 @@ class Miniature extends Main {
 	}
 
 	public async runAllScreenShots(): Promise<void> {
-		for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
-			let name = BrickDataManager.BrickNames[i];
-			let type = BrickType.Concrete;
-			await this.createBrick(name + "-" + type.toFixed(0) + "-" + Brick.DefaultColor(type).toFixed(0));
+		for (const brickType of BrickDataManager.BrickTypeIndexes) {
+			let names = BrickDataManager.GetAvailableBricks(brickType);
+			for (const name of names) {
+				await this.createBrick(name + "-" + brickType.toFixed(0) + "-" + Brick.DefaultColor(brickType).toFixed(0));
+			}
 		}
 		/*
         await this.createCube(CubeType.Dirt);
@@ -264,6 +265,12 @@ class Miniature extends Main {
 		let mesh = new BABYLON.Mesh("mesh");
 		let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
 		data.applyToMesh(mesh);
+		if (brickReference.type === BrickType.Concrete) {
+			mesh.material = Main.concreteMaterial;
+		}
+		else if (brickReference.type === BrickType.Steel) {
+			mesh.material = Main.steelMaterial;
+		}
 		
 		this.targets = [mesh];
 		

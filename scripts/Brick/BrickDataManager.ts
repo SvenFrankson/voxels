@@ -132,6 +132,8 @@ class BrickDataManager {
         "windowRoundCurb-3",
         "doorRound-4"
     ];
+    private static _AvailableBricks: Map<BrickType, string[]> = new Map<BrickType, string[]>();
+    public static BrickTypeIndexes: BrickType[] = [];
     private static _BrickDatas: Map<string, BrickData> = new Map<string, BrickData>();
 
     private static async _LoadConstructBrickData(constructName: string): Promise<BrickData> {
@@ -266,6 +268,80 @@ class BrickDataManager {
     }
 
     public static InitializeProceduralData(): void {
+        BrickDataManager._AvailableBricks.set(BrickType.None, []);
+        BrickDataManager._AvailableBricks.set(BrickType.Concrete, [
+            "plate-1x1",
+            "plate-1x2",
+            "plate-1x3",
+            "plate-1x4",
+            "plate-1x6",
+            "plate-1x8",
+            "plate-1x12",
+            
+            "plate-2x2",
+            "plate-2x3",
+            "plate-2x4",
+            "plate-2x6",
+            "plate-2x8",
+            "plate-2x12",
+            
+            "plate-4x4",
+
+            "brick-1x1",
+            "brick-1x2",
+            "brick-1x3",
+            "brick-1x4",
+            "brick-1x6",
+            "brick-1x8",
+            "brick-1x12",
+
+            "plateCurb-2",
+            "plateCurb-3",
+            "plateCurb-4",
+
+            "brickCurb-2",
+            "brickCurb-3",
+            "brickCurb-4",
+
+            "pilar-2",
+            "pilar-4",
+            "pilar-6"
+        ]);
+        BrickDataManager._AvailableBricks.set(BrickType.Steel, [
+            "plate-1x1",
+            "plate-1x2",
+            "plate-1x3",
+            "plate-1x4",
+            "plate-1x6",
+            "plate-1x8",
+            "plate-1x12",
+            
+            "plate-2x2",
+            "plate-2x3",
+            "plate-2x4",
+            "plate-2x6",
+            "plate-2x8",
+            "plate-2x12",
+            
+            "plate-4x4",
+    
+            "plateCurb-2",
+            "plateCurb-3",
+            "plateCurb-4",
+    
+            "pilar-2",
+            "pilar-4",
+            "pilar-6",
+    
+            "windowRound-2",
+            "windowRound-4",
+            "windowRoundCurb-3",
+            "doorRound-4"
+        ]);
+        BrickDataManager._AvailableBricks.set(BrickType.Plastic, []);
+
+        BrickDataManager.BrickTypeIndexes = [BrickType.Concrete, BrickType.Steel, BrickType.Plastic];
+
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
         BrickDataManager.BrickColors.set(BrickColor.Black, BABYLON.Color4.FromInts(60, 60, 60, 255));
@@ -524,6 +600,10 @@ class BrickDataManager {
             BrickDataManager.BrickNames.push(brickCurbName);
         }
         */
+    }
+
+    public static GetAvailableBricks(brickType: BrickType): string[] {
+        return BrickDataManager._AvailableBricks.get(brickType);
     }
 
     public static async GetBrickData(brickReference: IBrickReference): Promise<BrickData> {

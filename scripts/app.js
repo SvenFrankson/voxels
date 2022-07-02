@@ -775,6 +775,67 @@ class BrickDataManager {
         return curbData;
     }
     static InitializeProceduralData() {
+        BrickDataManager._AvailableBricks.set(BrickType.None, []);
+        BrickDataManager._AvailableBricks.set(BrickType.Concrete, [
+            "plate-1x1",
+            "plate-1x2",
+            "plate-1x3",
+            "plate-1x4",
+            "plate-1x6",
+            "plate-1x8",
+            "plate-1x12",
+            "plate-2x2",
+            "plate-2x3",
+            "plate-2x4",
+            "plate-2x6",
+            "plate-2x8",
+            "plate-2x12",
+            "plate-4x4",
+            "brick-1x1",
+            "brick-1x2",
+            "brick-1x3",
+            "brick-1x4",
+            "brick-1x6",
+            "brick-1x8",
+            "brick-1x12",
+            "plateCurb-2",
+            "plateCurb-3",
+            "plateCurb-4",
+            "brickCurb-2",
+            "brickCurb-3",
+            "brickCurb-4",
+            "pilar-2",
+            "pilar-4",
+            "pilar-6"
+        ]);
+        BrickDataManager._AvailableBricks.set(BrickType.Steel, [
+            "plate-1x1",
+            "plate-1x2",
+            "plate-1x3",
+            "plate-1x4",
+            "plate-1x6",
+            "plate-1x8",
+            "plate-1x12",
+            "plate-2x2",
+            "plate-2x3",
+            "plate-2x4",
+            "plate-2x6",
+            "plate-2x8",
+            "plate-2x12",
+            "plate-4x4",
+            "plateCurb-2",
+            "plateCurb-3",
+            "plateCurb-4",
+            "pilar-2",
+            "pilar-4",
+            "pilar-6",
+            "windowRound-2",
+            "windowRound-4",
+            "windowRoundCurb-3",
+            "doorRound-4"
+        ]);
+        BrickDataManager._AvailableBricks.set(BrickType.Plastic, []);
+        BrickDataManager.BrickTypeIndexes = [BrickType.Concrete, BrickType.Steel, BrickType.Plastic];
         BrickDataManager.BrickColors.set(BrickColor.White, BABYLON.Color4.FromInts(244, 244, 244, 255));
         BrickDataManager.BrickColors.set(BrickColor.Gray, BABYLON.Color4.FromInts(180, 180, 180, 255));
         BrickDataManager.BrickColors.set(BrickColor.Black, BABYLON.Color4.FromInts(60, 60, 60, 255));
@@ -1020,6 +1081,9 @@ class BrickDataManager {
         }
         */
     }
+    static GetAvailableBricks(brickType) {
+        return BrickDataManager._AvailableBricks.get(brickType);
+    }
     static async GetBrickData(brickReference) {
         if (brickReference.name.startsWith("construct_")) {
             if (!BrickDataManager._BrickDatas.get(brickReference.name)) {
@@ -1070,6 +1134,8 @@ BrickDataManager.BrickNames = [
     "windowRoundCurb-3",
     "doorRound-4"
 ];
+BrickDataManager._AvailableBricks = new Map();
+BrickDataManager.BrickTypeIndexes = [];
 BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
     static async _LoadCubicTemplateVertexData() {
@@ -6207,10 +6273,11 @@ class Miniature extends Main {
         }
     }
     async runAllScreenShots() {
-        for (let i = 0; i < BrickDataManager.BrickNames.length; i++) {
-            let name = BrickDataManager.BrickNames[i];
-            let type = BrickType.Concrete;
-            await this.createBrick(name + "-" + type.toFixed(0) + "-" + Brick.DefaultColor(type).toFixed(0));
+        for (const brickType of BrickDataManager.BrickTypeIndexes) {
+            let names = BrickDataManager.GetAvailableBricks(brickType);
+            for (const name of names) {
+                await this.createBrick(name + "-" + brickType.toFixed(0) + "-" + Brick.DefaultColor(brickType).toFixed(0));
+            }
         }
         /*
         await this.createCube(CubeType.Dirt);
@@ -6276,6 +6343,12 @@ class Miniature extends Main {
         let mesh = new BABYLON.Mesh("mesh");
         let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
         data.applyToMesh(mesh);
+        if (brickReference.type === BrickType.Concrete) {
+            mesh.material = Main.concreteMaterial;
+        }
+        else if (brickReference.type === BrickType.Steel) {
+            mesh.material = Main.steelMaterial;
+        }
         this.targets = [mesh];
         return new Promise(resolve => {
             setTimeout(() => {
@@ -6483,17 +6556,12 @@ class PlayerTest extends Main {
         BrickDataManager.BrickColors.forEach((color4, brickColor) => {
             inventory.addItem(InventoryItem.Paint(brickColor));
         });
-        let types = [
-            BrickType.Concrete
-        ];
-        let bricks = BrickDataManager.BrickNames;
-        for (let i = 0; i < types.length; i++) {
-            let type = types[i];
-            for (let j = 0; j < bricks.length; j++) {
-                let brickName = bricks[j];
+        for (const brickType of BrickDataManager.BrickTypeIndexes) {
+            let names = BrickDataManager.GetAvailableBricks(brickType);
+            for (const name of names) {
                 let count = Math.floor(Math.random() * 9 + 2);
                 for (let n = 0; n < count; n++) {
-                    inventory.addItem(await InventoryItem.Brick({ name: brickName, type: type, color: Brick.DefaultColor(type) }));
+                    inventory.addItem(await InventoryItem.Brick({ name: name, type: brickType, color: Brick.DefaultColor(brickType) }));
                 }
             }
         }
