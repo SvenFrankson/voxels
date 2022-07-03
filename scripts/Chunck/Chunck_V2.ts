@@ -398,7 +398,7 @@ class Chunck_V2 extends Chunck {
             let brick = this.bricks[i];
             let b = new BABYLON.Mesh("brick-" + i);
             brick.mesh = b;
-            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference, Random.GetN3(brick.i, brick.j, brick.k), Random.GetN3(brick.j, brick.k, brick.i), Random.GetN3(brick.k, brick.i, brick.j) * 2 * Math.PI, 0.3);
+            let vertexData = await BrickVertexData.GetFullBrickVertexData(brick.reference, BrickVertexData.GetBrickUVTransform(brick.reference.type, brick.i, brick.j, brick.k));
             vertexData.applyToMesh(b);
             b.position.copyFromFloats(brick.i * DX, brick.j * DY, brick.k * DX);
             b.rotation.y = Math.PI / 2 * brick.r;

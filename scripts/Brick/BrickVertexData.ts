@@ -1,3 +1,10 @@
+interface IBrickUVTransform {
+    translateUVX?: number;
+    translateUVY?: number;
+    rotateUV?: number;
+    scaleUV?: number;
+}
+
 class BrickVertexData {
 
     private static _CubicTemplateVertexData: BABYLON.VertexData[] = [];
@@ -426,8 +433,27 @@ class BrickVertexData {
         }
         return data;
     }
+
+    public static GetBrickUVTransform(brickType: BrickType, i: number, j: number, k: number): IBrickUVTransform {
+        if (brickType === BrickType.Concrete) {
+            return {
+                translateUVX: Random.GetN3(i, j, k),
+                translateUVY: Random.GetN3(j, k, i),
+                rotateUV: Random.GetN3(k, i, j) * 2 * Math.PI,
+                scaleUV: 0.3
+            }
+        }
+        else if (brickType === BrickType.Steel) {
+            return {
+                translateUVX: Random.GetN3(i, j, k),
+                translateUVY: Random.GetN3(j, k, i),
+                rotateUV: 0,
+                scaleUV: 0.3
+            }
+        }
+    }
     
-    public static async GetFullBrickVertexData(brickReference: IBrickReference, translateUVX: number = 0, translateUVY: number = 0, rotateUVA: number = 0, scaleUV: number = 1): Promise<BABYLON.VertexData> {
+    public static async GetFullBrickVertexData(brickReference: IBrickReference, uvTransform?: IBrickUVTransform): Promise<BABYLON.VertexData> {
         let vertexData = await BrickVertexData.GetBrickVertexData(brickReference.name, 0);
         if (brickReference.name.startsWith("construct_")) {
             return vertexData;
@@ -436,22 +462,40 @@ class BrickVertexData {
         let indices = [...vertexData.indices];
         let normals = [...vertexData.normals];
         let uvs = [...vertexData.uvs];
-        if (translateUVX != 0 || translateUVY != 0) {
-            for (let i = 0; i < uvs.length / 2; i++) {
-                uvs[2 * i] *= scaleUV;
-                uvs[2 * i] += translateUVX;
-                uvs[2 * i + 1] *= scaleUV;
-                uvs[2 * i + 1] += translateUVY;
+        if (uvTransform) {
+            let translateUVX = 0;
+            let translateUVY = 0;
+            let rotateUV = 0;
+            let scaleUV = 1;
+            if (isFinite(uvTransform.translateUVX)) {
+                translateUVX = uvTransform.translateUVX;
             }
-        }
-        if (rotateUVA != 0) {
-            let cosa = Math.cos(rotateUVA);
-            let sina = Math.sin(rotateUVA);
-            for (let i = 0; i < uvs.length / 2; i++) {
-                let u = uvs[2 * i];
-                let v = uvs[2 * i + 1];
-                uvs[2 * i] = cosa * u + sina * v;
-                uvs[2 * i + 1] = sina * u - cosa * v;
+            if (isFinite(uvTransform.translateUVY)) {
+                translateUVY = uvTransform.translateUVY;
+            }
+            if (isFinite(uvTransform.rotateUV)) {
+                rotateUV = uvTransform.rotateUV;
+            }
+            if (isFinite(uvTransform.scaleUV)) {
+                scaleUV = uvTransform.scaleUV;
+            }
+            if (translateUVX != 0 || translateUVY != 0) {
+                for (let i = 0; i < uvs.length / 2; i++) {
+                    uvs[2 * i] *= scaleUV;
+                    uvs[2 * i] += translateUVX;
+                    uvs[2 * i + 1] *= scaleUV;
+                    uvs[2 * i + 1] += translateUVY;
+                }
+            }
+            if (rotateUV != 0) {
+                let cosa = Math.cos(rotateUV);
+                let sina = Math.sin(rotateUV);
+                for (let i = 0; i < uvs.length / 2; i++) {
+                    let u = uvs[2 * i];
+                    let v = uvs[2 * i + 1];
+                    uvs[2 * i] = cosa * u + sina * v;
+                    uvs[2 * i + 1] = sina * u - cosa * v;
+                }
             }
         }
         let colors = [];
