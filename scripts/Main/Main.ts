@@ -18,6 +18,7 @@ class Main {
 		if (!Main._concreteMaterial) {
 			Main._concreteMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
 			Main._concreteMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/concrete.png", Main.Scene));
+			Main._concreteMaterial.setFloat("roughness", 1);
 		}
 		return Main._concreteMaterial;
 	}
@@ -27,6 +28,7 @@ class Main {
 		if (!Main._steelMaterial) {
 			Main._steelMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
 			Main._steelMaterial.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/steel.png", Main.Scene));
+			Main._steelMaterial.setFloat("roughness", 0.5);
 		}
 		return Main._steelMaterial;
 	}
