@@ -6,21 +6,21 @@
     "windowRound-2" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [1, 8, 0]
+            "max": [1, 0, 0]
         },
         "covers": "locks"
     },
     "windowRound-4" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [3, 8, 0]
+            "max": [3, 0, 0]
         },
         "covers": "locks"
     },
     "doorRound-4" : {
         "locks": {
             "min": [0, 0, 0],
-            "max": [3, 17, 0]
+            "max": [3, 0, 0]
         },
         "covers": "locks"
     }
