@@ -10,6 +10,7 @@ varying vec2 vUV;
 uniform sampler2D diffuseTexture;
 uniform vec3 lightInvDirW;
 uniform float roughness;
+uniform vec3 viewPos;
 
 void main(void) {
     float ToonThresholds[5];
@@ -65,6 +66,11 @@ void main(void) {
     else if (f > roughness * 0.5) {
         color = color * 0.5 + vec4(0.5);
     }
+
+    vec3 viewDir = normalize(viewPos - vPositionW);
+    vec3 reflectDir = reflect(lightInvDirW, vNormalW);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.);
+    color += vec4(spec);
     
     gl_FragColor = vec4(color.rgb, a);
 }

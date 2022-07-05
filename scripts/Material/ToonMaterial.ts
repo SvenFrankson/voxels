@@ -62,12 +62,18 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             },
             {
                 attributes: ["position", "normal", "uv", "color"],
-                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "diffuseTexture"],
+                uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "diffuseTexture", "viewPos"],
                 needAlphaBlending: transparent
             }
         );
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
         //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
+
+        scene.onBeforeRenderObservable.add(
+            () => {
+                this.setVector3("viewPos", scene.activeCamera.globalPosition);
+            }
+        )
     }
 
     private _diffuseTexture: BABYLON.Texture;

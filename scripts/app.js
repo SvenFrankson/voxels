@@ -1,9 +1,4 @@
 class ColorizedTextureLoader {
-    static instance;
-    scene;
-    _baseTextures;
-    _baseColorTextures;
-    _colorizedTextures;
     constructor(scene) {
         this.scene = scene;
         this._baseTextures = new Map();
@@ -70,9 +65,6 @@ class ColorizedTextureLoader {
     }
 }
 class VertexDataLoader {
-    static instance;
-    scene;
-    _vertexDatas;
     constructor(scene) {
         this.scene = scene;
         this._vertexDatas = new Map();
@@ -231,10 +223,14 @@ var BlockMaterial;
     BlockMaterial[BlockMaterial["Plastic"] = 4] = "Plastic";
 })(BlockMaterial || (BlockMaterial = {}));
 class Block extends BABYLON.Mesh {
-    reference;
-    meshName;
-    blockMaterial;
-    _chunck;
+    constructor() {
+        super("block");
+        this._i = 0;
+        this._j = 0;
+        this._k = 0;
+        this._r = 0;
+        this.material = Main.concreteMaterial;
+    }
     get chunck() {
         return this._chunck;
     }
@@ -242,7 +238,6 @@ class Block extends BABYLON.Mesh {
         this._chunck = c;
         this.parent = this.chunck;
     }
-    _i = 0;
     get i() {
         return this._i;
     }
@@ -250,7 +245,6 @@ class Block extends BABYLON.Mesh {
         this._i = v;
         this.position.x = this.i + 0.25;
     }
-    _j = 0;
     get j() {
         return this._j;
     }
@@ -258,7 +252,6 @@ class Block extends BABYLON.Mesh {
         this._j = v;
         this.position.y = this.j + 0.125;
     }
-    _k = 0;
     get k() {
         return this._k;
     }
@@ -266,17 +259,12 @@ class Block extends BABYLON.Mesh {
         this._k = v;
         this.position.z = this.k + 0.25;
     }
-    _r = 0;
     get r() {
         return this._r;
     }
     set r(v) {
         this._r = v;
         this.rotation.y = Math.PI / 2 * this.r;
-    }
-    constructor() {
-        super("block");
-        this.material = Main.concreteMaterial;
     }
     highlight() {
         this.renderOutline = true;
@@ -321,30 +309,29 @@ class Block extends BABYLON.Mesh {
     }
 }
 class BlockList {
-    static References = [
-        "wood-bar-1-1-1",
-        "wood-bar-1-1-2",
-        "wood-bar-1-1-4",
-        "stone-brick-1-1-1",
-        "stone-brick-1-1-2",
-        "stone-brick-1-1-4",
-        "sandstone-brick-1-1-1",
-        "sandstone-brick-1-1-2",
-        "sandstone-brick-1-1-4",
-        "stone-ramp-1-1-2",
-        "stone-ramp-1-1-4",
-        "sandstone-ramp-1-1-2",
-        "sandstone-ramp-1-1-4",
-        "brick-ramp-1-1-2",
-        "brick-ramp-1-1-4",
-        "plastic-light-wall",
-        "plastic-light-wall-corner",
-        "plastic-light-wall-door",
-        "plastic-light-wall-window",
-    ];
 }
+BlockList.References = [
+    "wood-bar-1-1-1",
+    "wood-bar-1-1-2",
+    "wood-bar-1-1-4",
+    "stone-brick-1-1-1",
+    "stone-brick-1-1-2",
+    "stone-brick-1-1-4",
+    "sandstone-brick-1-1-1",
+    "sandstone-brick-1-1-2",
+    "sandstone-brick-1-1-4",
+    "stone-ramp-1-1-2",
+    "stone-ramp-1-1-4",
+    "sandstone-ramp-1-1-2",
+    "sandstone-ramp-1-1-4",
+    "brick-ramp-1-1-2",
+    "brick-ramp-1-1-4",
+    "plastic-light-wall",
+    "plastic-light-wall-corner",
+    "plastic-light-wall-door",
+    "plastic-light-wall-window",
+];
 class BlockVertexData {
-    static _BlockColors;
     static get BlockColors() {
         if (!BlockVertexData._BlockColors) {
             BlockVertexData._BlockColors = new Map();
@@ -462,6 +449,12 @@ var BrickColor;
     BrickColor[BrickColor["Black"] = 18] = "Black";
 })(BrickColor || (BrickColor = {}));
 class Brick {
+    constructor() {
+        this._i = 0;
+        this._j = 0;
+        this._k = 0;
+        this._r = 0;
+    }
     static DefaultColor(type) {
         if (type === BrickType.None) {
             return BrickColor.None;
@@ -497,43 +490,36 @@ class Brick {
         }
         return brickReference.name + "-" + brickReference.type.toFixed(0) + "-" + brickReference.color.toFixed(0);
     }
-    reference;
-    _tile;
     get tile() {
         return this._tile;
     }
     set tile(t) {
         this._tile = t;
     }
-    _chunck;
     get chunck() {
         return this._chunck;
     }
     set chunck(c) {
         this._chunck = c;
     }
-    _i = 0;
     get i() {
         return this._i;
     }
     set i(v) {
         this._i = v;
     }
-    _j = 0;
     get j() {
         return this._j;
     }
     set j(v) {
         this._j = v;
     }
-    _k = 0;
     get k() {
         return this._k;
     }
     set k(v) {
         this._k = v;
     }
-    _r = 0;
     get r() {
         return this._r;
     }
@@ -547,9 +533,6 @@ class Brick {
             color: color
         };
     }
-    _debugText;
-    _debugOrigin;
-    mesh;
     setCoordinates(coordinates) {
         this.i = coordinates.x;
         this.j = coordinates.y;
@@ -597,9 +580,6 @@ class Brick {
     }
 }
 class BrickData {
-    locks;
-    covers;
-    _rotatedLocks;
     constructor(locks = [], covers = []) {
         this.locks = locks;
         this.covers = covers;
@@ -673,48 +653,6 @@ class BrickData {
     }
 }
 class BrickDataManager {
-    static BrickColors = new Map();
-    static BrickColorIRLNames = new Map();
-    static BrickColorIndexes = [];
-    static BrickNames = [
-        "plate-1x1",
-        "plate-1x2",
-        "plate-1x3",
-        "plate-1x4",
-        "plate-1x6",
-        "plate-1x8",
-        "plate-1x12",
-        "plate-2x2",
-        "plate-2x3",
-        "plate-2x4",
-        "plate-2x6",
-        "plate-2x8",
-        "plate-2x12",
-        "plate-4x4",
-        "brick-1x1",
-        "brick-1x2",
-        "brick-1x3",
-        "brick-1x4",
-        "brick-1x6",
-        "brick-1x8",
-        "brick-1x12",
-        "plateCurb-2",
-        "plateCurb-3",
-        "plateCurb-4",
-        "brickCurb-2",
-        "brickCurb-3",
-        "brickCurb-4",
-        "pilar-2",
-        "pilar-4",
-        "pilar-6",
-        "windowRound-2",
-        "windowRound-4",
-        "windowRoundCurb-3",
-        "doorRound-4"
-    ];
-    static _AvailableBricks = new Map();
-    static BrickTypeIndexes = [];
-    static _BrickDatas = new Map();
     static async _LoadConstructBrickData(constructName) {
         return new Promise(resolve => {
             var xhr = new XMLHttpRequest();
@@ -1157,10 +1095,49 @@ class BrickDataManager {
         return BrickDataManager._BrickDatas.get(brickReference.name);
     }
 }
+BrickDataManager.BrickColors = new Map();
+BrickDataManager.BrickColorIRLNames = new Map();
+BrickDataManager.BrickColorIndexes = [];
+BrickDataManager.BrickNames = [
+    "plate-1x1",
+    "plate-1x2",
+    "plate-1x3",
+    "plate-1x4",
+    "plate-1x6",
+    "plate-1x8",
+    "plate-1x12",
+    "plate-2x2",
+    "plate-2x3",
+    "plate-2x4",
+    "plate-2x6",
+    "plate-2x8",
+    "plate-2x12",
+    "plate-4x4",
+    "brick-1x1",
+    "brick-1x2",
+    "brick-1x3",
+    "brick-1x4",
+    "brick-1x6",
+    "brick-1x8",
+    "brick-1x12",
+    "plateCurb-2",
+    "plateCurb-3",
+    "plateCurb-4",
+    "brickCurb-2",
+    "brickCurb-3",
+    "brickCurb-4",
+    "pilar-2",
+    "pilar-4",
+    "pilar-6",
+    "windowRound-2",
+    "windowRound-4",
+    "windowRoundCurb-3",
+    "doorRound-4"
+];
+BrickDataManager._AvailableBricks = new Map();
+BrickDataManager.BrickTypeIndexes = [];
+BrickDataManager._BrickDatas = new Map();
 class BrickVertexData {
-    static _CubicTemplateVertexData = [];
-    static _CurbTemplateVertexData = [];
-    static _BrickVertexDatas = new Map();
     static async _LoadCubicTemplateVertexData() {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/cubic-template.babylon", "", Main.Scene, (meshes) => {
@@ -1591,22 +1568,21 @@ class BrickVertexData {
         return fullVertexData;
     }
 }
+BrickVertexData._CubicTemplateVertexData = [];
+BrickVertexData._CurbTemplateVertexData = [];
+BrickVertexData._BrickVertexDatas = new Map();
 class Chunck extends BABYLON.Mesh {
-    manager;
-    i;
-    j;
-    k;
-    isEmpty = true;
-    faces = [];
-    vertices = [];
-    cubes = [];
-    blocks = [];
     constructor(manager, i, j, k) {
         super("chunck_" + i + "_" + j + "_" + k);
         this.manager = manager;
         this.i = i;
         this.j = j;
         this.k = k;
+        this.isEmpty = true;
+        this.faces = [];
+        this.vertices = [];
+        this.cubes = [];
+        this.blocks = [];
     }
     static ConstructChunck(manager, i, j, k) {
         return new Chunck_V2(manager, i, j, k);
@@ -1830,15 +1806,13 @@ class Chunck extends BABYLON.Mesh {
     }
 }
 class ChunckEditor {
-    chunckManager;
-    _xPointerDown = NaN;
-    _yPointerDown = NaN;
-    brushCubeType = undefined;
-    brushSize = 0;
-    brushMesh;
-    saveSceneName = "scene";
     constructor(chunckManager) {
         this.chunckManager = chunckManager;
+        this._xPointerDown = NaN;
+        this._yPointerDown = NaN;
+        this.brushCubeType = undefined;
+        this.brushSize = 0;
+        this.saveSceneName = "scene";
         document.getElementById("chunck-editor").style.display = "block";
         this.brushMesh = new BABYLON.Mesh("brush-mesh");
         this.updateBrushMesh();
@@ -1972,46 +1946,46 @@ class ChunckEditor {
     }
 }
 class ChunckManager {
-    chuncks = new Map();
-    updateBuffer = [];
     constructor() {
-        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
-    }
-    updateChunck = () => {
-        if (this.updateBuffer.length > 0) {
-            let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
-            let camPos = Main.Camera.position;
-            for (let i = 0; i < sortSteps; i++) {
-                let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
-                let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
-                let i1 = Math.min(r1, r2);
-                let i2 = Math.max(r1, r2);
-                let c1 = this.updateBuffer[i1];
-                let c2 = this.updateBuffer[i2];
-                if (c1 && c2 && c1 != c2) {
-                    let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
-                    let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
-                    if (d2 > d1) {
-                        this.updateBuffer[i1] = c2;
-                        this.updateBuffer[i2] = c1;
+        this.chuncks = new Map();
+        this.updateBuffer = [];
+        this.updateChunck = () => {
+            if (this.updateBuffer.length > 0) {
+                let sortSteps = Math.min(this.updateBuffer.length * 3, 100);
+                let camPos = Main.Camera.position;
+                for (let i = 0; i < sortSteps; i++) {
+                    let r1 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let r2 = Math.floor(Math.random() * (this.updateBuffer.length));
+                    let i1 = Math.min(r1, r2);
+                    let i2 = Math.max(r1, r2);
+                    let c1 = this.updateBuffer[i1];
+                    let c2 = this.updateBuffer[i2];
+                    if (c1 && c2 && c1 != c2) {
+                        let d1 = BABYLON.Vector3.DistanceSquared(camPos, c1.position);
+                        let d2 = BABYLON.Vector3.DistanceSquared(camPos, c2.position);
+                        if (d2 > d1) {
+                            this.updateBuffer[i1] = c2;
+                            this.updateBuffer[i2] = c1;
+                        }
                     }
                 }
-            }
-            let done = false;
-            while (!done) {
-                let chunck = this.updateBuffer.pop();
-                if (chunck) {
-                    if (!chunck.isEmpty) {
-                        chunck.generate();
+                let done = false;
+                while (!done) {
+                    let chunck = this.updateBuffer.pop();
+                    if (chunck) {
+                        if (!chunck.isEmpty) {
+                            chunck.generate();
+                            done = true;
+                        }
+                    }
+                    else {
                         done = true;
                     }
                 }
-                else {
-                    done = true;
-                }
             }
-        }
-    };
+        };
+        Main.Scene.onBeforeRenderObservable.add(this.updateChunck);
+    }
     async generateManyChuncks(chuncks) {
         return new Promise(resolve => {
             let iterator = 0;
@@ -2602,7 +2576,6 @@ class ChunckUtils {
     }
 }
 class ChunckVertexData {
-    static _VertexDatas = new Map();
     static RotateYChunckPartName(name) {
         let v0 = name[0];
         let v1 = name[1];
@@ -2890,12 +2863,10 @@ class ChunckVertexData {
         return ref.substr(rotation) + ref.substring(0, rotation);
     }
 }
+ChunckVertexData._VertexDatas = new Map();
 /// <reference path="./Chunck.ts"/>
 var CHUNCK_SIZE = 8;
 class Face {
-    vertices;
-    cubeType;
-    draw;
     constructor(vertices, cubeType, draw = true) {
         this.vertices = vertices;
         this.cubeType = cubeType;
@@ -3195,16 +3166,70 @@ var ACTIVE_DEBUG_CHUNCK = false;
 var ACTIVE_DEBUG_CHUNCK_LOCK = false;
 var ACTIVE_DEBUG_SPLIT_CHUNCKS = false;
 class Chunck_V2 extends Chunck {
-    _barycenter = BABYLON.Vector3.Zero();
-    bricks = [];
-    brickMeshes = [];
-    _locks = [];
-    _debugText;
-    _debugOrigin;
-    _debugBox;
-    _debugLocks;
     constructor(manager, i, j, k) {
         super(manager, i, j, k);
+        this._barycenter = BABYLON.Vector3.Zero();
+        this.bricks = [];
+        this.brickMeshes = [];
+        this._locks = [];
+        this._updateDebug = () => {
+            if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+                if (!this._debugText) {
+                    this._debugText = DebugText3D.CreateText("", this.position);
+                }
+                let text = "";
+                text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
+                this._debugText.setText(text);
+                if (!this._debugOrigin) {
+                    this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Red(), this.position);
+                }
+                if (!this._debugBox) {
+                    this._debugBox = DebugBox.CreateBox(CHUNCK_SIZE * 1.6 - 0.05, CHUNCK_SIZE * 0.96 - 0.05, CHUNCK_SIZE * 1.6 - 0.05, new BABYLON.Color4(0, 0, 1, 0.2), this.barycenter);
+                }
+            }
+            else {
+                if (this._debugText) {
+                    this._debugText.dispose();
+                    this._debugText = undefined;
+                }
+                if (this._debugOrigin) {
+                    this._debugOrigin.dispose();
+                    this._debugOrigin = undefined;
+                }
+                if (this._debugBox) {
+                    this._debugBox.dispose();
+                    this._debugBox = undefined;
+                }
+            }
+        };
+        this._updateDebugLock = () => {
+            if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
+                if (this._debugLocks) {
+                    this._debugLocks.dispose();
+                }
+                let positions = [];
+                for (let i = 0; i < this._locks.length; i++) {
+                    if (this._locks[i]) {
+                        for (let j = 0; j < this._locks[i].length; j++) {
+                            if (this._locks[i][j]) {
+                                for (let k = 0; k < this._locks[i][j].length; k++) {
+                                    if (this._locks[i][j][k]) {
+                                        positions.push(new BABYLON.Vector3(this.position.x + i * DX, this.position.y + j * DY + DY * 0.5, this.position.z + k * DX));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
+            }
+            else {
+                if (this._debugLocks) {
+                    this._debugLocks.dispose();
+                    this._debugLocks = undefined;
+                }
+            }
+        };
         this.name = "chunck_v2_" + i + "_" + j + "_" + k;
         this.position.x = CHUNCK_SIZE * this.i * 1.6;
         this.position.y = CHUNCK_SIZE * this.j * 0.96;
@@ -3314,7 +3339,6 @@ class Chunck_V2 extends Chunck {
     setLockSafe(i, j, k, brick) {
         return this.manager.setChunckLock(this, i, j, k, brick);
     }
-    static HasLoged = false;
     async generate() {
         let positions = [];
         let indices = [];
@@ -3471,64 +3495,6 @@ class Chunck_V2 extends Chunck {
             Main.AddOnUpdateDebugCallback(this._updateDebugLock);
         }
     }
-    _updateDebug = () => {
-        if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
-            if (!this._debugText) {
-                this._debugText = DebugText3D.CreateText("", this.position);
-            }
-            let text = "";
-            text += "IJK : " + this.i + " " + this.j + " " + this.k + "<br>";
-            this._debugText.setText(text);
-            if (!this._debugOrigin) {
-                this._debugOrigin = DebugCross.CreateCross(2, BABYLON.Color3.Red(), this.position);
-            }
-            if (!this._debugBox) {
-                this._debugBox = DebugBox.CreateBox(CHUNCK_SIZE * 1.6 - 0.05, CHUNCK_SIZE * 0.96 - 0.05, CHUNCK_SIZE * 1.6 - 0.05, new BABYLON.Color4(0, 0, 1, 0.2), this.barycenter);
-            }
-        }
-        else {
-            if (this._debugText) {
-                this._debugText.dispose();
-                this._debugText = undefined;
-            }
-            if (this._debugOrigin) {
-                this._debugOrigin.dispose();
-                this._debugOrigin = undefined;
-            }
-            if (this._debugBox) {
-                this._debugBox.dispose();
-                this._debugBox = undefined;
-            }
-        }
-    };
-    _updateDebugLock = () => {
-        if (BABYLON.Vector3.DistanceSquared(this.barycenter, Main.Camera.globalPosition) < 1.5 * CHUNCK_SIZE * 1.6 * 1.5 * CHUNCK_SIZE * 1.6) {
-            if (this._debugLocks) {
-                this._debugLocks.dispose();
-            }
-            let positions = [];
-            for (let i = 0; i < this._locks.length; i++) {
-                if (this._locks[i]) {
-                    for (let j = 0; j < this._locks[i].length; j++) {
-                        if (this._locks[i][j]) {
-                            for (let k = 0; k < this._locks[i][j].length; k++) {
-                                if (this._locks[i][j][k]) {
-                                    positions.push(new BABYLON.Vector3(this.position.x + i * DX, this.position.y + j * DY + DY * 0.5, this.position.z + k * DX));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            this._debugLocks = DebugCrosses.CreateCrosses(DX + 0.2, DY + 0.2, BABYLON.Color3.Magenta(), positions);
-        }
-        else {
-            if (this._debugLocks) {
-                this._debugLocks.dispose();
-                this._debugLocks = undefined;
-            }
-        }
-    };
     async updateBricks() {
         while (this.brickMeshes.length > 0) {
             this.brickMeshes.pop().dispose();
@@ -3552,6 +3518,7 @@ class Chunck_V2 extends Chunck {
         }
     }
 }
+Chunck_V2.HasLoged = false;
 var CubeType;
 (function (CubeType) {
     CubeType[CubeType["Dirt"] = 0] = "Dirt";
@@ -3560,10 +3527,18 @@ var CubeType;
     CubeType[CubeType["None"] = 3] = "None";
 })(CubeType || (CubeType = {}));
 class Cube {
-    chunck;
-    i;
-    j;
-    k;
+    constructor(chunck, i, j, k, cubeType) {
+        this.chunck = chunck;
+        this.i = i;
+        this.j = j;
+        this.k = k;
+        this._color = new BABYLON.Color4();
+        this._displayedColor = new BABYLON.Color4();
+        this.cubeType = cubeType;
+        if (this.cubeType === undefined) {
+            this.cubeType = Math.floor(Math.random() * 3);
+        }
+    }
     static get PreviewMaterials() {
         if (!Cube._PreviewMaterials) {
             Cube._PreviewMaterials = [];
@@ -3579,26 +3554,6 @@ class Cube {
         }
         return Cube._PreviewMaterials;
     }
-    static _PreviewMaterials;
-    v000;
-    v001;
-    v010;
-    v011;
-    v100;
-    v101;
-    v110;
-    v111;
-    constructor(chunck, i, j, k, cubeType) {
-        this.chunck = chunck;
-        this.i = i;
-        this.j = j;
-        this.k = k;
-        this.cubeType = cubeType;
-        if (this.cubeType === undefined) {
-            this.cubeType = Math.floor(Math.random() * 3);
-        }
-    }
-    _cubeType;
     get cubeType() {
         return this._cubeType;
     }
@@ -3617,11 +3572,9 @@ class Cube {
             this._displayedColor.copyFromFloats(219 / 255, 198 / 255, 123 / 255, 255);
         }
     }
-    _color = new BABYLON.Color4();
     get color() {
         return this._color;
     }
-    _displayedColor = new BABYLON.Color4();
     get displayedColor() {
         return this._displayedColor;
     }
@@ -3769,9 +3722,8 @@ class Cube {
     }
 }
 class VertexCubeType {
-    values;
-    sourceCount = 0;
     constructor() {
+        this.sourceCount = 0;
         this.values = [0, 0, 0];
     }
     getColor() {
@@ -3812,21 +3764,15 @@ class VertexCubeType {
     }
 }
 class Vertex {
-    i;
-    j;
-    k;
-    index;
-    links = [];
-    faces = [];
-    position;
-    smoothedPosition;
-    cubeTypes = new VertexCubeType();
-    smoothedCubeTypes = new VertexCubeType();
-    normalSum = BABYLON.Vector3.Zero();
     constructor(i, j, k) {
         this.i = i;
         this.j = j;
         this.k = k;
+        this.links = [];
+        this.faces = [];
+        this.cubeTypes = new VertexCubeType();
+        this.smoothedCubeTypes = new VertexCubeType();
+        this.normalSum = BABYLON.Vector3.Zero();
         this.position = new BABYLON.Vector3(i, j, k);
         this.smoothedPosition = this.position.clone();
         while (this.i < 0) {
@@ -3877,26 +3823,86 @@ class Vertex {
     }
 }
 class Walker extends BABYLON.Mesh {
-    target = BABYLON.Vector3.Zero();
-    speed = 1;
-    leftFoot;
-    leftLeg;
-    leftKnee;
-    leftHip;
-    leftHipJoin;
-    leftFootJoin;
-    rightFoot;
-    rightLeg;
-    rightKnee;
-    rightHip;
-    rightHipJoin;
-    rightFootJoin;
-    body;
-    bodySpeed = BABYLON.Vector3.Zero();
-    yaw = 0;
-    yawSpeed = 0;
-    pitch = 0;
-    roll = 0;
+    constructor() {
+        super(...arguments);
+        this.target = BABYLON.Vector3.Zero();
+        this.speed = 1;
+        this.bodySpeed = BABYLON.Vector3.Zero();
+        this.yaw = 0;
+        this.yawSpeed = 0;
+        this.pitch = 0;
+        this.roll = 0;
+        this.update = () => {
+            let forLeft = this.leftFoot.position.subtract(this.leftHipJoin.absolutePosition);
+            let lenLeft = forLeft.length();
+            forLeft.scaleInPlace(1 / lenLeft);
+            forLeft.scaleInPlace(lenLeft - 4);
+            this.bodySpeed.addInPlace(forLeft.scale(0.015 * 25));
+            let forRight = this.rightFoot.position.subtract(this.rightHipJoin.absolutePosition);
+            let lenRight = forRight.length();
+            forRight.scaleInPlace(1 / lenRight);
+            forRight.scaleInPlace(lenRight - 4);
+            this.bodySpeed.addInPlace(forRight.scale(0.015 * 25));
+            let center = this.leftFoot.position.add(this.rightFoot.position).scaleInPlace(0.5);
+            let forCenter = center.subtract(this.body.position);
+            forCenter.y = 0;
+            let lenCenter = forCenter.length();
+            forCenter.scaleInPlace(1 / lenCenter);
+            forCenter.scaleInPlace(lenCenter);
+            this.bodySpeed.addInPlace(forCenter.scale(0.015 * 10));
+            let localX = this.body.getDirection(BABYLON.Axis.X);
+            let localZ = this.body.getDirection(BABYLON.Axis.Z);
+            this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
+            this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(2));
+            for (let i = 0; i < 5; i++) {
+                let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
+                this.leftKnee.position.copyFrom(this.leftHipJoin.absolutePosition).addInPlace(dHip.scale(3));
+                let dFoot = this.leftKnee.position.subtract(this.leftFootJoin.absolutePosition).normalize();
+                this.leftKnee.position.copyFrom(this.leftFootJoin.absolutePosition).addInPlace(dFoot.scale(3));
+            }
+            this.leftLeg.position.copyFrom(this.leftFootJoin.absolutePosition);
+            this.leftLeg.position.addInPlace(this.leftKnee.position);
+            this.leftLeg.position.scaleInPlace(0.5);
+            this.leftLeg.lookAt(this.leftKnee.position);
+            this.leftHip.position.copyFrom(this.leftHipJoin.absolutePosition);
+            this.leftHip.position.addInPlace(this.leftKnee.position);
+            this.leftHip.position.scaleInPlace(0.5);
+            this.leftHip.lookAt(this.leftKnee.position);
+            this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
+            this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(2));
+            for (let i = 0; i < 5; i++) {
+                let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
+                this.rightKnee.position.copyFrom(this.rightHipJoin.absolutePosition).addInPlace(dHip.scale(3));
+                let dFoot = this.rightKnee.position.subtract(this.rightFootJoin.absolutePosition).normalize();
+                this.rightKnee.position.copyFrom(this.rightFootJoin.absolutePosition).addInPlace(dFoot.scale(3));
+            }
+            this.rightLeg.position.copyFrom(this.rightFootJoin.absolutePosition);
+            this.rightLeg.position.addInPlace(this.rightKnee.position);
+            this.rightLeg.position.scaleInPlace(0.5);
+            this.rightLeg.lookAt(this.rightKnee.position);
+            this.rightHip.position.copyFrom(this.rightHipJoin.absolutePosition);
+            this.rightHip.position.addInPlace(this.rightKnee.position);
+            this.rightHip.position.scaleInPlace(0.5);
+            this.rightHip.lookAt(this.rightKnee.position);
+            this.body.position.addInPlace(this.bodySpeed.scale(0.015));
+            this.body.position.y = Math.max(this.body.position.y, center.y + 1);
+            let yaw = VMath.AngleFromToAround(BABYLON.Axis.Z, this.target.subtract(this.body.position), BABYLON.Axis.Y);
+            this.yaw = Math2D.LerpFromToCircular(this.yaw, yaw, 0.001);
+            let footZ = this.rightFoot.position.subtract(this.leftFoot.position);
+            footZ = BABYLON.Vector3.Cross(footZ, BABYLON.Axis.Y);
+            let yawFoot = VMath.AngleFromToAround(localZ, footZ, BABYLON.Axis.Y);
+            let lim = Math.PI / 2 * 0.8;
+            if (yawFoot > lim) {
+                this.yaw -= yawFoot - lim;
+            }
+            if (yawFoot < -lim) {
+                this.yaw += yawFoot + lim;
+            }
+            this.roll = Math.PI / 4 * (this.rightFoot.position.y - this.leftFoot.position.y) / 4;
+            BABYLON.Quaternion.RotationYawPitchRollToRef(this.yaw, this.pitch, this.roll, this.body.rotationQuaternion);
+            this.bodySpeed.scaleInPlace(0.95);
+        };
+    }
     async instantiate() {
         let data = await VertexDataLoader.instance.getColorizedMultiple("walker", "#ffebb0", "", "#609400", "#beff45", "#243a40");
         this.leftFoot = new BABYLON.Mesh("left-foot");
@@ -4054,92 +4060,20 @@ class Walker extends BABYLON.Mesh {
             step();
         });
     }
-    update = () => {
-        let forLeft = this.leftFoot.position.subtract(this.leftHipJoin.absolutePosition);
-        let lenLeft = forLeft.length();
-        forLeft.scaleInPlace(1 / lenLeft);
-        forLeft.scaleInPlace(lenLeft - 4);
-        this.bodySpeed.addInPlace(forLeft.scale(0.015 * 25));
-        let forRight = this.rightFoot.position.subtract(this.rightHipJoin.absolutePosition);
-        let lenRight = forRight.length();
-        forRight.scaleInPlace(1 / lenRight);
-        forRight.scaleInPlace(lenRight - 4);
-        this.bodySpeed.addInPlace(forRight.scale(0.015 * 25));
-        let center = this.leftFoot.position.add(this.rightFoot.position).scaleInPlace(0.5);
-        let forCenter = center.subtract(this.body.position);
-        forCenter.y = 0;
-        let lenCenter = forCenter.length();
-        forCenter.scaleInPlace(1 / lenCenter);
-        forCenter.scaleInPlace(lenCenter);
-        this.bodySpeed.addInPlace(forCenter.scale(0.015 * 10));
-        let localX = this.body.getDirection(BABYLON.Axis.X);
-        let localZ = this.body.getDirection(BABYLON.Axis.Z);
-        this.leftKnee.position = this.leftFootJoin.absolutePosition.add(this.leftHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.leftKnee.position.subtractInPlace(localZ.scale(4)).subtractInPlace(localX.scale(2));
-        for (let i = 0; i < 5; i++) {
-            let dHip = this.leftKnee.position.subtract(this.leftHipJoin.absolutePosition).normalize();
-            this.leftKnee.position.copyFrom(this.leftHipJoin.absolutePosition).addInPlace(dHip.scale(3));
-            let dFoot = this.leftKnee.position.subtract(this.leftFootJoin.absolutePosition).normalize();
-            this.leftKnee.position.copyFrom(this.leftFootJoin.absolutePosition).addInPlace(dFoot.scale(3));
-        }
-        this.leftLeg.position.copyFrom(this.leftFootJoin.absolutePosition);
-        this.leftLeg.position.addInPlace(this.leftKnee.position);
-        this.leftLeg.position.scaleInPlace(0.5);
-        this.leftLeg.lookAt(this.leftKnee.position);
-        this.leftHip.position.copyFrom(this.leftHipJoin.absolutePosition);
-        this.leftHip.position.addInPlace(this.leftKnee.position);
-        this.leftHip.position.scaleInPlace(0.5);
-        this.leftHip.lookAt(this.leftKnee.position);
-        this.rightKnee.position = this.rightFootJoin.absolutePosition.add(this.rightHipJoin.absolutePosition).scaleInPlace(0.5);
-        this.rightKnee.position.subtractInPlace(localZ.scale(4)).addInPlace(localX.scale(2));
-        for (let i = 0; i < 5; i++) {
-            let dHip = this.rightKnee.position.subtract(this.rightHipJoin.absolutePosition).normalize();
-            this.rightKnee.position.copyFrom(this.rightHipJoin.absolutePosition).addInPlace(dHip.scale(3));
-            let dFoot = this.rightKnee.position.subtract(this.rightFootJoin.absolutePosition).normalize();
-            this.rightKnee.position.copyFrom(this.rightFootJoin.absolutePosition).addInPlace(dFoot.scale(3));
-        }
-        this.rightLeg.position.copyFrom(this.rightFootJoin.absolutePosition);
-        this.rightLeg.position.addInPlace(this.rightKnee.position);
-        this.rightLeg.position.scaleInPlace(0.5);
-        this.rightLeg.lookAt(this.rightKnee.position);
-        this.rightHip.position.copyFrom(this.rightHipJoin.absolutePosition);
-        this.rightHip.position.addInPlace(this.rightKnee.position);
-        this.rightHip.position.scaleInPlace(0.5);
-        this.rightHip.lookAt(this.rightKnee.position);
-        this.body.position.addInPlace(this.bodySpeed.scale(0.015));
-        this.body.position.y = Math.max(this.body.position.y, center.y + 1);
-        let yaw = VMath.AngleFromToAround(BABYLON.Axis.Z, this.target.subtract(this.body.position), BABYLON.Axis.Y);
-        this.yaw = Math2D.LerpFromToCircular(this.yaw, yaw, 0.001);
-        let footZ = this.rightFoot.position.subtract(this.leftFoot.position);
-        footZ = BABYLON.Vector3.Cross(footZ, BABYLON.Axis.Y);
-        let yawFoot = VMath.AngleFromToAround(localZ, footZ, BABYLON.Axis.Y);
-        let lim = Math.PI / 2 * 0.8;
-        if (yawFoot > lim) {
-            this.yaw -= yawFoot - lim;
-        }
-        if (yawFoot < -lim) {
-            this.yaw += yawFoot + lim;
-        }
-        this.roll = Math.PI / 4 * (this.rightFoot.position.y - this.leftFoot.position.y) / 4;
-        BABYLON.Quaternion.RotationYawPitchRollToRef(this.yaw, this.pitch, this.roll, this.body.rotationQuaternion);
-        this.bodySpeed.scaleInPlace(0.95);
-    };
 }
 class DebugMesh {
-    position;
-    mesh;
-    creationTime = 0;
-    duration = -1;
     constructor() {
+        this.creationTime = 0;
+        this.duration = -1;
+        this._update = () => {
+            if (this.duration > 0) {
+                if (performance.now() - this.creationTime > this.duration) {
+                    this.dispose();
+                }
+            }
+        };
         this.creationTime = performance.now();
     }
-    _update = () => {
-        if (this.duration > 0) {
-            if (performance.now() - this.creationTime > this.duration) {
-                this.dispose();
-            }
-        }
-    };
     dispose() {
         if (this.mesh) {
             this.mesh.dispose();
@@ -4231,10 +4165,20 @@ class DebugBox extends DebugMesh {
     }
 }
 class DebugText3D {
-    position;
-    element;
-    creationTime = 0;
-    duration = -1;
+    constructor() {
+        this.creationTime = 0;
+        this.duration = -1;
+        this._update = () => {
+            let screenPos = BABYLON.Vector3.Project(this.position, BABYLON.Matrix.Identity(), Main.Scene.getTransformMatrix(), Main.Camera.viewport.toGlobal(1, 1));
+            this.element.style.left = (screenPos.x * Main.Canvas.width) + "px";
+            this.element.style.bottom = ((1 - screenPos.y) * Main.Canvas.height - this.element.clientHeight * 0.5) + "px";
+            if (this.duration > 0) {
+                if (performance.now() - this.creationTime > this.duration) {
+                    this.dispose();
+                }
+            }
+        };
+    }
     static CreateText(text, position, duration = -1) {
         let debugText = new DebugText3D();
         debugText.element = document.createElement("div");
@@ -4246,16 +4190,6 @@ class DebugText3D {
         Main.Scene.onBeforeRenderObservable.add(debugText._update);
         return debugText;
     }
-    _update = () => {
-        let screenPos = BABYLON.Vector3.Project(this.position, BABYLON.Matrix.Identity(), Main.Scene.getTransformMatrix(), Main.Camera.viewport.toGlobal(1, 1));
-        this.element.style.left = (screenPos.x * Main.Canvas.width) + "px";
-        this.element.style.bottom = ((1 - screenPos.y) * Main.Canvas.height - this.element.clientHeight * 0.5) + "px";
-        if (this.duration > 0) {
-            if (performance.now() - this.creationTime > this.duration) {
-                this.dispose();
-            }
-        }
-    };
     setText(text) {
         this.element.innerHTML = text;
     }
@@ -4287,12 +4221,14 @@ var KeyInput;
     KeyInput[KeyInput["JUMP"] = 15] = "JUMP";
 })(KeyInput || (KeyInput = {}));
 class InputManager {
-    keyInputMap = new Map();
-    keyInputDown = new UniqueList();
-    keyDownListeners = [];
-    mappedKeyDownListeners = new Map();
-    keyUpListeners = [];
-    mappedKeyUpListeners = new Map();
+    constructor() {
+        this.keyInputMap = new Map();
+        this.keyInputDown = new UniqueList();
+        this.keyDownListeners = [];
+        this.mappedKeyDownListeners = new Map();
+        this.keyUpListeners = [];
+        this.mappedKeyUpListeners = new Map();
+    }
     initialize() {
         this.keyInputMap.set("Digit0", KeyInput.ACTION_SLOT_0);
         this.keyInputMap.set("Digit1", KeyInput.ACTION_SLOT_1);
@@ -4441,10 +4377,9 @@ var MenuPage;
     MenuPage[MenuPage["Inventory"] = 2] = "Inventory";
 })(MenuPage || (MenuPage = {}));
 class MenuManager {
-    cursor;
-    pauseMenu;
-    inventory;
-    currentMenu = MenuPage.Pause;
+    constructor() {
+        this.currentMenu = MenuPage.Pause;
+    }
     initialize() {
         this.cursor = document.getElementById("cursor");
         let update = () => {
@@ -4477,10 +4412,6 @@ class MenuManager {
     }
 }
 class PauseMenu {
-    background;
-    optionsButton;
-    saveButton;
-    resumeButton;
     constructor() {
         Main.MenuManager.pauseMenu = this;
     }
@@ -4521,26 +4452,136 @@ class PauseMenu {
 }
 var ACTIVE_DEBUG_BRICK = true;
 class Player extends BABYLON.Mesh {
-    static DEBUG_INSTANCE;
-    inventory;
-    speed = 5;
-    camVario = 1.6;
-    camSensitivity = 1;
-    camSmoothness = 0.5;
-    camMaxSpeed = 1200; // in mouse pixels per second
-    camXVelocity = 0;
-    camYVelocity = 0;
-    targetRX = 0;
-    targetRY = 0;
-    pointerDX = 0;
-    pointerDY = 0;
-    _downVelocity = 0;
-    playerActionManager;
-    currentAction;
-    _aimedObject;
-    areNearChunckReady = false;
     constructor() {
         super("player");
+        this.speed = 5;
+        this.camVario = 1.6;
+        this.camSensitivity = 1;
+        this.camSmoothness = 0.5;
+        this.camMaxSpeed = 1200; // in mouse pixels per second
+        this.camXVelocity = 0;
+        this.camYVelocity = 0;
+        this.targetRX = 0;
+        this.targetRY = 0;
+        this.pointerDX = 0;
+        this.pointerDY = 0;
+        this._downVelocity = 0;
+        this.areNearChunckReady = false;
+        this.update = () => {
+            this.checkPause();
+            if (!this.areNearChunckReady) {
+                let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
+                console.log(o);
+                if (o.chunck) {
+                    this.areNearChunckReady = true;
+                }
+                return;
+            }
+            let right = this.getDirection(BABYLON.Axis.X);
+            let forward = this.getDirection(BABYLON.Axis.Z);
+            let dt = this.getEngine().getDeltaTime() / 1000;
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+                this.position.addInPlace(forward.scale(this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+                this.position.addInPlace(right.scale(-this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+                this.position.addInPlace(forward.scale(-this.speed * dt));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(this.speed * dt));
+            }
+            this.position.y -= this._downVelocity;
+            this._downVelocity += 0.1 * dt;
+            this._downVelocity *= 0.99;
+            let maxSpeed = this.camMaxSpeed * dt;
+            let pDX = this.pointerDX;
+            if (Math.abs(this.pointerDX) > maxSpeed) {
+                pDX = Math.sign(this.pointerDX) * maxSpeed;
+            }
+            this.targetRY += Math.sign(pDX) * Math.pow(Math.abs(pDX), this.camVario) * this.camSensitivity / 1000;
+            this.pointerDX = 0;
+            this.rotation.y = this.rotation.y * (1 - this.camSmoothness) + this.targetRY * this.camSmoothness;
+            //this.rotation.y = Math2D.Step(this.rotation.y, this.targetRY, 4 * Math.PI * dt);
+            if (Main.Camera instanceof BABYLON.FreeCamera) {
+                let pDY = this.pointerDY;
+                if (Math.abs(this.pointerDY) > maxSpeed) {
+                    pDY = Math.sign(this.pointerDY) * maxSpeed;
+                }
+                this.targetRX += Math.sign(pDY) * Math.pow(Math.abs(pDY), this.camVario) * this.camSensitivity / 1000;
+                this.targetRX = Math.min(Math.max(this.targetRX, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
+                this.pointerDY = 0;
+                Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - this.camSmoothness) + this.targetRX * this.camSmoothness;
+                //Main.Camera.rotation.x = Math2D.Step(Main.Camera.rotation.x, this.targetRX, 4 * Math.PI * dt);
+            }
+            ChunckUtils.WorldPositionToChuncks(this.position).forEach((chunck) => {
+                let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
+                if (intersections) {
+                    for (let j = 0; j < intersections.length; j++) {
+                        let d = this.position.subtract(intersections[j].point);
+                        let l = d.length();
+                        d.normalize();
+                        if (d.y > 0.8) {
+                            this._downVelocity = 0.0;
+                        }
+                        d.scaleInPlace((0.5 - l) * 0.5);
+                        this.position.addInPlace(d);
+                    }
+                }
+            });
+            if (this.currentAction) {
+                if (this.currentAction.onUpdate) {
+                    this.currentAction.onUpdate();
+                }
+            }
+            else {
+                let aimed;
+                let x = Main.Engine.getRenderWidth() * 0.5;
+                let y = Main.Engine.getRenderHeight() * 0.5;
+                let pickInfo = ChunckUtils.ScenePickAround(this.position, x, y);
+                if (pickInfo && pickInfo.pickedMesh) {
+                    let chunck = pickInfo.pickedMesh.parent;
+                    if (chunck instanceof Chunck_V2) {
+                        let brick = chunck.bricks.find(b => { return b.mesh === pickInfo.pickedMesh; });
+                        if (brick) {
+                            aimed = brick;
+                        }
+                    }
+                }
+                this.setAimedObject(aimed);
+            }
+        };
+        this.updateBrickMode = () => {
+            let right = this.getDirection(BABYLON.Axis.X);
+            let forward = this.getDirection(BABYLON.Axis.Z);
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
+                this.position.addInPlace(forward.scale(0.08));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
+                this.position.addInPlace(right.scale(-0.08));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
+                this.position.addInPlace(forward.scale(-0.08));
+            }
+            if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
+                this.position.addInPlace(right.scale(0.08));
+            }
+            let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, -1, 0));
+            let pick = Main.Scene.pickWithRay(ray, (mesh) => {
+                return mesh instanceof Tile;
+            });
+            if (pick.hit) {
+                let y = Math.floor((pick.pickedPoint.y + 0.01) / DY) * DY + 1;
+                this.position.y *= 0.5;
+                this.position.y += y * 0.5;
+            }
+            if (this.currentAction) {
+                if (this.currentAction.onUpdate) {
+                    this.currentAction.onUpdate();
+                }
+            }
+        };
         this.playerActionManager = new PlayerActionManager(this);
         // debug
         //BABYLON.VertexData.CreateSphere({ diameter: 1}).applyToMesh(this);
@@ -4652,121 +4693,6 @@ class Player extends BABYLON.Mesh {
         }
         return false;
     }
-    update = () => {
-        this.checkPause();
-        if (!this.areNearChunckReady) {
-            let o = ChunckUtils.WorldPositionToChunckBlockCoordinates_V2(this.position);
-            console.log(o);
-            if (o.chunck) {
-                this.areNearChunckReady = true;
-            }
-            return;
-        }
-        let right = this.getDirection(BABYLON.Axis.X);
-        let forward = this.getDirection(BABYLON.Axis.Z);
-        let dt = this.getEngine().getDeltaTime() / 1000;
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
-            this.position.addInPlace(forward.scale(this.speed * dt));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
-            this.position.addInPlace(right.scale(-this.speed * dt));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
-            this.position.addInPlace(forward.scale(-this.speed * dt));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
-            this.position.addInPlace(right.scale(this.speed * dt));
-        }
-        this.position.y -= this._downVelocity;
-        this._downVelocity += 0.1 * dt;
-        this._downVelocity *= 0.99;
-        let maxSpeed = this.camMaxSpeed * dt;
-        let pDX = this.pointerDX;
-        if (Math.abs(this.pointerDX) > maxSpeed) {
-            pDX = Math.sign(this.pointerDX) * maxSpeed;
-        }
-        this.targetRY += Math.sign(pDX) * Math.pow(Math.abs(pDX), this.camVario) * this.camSensitivity / 1000;
-        this.pointerDX = 0;
-        this.rotation.y = this.rotation.y * (1 - this.camSmoothness) + this.targetRY * this.camSmoothness;
-        //this.rotation.y = Math2D.Step(this.rotation.y, this.targetRY, 4 * Math.PI * dt);
-        if (Main.Camera instanceof BABYLON.FreeCamera) {
-            let pDY = this.pointerDY;
-            if (Math.abs(this.pointerDY) > maxSpeed) {
-                pDY = Math.sign(this.pointerDY) * maxSpeed;
-            }
-            this.targetRX += Math.sign(pDY) * Math.pow(Math.abs(pDY), this.camVario) * this.camSensitivity / 1000;
-            this.targetRX = Math.min(Math.max(this.targetRX, -Math.PI / 2 + Math.PI / 60), Math.PI / 2 - Math.PI / 60);
-            this.pointerDY = 0;
-            Main.Camera.rotation.x = Main.Camera.rotation.x * (1 - this.camSmoothness) + this.targetRX * this.camSmoothness;
-            //Main.Camera.rotation.x = Math2D.Step(Main.Camera.rotation.x, this.targetRX, 4 * Math.PI * dt);
-        }
-        ChunckUtils.WorldPositionToChuncks(this.position).forEach((chunck) => {
-            let intersections = Intersections3D.SphereChunck(this.position, 0.5, chunck);
-            if (intersections) {
-                for (let j = 0; j < intersections.length; j++) {
-                    let d = this.position.subtract(intersections[j].point);
-                    let l = d.length();
-                    d.normalize();
-                    if (d.y > 0.8) {
-                        this._downVelocity = 0.0;
-                    }
-                    d.scaleInPlace((0.5 - l) * 0.5);
-                    this.position.addInPlace(d);
-                }
-            }
-        });
-        if (this.currentAction) {
-            if (this.currentAction.onUpdate) {
-                this.currentAction.onUpdate();
-            }
-        }
-        else {
-            let aimed;
-            let x = Main.Engine.getRenderWidth() * 0.5;
-            let y = Main.Engine.getRenderHeight() * 0.5;
-            let pickInfo = ChunckUtils.ScenePickAround(this.position, x, y);
-            if (pickInfo && pickInfo.pickedMesh) {
-                let chunck = pickInfo.pickedMesh.parent;
-                if (chunck instanceof Chunck_V2) {
-                    let brick = chunck.bricks.find(b => { return b.mesh === pickInfo.pickedMesh; });
-                    if (brick) {
-                        aimed = brick;
-                    }
-                }
-            }
-            this.setAimedObject(aimed);
-        }
-    };
-    updateBrickMode = () => {
-        let right = this.getDirection(BABYLON.Axis.X);
-        let forward = this.getDirection(BABYLON.Axis.Z);
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_FORWARD)) {
-            this.position.addInPlace(forward.scale(0.08));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_LEFT)) {
-            this.position.addInPlace(right.scale(-0.08));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_BACK)) {
-            this.position.addInPlace(forward.scale(-0.08));
-        }
-        if (Main.InputManager.isKeyInputDown(KeyInput.MOVE_RIGHT)) {
-            this.position.addInPlace(right.scale(0.08));
-        }
-        let ray = new BABYLON.Ray(this.position, new BABYLON.Vector3(0, -1, 0));
-        let pick = Main.Scene.pickWithRay(ray, (mesh) => {
-            return mesh instanceof Tile;
-        });
-        if (pick.hit) {
-            let y = Math.floor((pick.pickedPoint.y + 0.01) / DY) * DY + 1;
-            this.position.y *= 0.5;
-            this.position.y += y * 0.5;
-        }
-        if (this.currentAction) {
-            if (this.currentAction.onUpdate) {
-                this.currentAction.onUpdate();
-            }
-        }
-    };
     serialize() {
         let data = {
             position: { x: this.position.x, y: this.position.y, z: this.position.z },
@@ -5334,26 +5260,28 @@ class PlayerActionTemplate {
     }
 }
 class PlayerAction {
-    name;
-    iconUrl;
-    r = 0;
-    onUpdate;
-    onClick;
-    onWheel;
-    onKeyDown;
-    onKeyUp;
-    onEquip;
-    onUnequip;
     constructor(name) {
         this.name = name;
+        this.r = 0;
     }
 }
 class PlayerActionManager {
-    player;
-    linkedActions = [];
-    hintedSlotIndex = new UniqueList();
     constructor(player) {
         this.player = player;
+        this.linkedActions = [];
+        this.hintedSlotIndex = new UniqueList();
+        this.update = () => {
+            if (this.hintedSlotIndex.length > 0) {
+                let t = (new Date()).getTime();
+                let thickness = Math.cos(2 * Math.PI * t / 1000) * 2 + 3;
+                let opacity = (Math.cos(2 * Math.PI * t / 1000) + 1) * 0.5 * 0.5 + 0.25;
+                for (let i = 0; i < this.hintedSlotIndex.length; i++) {
+                    let slotIndex = this.hintedSlotIndex.get(i);
+                    console.log(thickness);
+                    document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "rgba(255, 255, 255, " + opacity.toFixed(2) + ")";
+                }
+            }
+        };
     }
     initialize() {
         Main.Scene.onBeforeRenderObservable.add(this.update);
@@ -5405,18 +5333,6 @@ class PlayerActionManager {
             }
         });
     }
-    update = () => {
-        if (this.hintedSlotIndex.length > 0) {
-            let t = (new Date()).getTime();
-            let thickness = Math.cos(2 * Math.PI * t / 1000) * 2 + 3;
-            let opacity = (Math.cos(2 * Math.PI * t / 1000) + 1) * 0.5 * 0.5 + 0.25;
-            for (let i = 0; i < this.hintedSlotIndex.length; i++) {
-                let slotIndex = this.hintedSlotIndex.get(i);
-                console.log(thickness);
-                document.getElementById("player-action-" + slotIndex + "-icon").style.backgroundColor = "rgba(255, 255, 255, " + opacity.toFixed(2) + ")";
-            }
-        }
-    };
     linkAction(action, slotIndex) {
         if (slotIndex >= 0 && slotIndex <= 9) {
             this.linkedActions[slotIndex] = action;
@@ -5469,15 +5385,11 @@ var InventorySection;
     InventorySection[InventorySection["Brick"] = 3] = "Brick";
 })(InventorySection || (InventorySection = {}));
 class InventoryItem {
-    section;
-    subSection;
-    count = 1;
-    name;
-    brickReference;
-    size = 1;
-    playerAction;
-    iconUrl;
-    timeUse = 0;
+    constructor() {
+        this.count = 1;
+        this.size = 1;
+        this.timeUse = 0;
+    }
     static Block(reference) {
         let it = new InventoryItem();
         it.section = InventorySection.Block;
@@ -5526,24 +5438,10 @@ var BrickSortingOrder;
     BrickSortingOrder[BrickSortingOrder["ColorDesc"] = 6] = "ColorDesc";
 })(BrickSortingOrder || (BrickSortingOrder = {}));
 class Inventory {
-    player;
-    currentSection;
-    items = [];
-    body;
-    _sectionActions;
-    _sectionCubes;
-    _sectionBlocks;
-    _sectionBricks;
-    _brickSorting = BrickSortingOrder.TypeAsc;
-    _sortBrick;
-    _sortBrickMostRecent;
-    _sortBrickType;
-    _sortBrickSize;
-    _sortBrickColor;
-    _items;
-    _draggedItem;
     constructor(player) {
         this.player = player;
+        this.items = [];
+        this._brickSorting = BrickSortingOrder.TypeAsc;
         player.inventory = this;
     }
     initialize() {
@@ -5812,17 +5710,10 @@ class Inventory {
 }
 /// <reference path="../../lib/babylon.d.ts"/>
 class Main {
-    static Canvas;
-    static Engine;
-    static Scene;
-    static Light;
-    static Camera;
-    static Skybox;
-    static ChunckManager;
-    static ChunckEditor;
-    static MenuManager;
-    static InputManager;
-    static _concreteMaterial;
+    constructor(canvasElement) {
+        Main.Canvas = document.getElementById(canvasElement);
+        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    }
     static get concreteMaterial() {
         if (!Main._concreteMaterial) {
             Main._concreteMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
@@ -5831,7 +5722,6 @@ class Main {
         }
         return Main._concreteMaterial;
     }
-    static _steelMaterial;
     static get steelMaterial() {
         if (!Main._steelMaterial) {
             Main._steelMaterial = new ToonMaterial("CellMaterial", false, Main.Scene);
@@ -5840,28 +5730,24 @@ class Main {
         }
         return Main._steelMaterial;
     }
-    static _cellShadingTransparentMaterial;
     static get cellShadingTransparentMaterial() {
         if (!Main._cellShadingTransparentMaterial) {
             Main._cellShadingTransparentMaterial = new ToonMaterial("CellMaterial", true, Main.Scene);
         }
         return Main._cellShadingTransparentMaterial;
     }
-    static _terrainCellShadingMaterial;
     static get terrainCellShadingMaterial() {
         if (!Main._terrainCellShadingMaterial) {
             Main._terrainCellShadingMaterial = new TerrainToonMaterial("CellMaterial", BABYLON.Color3.White(), Main.Scene);
         }
         return Main._terrainCellShadingMaterial;
     }
-    static _toonRampTexture;
     static get toonRampTexture() {
         if (!Main._toonRampTexture) {
             Main._toonRampTexture = new BABYLON.Texture("./datas/textures/toon-ramp.png", Main.Scene);
         }
         return Main._toonRampTexture;
     }
-    static _debugRedMaterial;
     static get DebugRedMaterial() {
         if (!Main._debugRedMaterial) {
             Main._debugRedMaterial = new BABYLON.StandardMaterial("DebugRedMaterial", Main.Scene);
@@ -5870,7 +5756,6 @@ class Main {
         }
         return Main._debugRedMaterial;
     }
-    static _debugGreenMaterial;
     static get DebugGreenMaterial() {
         if (!Main._debugGreenMaterial) {
             Main._debugGreenMaterial = new BABYLON.StandardMaterial("DebugGreenMaterial", Main.Scene);
@@ -5879,7 +5764,6 @@ class Main {
         }
         return Main._debugGreenMaterial;
     }
-    static _debugBlueMaterial;
     static get DebugBlueMaterial() {
         if (!Main._debugBlueMaterial) {
             Main._debugBlueMaterial = new BABYLON.StandardMaterial("DebugBlueMaterial", Main.Scene);
@@ -5888,7 +5772,6 @@ class Main {
         }
         return Main._debugBlueMaterial;
     }
-    static _OnUpdateDebugCallbacks = [];
     static AddOnUpdateDebugCallback(callback) {
         if (this._OnUpdateDebugCallbacks.indexOf(callback) === -1) {
             this._OnUpdateDebugCallbacks.push(callback);
@@ -5899,10 +5782,6 @@ class Main {
         if (index != -1) {
             this._OnUpdateDebugCallbacks.splice(index, 1);
         }
-    }
-    constructor(canvasElement) {
-        Main.Canvas = document.getElementById(canvasElement);
-        Main.Engine = new BABYLON.Engine(Main.Canvas, true, { preserveDrawingBuffer: true, stencil: true });
     }
     initializeCamera() {
         let camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 1, new BABYLON.Vector3(0, 10, 0), Main.Scene);
@@ -6052,6 +5931,7 @@ class Main {
         });
     }
 }
+Main._OnUpdateDebugCallbacks = [];
 function makeAvailableSceneButton(name, sceneRef) {
     let skullIsland = document.createElement("a");
     skullIsland.classList.add("available-scene-button");
@@ -6285,9 +6165,10 @@ class CollisionsTest extends Main {
 }
 /// <reference path="Main.ts"/>
 class Miniature extends Main {
-    targets = [];
-    sizeMarkers;
-    sizeMarkerMaterial;
+    constructor() {
+        super(...arguments);
+        this.targets = [];
+    }
     updateCameraPosition(useSizeMarker = false) {
         if (Main.Camera instanceof BABYLON.ArcRotateCamera) {
             Main.Camera.lowerRadiusLimit = 0.01;
@@ -6623,7 +6504,6 @@ class Miniature extends Main {
 }
 /// <reference path="./Main.ts"/>
 class PlayerTest extends Main {
-    static Player;
     initializeCamera() {
         let camera = new BABYLON.FreeCamera("camera1", BABYLON.Vector3.Zero(), Main.Scene);
         Main.Camera = camera;
@@ -6931,14 +6811,6 @@ class TileTest extends Main {
     }
 }
 class SeaMaterial extends BABYLON.ShaderMaterial {
-    t = 0;
-    dir0 = BABYLON.Vector2.Zero();
-    dir1 = BABYLON.Vector2.Zero();
-    dir2 = BABYLON.Vector2.Zero();
-    dir3 = BABYLON.Vector2.Zero();
-    dir4 = BABYLON.Vector2.Zero();
-    dir5 = BABYLON.Vector2.Zero();
-    dir6 = BABYLON.Vector2.Zero();
     constructor(name, scene) {
         super(name, scene, {
             vertex: "sea",
@@ -6948,6 +6820,17 @@ class SeaMaterial extends BABYLON.ShaderMaterial {
             uniforms: ["world", "worldView", "worldViewProjection", "view", "projection"],
             needAlphaBlending: true
         });
+        this.t = 0;
+        this.dir0 = BABYLON.Vector2.Zero();
+        this.dir1 = BABYLON.Vector2.Zero();
+        this.dir2 = BABYLON.Vector2.Zero();
+        this.dir3 = BABYLON.Vector2.Zero();
+        this.dir4 = BABYLON.Vector2.Zero();
+        this.dir5 = BABYLON.Vector2.Zero();
+        this.dir6 = BABYLON.Vector2.Zero();
+        this._updateTime = () => {
+            this.setFloat("time", this.t++ / 60);
+        };
         this.dir0 = new BABYLON.Vector2(Math.random(), Math.random()).normalize();
         this.dir1 = new BABYLON.Vector2(Math.random(), Math.random()).normalize();
         this.dir2 = new BABYLON.Vector2(Math.random(), Math.random()).normalize();
@@ -6971,9 +6854,6 @@ class SeaMaterial extends BABYLON.ShaderMaterial {
         this.setFloat("a6", 1 / 7);
         scene.registerBeforeRender(this._updateTime);
     }
-    _updateTime = () => {
-        this.setFloat("time", this.t++ / 60);
-    };
 }
 class TerrainToonMaterial extends BABYLON.ShaderMaterial {
     constructor(name, color, scene) {
@@ -7003,7 +6883,6 @@ class TerrainTileToonMaterial extends BABYLON.ShaderMaterial {
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5, 2.5, 1.5)).normalize());
         this.setTexture("toonRampTexture", Main.toonRampTexture);
     }
-    _diffuseTexture;
     get diffuseTexture() {
         return this._diffuseTexture;
     }
@@ -7019,13 +6898,15 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
             fragment: "toon",
         }, {
             attributes: ["position", "normal", "uv", "color"],
-            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "diffuseTexture"],
+            uniforms: ["world", "worldView", "worldViewProjection", "view", "projection", "diffuseTexture", "viewPos"],
             needAlphaBlending: transparent
         });
         this.setVector3("lightInvDirW", (new BABYLON.Vector3(0.5 + Math.random(), 2.5 + Math.random(), 1.5 + Math.random())).normalize());
         //this.setTexture("diffuseTexture", new BABYLON.Texture("datas/textures/bricks/test_texture.png", scene));
+        scene.onBeforeRenderObservable.add(() => {
+            this.setVector3("viewPos", scene.activeCamera.globalPosition);
+        });
     }
-    _diffuseTexture;
     get diffuseTexture() {
         return this._diffuseTexture;
     }
@@ -7036,15 +6917,12 @@ class ToonMaterial extends BABYLON.ShaderMaterial {
 }
 var ACTIVE_DEBUG_CHUNCK_INTERSECTION = false;
 class RayIntersection {
-    point;
-    normal;
     constructor(point, normal) {
         this.point = point;
         this.normal = normal;
     }
 }
 class SphereIntersection {
-    point;
     constructor(point) {
         this.point = point;
     }
@@ -7302,28 +7180,24 @@ class Math2D {
         vector.x = x;
         vector.y = y;
     }
-    static __Tmp0;
     static get _Tmp0() {
         if (!Math2D.__Tmp0) {
             Math2D.__Tmp0 = new BABYLON.Vector2(1, 0);
         }
         return Math2D.__Tmp0;
     }
-    static __Tmp1;
     static get _Tmp1() {
         if (!Math2D.__Tmp1) {
             Math2D.__Tmp1 = new BABYLON.Vector2(1, 0);
         }
         return Math2D.__Tmp1;
     }
-    static __Tmp2;
     static get _Tmp2() {
         if (!Math2D.__Tmp2) {
             Math2D.__Tmp2 = new BABYLON.Vector2(1, 0);
         }
         return Math2D.__Tmp2;
     }
-    static __Tmp3;
     static get _Tmp3() {
         if (!Math2D.__Tmp3) {
             Math2D.__Tmp3 = new BABYLON.Vector2(1, 0);
@@ -7626,16 +7500,6 @@ class VMath {
     }
 }
 class TerrainTileTexture extends BABYLON.DynamicTexture {
-    tile;
-    _size;
-    static LodResolutions = [1024, 256, 128, 64];
-    static TerrainColors = [
-        "#47a632",
-        "#a86f32",
-        "#8c8c89",
-        "#dbc67b"
-    ];
-    static debugTextures = [];
     constructor(tile, _size = 64) {
         super(tile.name + "-texture-" + _size, _size, Main.Scene, true);
         this.tile = tile;
@@ -7745,13 +7609,15 @@ class TerrainTileTexture extends BABYLON.DynamicTexture {
         this.update();
     }
 }
+TerrainTileTexture.LodResolutions = [1024, 256, 128, 64];
+TerrainTileTexture.TerrainColors = [
+    "#47a632",
+    "#a86f32",
+    "#8c8c89",
+    "#dbc67b"
+];
+TerrainTileTexture.debugTextures = [];
 class TerrainTileVertexData {
-    static LoadedRefs = [
-        "0000",
-        "0001", "0011", "0101", "0111",
-        "0102", "0022", "0122", "0002", "0222", "0221", "0212", "0121", "0211", "0112", "0012", "0021", "0202"
-    ];
-    static _VertexDatas = new Map();
     static async _LoadTerrainTileVertexDatas() {
         return new Promise(resolve => {
             BABYLON.SceneLoader.ImportMesh("", "./datas/meshes/terrain-tiles.babylon", "", Main.Scene, (meshes) => {
@@ -7844,6 +7710,12 @@ class TerrainTileVertexData {
         }
     }
 }
+TerrainTileVertexData.LoadedRefs = [
+    "0000",
+    "0001", "0011", "0101", "0111",
+    "0102", "0022", "0122", "0002", "0222", "0221", "0212", "0121", "0211", "0112", "0012", "0021", "0202"
+];
+TerrainTileVertexData._VertexDatas = new Map();
 var TILE_VERTEX_SIZE = 9;
 var TILE_SIZE = 8;
 var DX = 0.8;
@@ -7855,12 +7727,18 @@ var DY2 = DY * 2;
 var DY3 = DY * 3;
 var TILE_LENGTH = TILE_SIZE * DX * 2;
 class Tile extends BABYLON.Mesh {
-    i;
-    j;
-    heights;
-    types;
-    bricks = [];
-    currentLOD = -1;
+    constructor(i, j) {
+        super("tile_" + i + "_" + j);
+        this.i = i;
+        this.j = j;
+        this.bricks = [];
+        this.currentLOD = -1;
+        this.position.x = TILE_SIZE * this.i * DX * 2;
+        this.position.z = TILE_SIZE * this.j * DX * 2;
+        let material = new TerrainTileToonMaterial(this.name + "-material", Main.Scene);
+        material.diffuseTexture = new TerrainTileTexture(this);
+        this.material = material;
+    }
     get tileTexture() {
         if (this.material instanceof TerrainTileToonMaterial) {
             if (this.material.diffuseTexture instanceof TerrainTileTexture) {
@@ -7872,16 +7750,6 @@ class Tile extends BABYLON.Mesh {
         if (this.material instanceof TerrainTileToonMaterial) {
             this.material.diffuseTexture = t;
         }
-    }
-    constructor(i, j) {
-        super("tile_" + i + "_" + j);
-        this.i = i;
-        this.j = j;
-        this.position.x = TILE_SIZE * this.i * DX * 2;
-        this.position.z = TILE_SIZE * this.j * DX * 2;
-        let material = new TerrainTileToonMaterial(this.name + "-material", Main.Scene);
-        material.diffuseTexture = new TerrainTileTexture(this);
-        this.material = material;
     }
     makeEmpty() {
         this.heights = [];
@@ -8075,10 +7943,75 @@ var LOD1_DIST = 6;
 var LOD2_DIST = 8;
 var LOD3_DIST = 10;
 class TileManager {
-    static Instance;
-    tiles = new Map();
-    _checkPositions = [];
     constructor() {
+        this.tiles = new Map();
+        this._checkPositions = [];
+        this._camIReset = NaN;
+        this._camJReset = NaN;
+        this._checkIndex = 0;
+        this.updateLoop = () => {
+            let cameraPosition = Main.Camera.globalPosition;
+            let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
+            let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
+            let done = false;
+            let t0 = performance.now();
+            while (!done) {
+                let _checkPosition = this._checkPositions[this._checkIndex];
+                this._checkIndex++;
+                if (_checkPosition) {
+                    let tile = this.getOrCreateTile(_checkPosition.i + camI, _checkPosition.j + camJ);
+                    if (tile.currentLOD === -1) {
+                        if (_checkPosition.d <= LOD0_DIST) {
+                            tile.updateTerrainMesh(0);
+                        }
+                        else if (_checkPosition.d <= LOD1_DIST) {
+                            tile.updateTerrainMesh(1);
+                        }
+                        else if (_checkPosition.d <= LOD2_DIST) {
+                            tile.updateTerrainMesh(2);
+                        }
+                        else if (_checkPosition.d <= LOD3_DIST) {
+                            tile.updateTerrainMesh(3);
+                        }
+                    }
+                    else if (tile.currentLOD === 3) {
+                        if (_checkPosition.d <= LOD2_DIST) {
+                            tile.updateTerrainMesh(2);
+                        }
+                    }
+                    else if (tile.currentLOD === 2) {
+                        if (_checkPosition.d <= LOD1_DIST) {
+                            tile.updateTerrainMesh(1);
+                        }
+                        else if (_checkPosition.d >= LOD2_DIST + 4) {
+                            tile.updateTerrainMesh(3);
+                        }
+                    }
+                    else if (tile.currentLOD === 1) {
+                        if (_checkPosition.d <= LOD0_DIST) {
+                            tile.updateTerrainMesh(0);
+                        }
+                        else if (_checkPosition.d >= LOD1_DIST + 2) {
+                            tile.updateTerrainMesh(2);
+                        }
+                    }
+                    else if (tile.currentLOD === 0) {
+                        if (_checkPosition.d >= LOD0_DIST + 1) {
+                            tile.updateTerrainMesh(1);
+                        }
+                    }
+                    done = performance.now() - t0 > 30;
+                }
+                else {
+                    if (this._camIReset !== camI || this._camJReset !== camJ) {
+                        this._camIReset = camI;
+                        this._camJReset = camJ;
+                        this._checkIndex = 0;
+                    }
+                    return;
+                }
+            }
+        };
         TileManager.Instance = this;
         this._checkPositions = [];
         for (let i = -LOD3_DIST; i <= LOD3_DIST; i++) {
@@ -8146,79 +8079,11 @@ class TileManager {
         }
         return tile;
     }
-    _camIReset = NaN;
-    _camJReset = NaN;
-    _checkIndex = 0;
-    updateLoop = () => {
-        let cameraPosition = Main.Camera.globalPosition;
-        let camI = Math.round(cameraPosition.x / (TILE_SIZE * DX * 2));
-        let camJ = Math.round(cameraPosition.z / (TILE_SIZE * DX * 2));
-        let done = false;
-        let t0 = performance.now();
-        while (!done) {
-            let _checkPosition = this._checkPositions[this._checkIndex];
-            this._checkIndex++;
-            if (_checkPosition) {
-                let tile = this.getOrCreateTile(_checkPosition.i + camI, _checkPosition.j + camJ);
-                if (tile.currentLOD === -1) {
-                    if (_checkPosition.d <= LOD0_DIST) {
-                        tile.updateTerrainMesh(0);
-                    }
-                    else if (_checkPosition.d <= LOD1_DIST) {
-                        tile.updateTerrainMesh(1);
-                    }
-                    else if (_checkPosition.d <= LOD2_DIST) {
-                        tile.updateTerrainMesh(2);
-                    }
-                    else if (_checkPosition.d <= LOD3_DIST) {
-                        tile.updateTerrainMesh(3);
-                    }
-                }
-                else if (tile.currentLOD === 3) {
-                    if (_checkPosition.d <= LOD2_DIST) {
-                        tile.updateTerrainMesh(2);
-                    }
-                }
-                else if (tile.currentLOD === 2) {
-                    if (_checkPosition.d <= LOD1_DIST) {
-                        tile.updateTerrainMesh(1);
-                    }
-                    else if (_checkPosition.d >= LOD2_DIST + 4) {
-                        tile.updateTerrainMesh(3);
-                    }
-                }
-                else if (tile.currentLOD === 1) {
-                    if (_checkPosition.d <= LOD0_DIST) {
-                        tile.updateTerrainMesh(0);
-                    }
-                    else if (_checkPosition.d >= LOD1_DIST + 2) {
-                        tile.updateTerrainMesh(2);
-                    }
-                }
-                else if (tile.currentLOD === 0) {
-                    if (_checkPosition.d >= LOD0_DIST + 1) {
-                        tile.updateTerrainMesh(1);
-                    }
-                }
-                done = performance.now() - t0 > 30;
-            }
-            else {
-                if (this._camIReset !== camI || this._camJReset !== camJ) {
-                    this._camIReset = camI;
-                    this._camJReset = camJ;
-                    this._checkIndex = 0;
-                }
-                return;
-            }
-        }
-    };
 }
 class TileUtils {
 }
 var DATA_SIZE = 128;
 class WorldDataGenerator {
-    static _RawDatas = new Map();
-    static _Datas = new Map();
     static _GetRawData(IRaw, JRaw) {
         let rawTile = WorldDataGenerator._RawDatas.get(IRaw.toFixed(0) + "_" + JRaw.toFixed(0));
         if (rawTile) {
@@ -8364,14 +8229,9 @@ class WorldDataGenerator {
         return output;
     }
 }
+WorldDataGenerator._RawDatas = new Map();
+WorldDataGenerator._Datas = new Map();
 class Random {
-    static Seed = 0;
-    static Length1 = 1;
-    static Length2 = 1;
-    static Length3 = 1;
-    static Length4 = 1;
-    static PiDecimalsString = "14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127372458700660631558817488152092096282925409171536436789259036001133053054882046652138414695194151160943305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912983367336244065664308602139494639522473719070217986094370277053921717629317675238467481846766940513200056812714526356082778577134275778960917363717872146844090122495343014654958537105079227968925892354201995611212902196086403441815981362977477130996051870721134999999837297804995105973173281609631859502445945534690830264252230825334468503526193118817101000313783875288658753320838142061717766914730359825349042875546873115956286388235378759375195778185778053217122680661300192787661119590921642019893809525720106548586327886593615338182796823030195203530185296899577362259941389124972177528347913151557485724245415069595082953311686172785588907509838175463746493931925506040092770167113900984882401285836160356370766010471018194295559619894676783744944825537977472684710404753464620804668425906949129331367702898915210475216205696602405803815019351125338243003558764024749647326391419927260426992279678235478163600934172164121992458631503028618297455570674983850549458858692699569092721079750930295532116534498720275596023648066549911988183479775356636980742654252786255181841757467289097777279380008164706001614524919217321721477235014144197356854816136115735255213347574184946843852332390739414333454776241686251898356948556209921922218427255025425688767179049460165346680498862723279178608578438382796797668145410095388378636095068006422512520511739298489608412848862694560424196528502221066118630674427862203919494504712371378696095636437191728746776465757396241389086583264599581339047802759009946576407895126946839835259570982582262052248940772671947826848260147699090264013639443745530506820349625245174939965143142980919065925093722169646151570985838741059788595977297549893016175392846813826868386894277415599185592524595395943104997252468084598727364469584865383673622262609912460805124388439045124413654976278079771569143599770012961608944169486855584840635342207222582848864815845602850601684273945226746767889525213852254995466672782398645659611635488623057745649803559363456817432411251507606947945109659609402522887971089314566913686722874894056010150330861792868092087476091782493858900971490967598526136554978189312978482168299894872265880485756401427047755513237964145152374623436454285844479526586782105114135473573952311342716610213596953623144295248493718711014576540359027993440374200731057853906219838744780847848968332144571386875194350643021845319104848100537061468067491927819119793995206141966342875444064374512371819217999839101591956181467514269123974894090718649423196156794520809514655022523160388193014209376213785595663893778708303906979207734672218256259966150142150306803844773454920260541466592520149744285073251866600213243408819071048633173464965145390579626856100550810665879699816357473638405257145910289706414011097120628043903975951567715770042033786993600723055876317635942187312514712053292819182618612586732157919841484882916447060957527069572209175671167229109816909152801735067127485832228718352093539657251210835791513698820914442100675103346711031412671113699086585163983150197016515116851714376576183515565088490998985998238734552833163550764791853589322618548963213293308985706420467525907091548141654985946163718027098199430992448895757128289059232332609729971208443357326548938239119325974636673058360414281388303203824903758985243744170291327656180937734440307074692112019130203303801976211011004492932151608424448596376698389522868478312355265821314495768572624334418930396864262434107732269780280731891544110104468232527162010526522721116603966655730925471105578537634668206531098965269186205647693125705863566201855810072936065987648611791045334885034611365768675324944166803962657978771855608455296541266540853061434443185867697514566140680070023787765913440171274947042056223053899456131407112700040785473326993908145466464588079727082668306343285878569830523580893306575740679545716377525420211495576158140025012622859413021647155097925923099079654737612551765675135751782966645477917450112996148903046399471329621073404375189573596145890193897131117904297828564750320319869151402870808599048010941214722131794764777262241425485454033215718530614228813758504306332175182979866223717215916077166925474873898665494945011465406284336639379003976926567214638530673609657120918076383271664162748888007869256029022847210403172118608204190004229661711963779213375751149595015660496318629472654736425230817703675159067350235072835405670403867435136222247715891504953098444893330963408780769325993978054193414473774418426312986080998886874132604721";
-    static Values;
     static Initialize() {
         let piDecimals = [];
         for (let i = 0; i < Random.PiDecimalsString.length / 4 - 1; i++) {
@@ -8406,9 +8266,17 @@ class Random {
         return Random.Values[i + j * Random.Length4 + k * Random.Length4 * Random.Length4 + l * Random.Length4 * Random.Length4 * Random.Length4];
     }
 }
+Random.Seed = 0;
+Random.Length1 = 1;
+Random.Length2 = 1;
+Random.Length3 = 1;
+Random.Length4 = 1;
+Random.PiDecimalsString = "14159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127372458700660631558817488152092096282925409171536436789259036001133053054882046652138414695194151160943305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912983367336244065664308602139494639522473719070217986094370277053921717629317675238467481846766940513200056812714526356082778577134275778960917363717872146844090122495343014654958537105079227968925892354201995611212902196086403441815981362977477130996051870721134999999837297804995105973173281609631859502445945534690830264252230825334468503526193118817101000313783875288658753320838142061717766914730359825349042875546873115956286388235378759375195778185778053217122680661300192787661119590921642019893809525720106548586327886593615338182796823030195203530185296899577362259941389124972177528347913151557485724245415069595082953311686172785588907509838175463746493931925506040092770167113900984882401285836160356370766010471018194295559619894676783744944825537977472684710404753464620804668425906949129331367702898915210475216205696602405803815019351125338243003558764024749647326391419927260426992279678235478163600934172164121992458631503028618297455570674983850549458858692699569092721079750930295532116534498720275596023648066549911988183479775356636980742654252786255181841757467289097777279380008164706001614524919217321721477235014144197356854816136115735255213347574184946843852332390739414333454776241686251898356948556209921922218427255025425688767179049460165346680498862723279178608578438382796797668145410095388378636095068006422512520511739298489608412848862694560424196528502221066118630674427862203919494504712371378696095636437191728746776465757396241389086583264599581339047802759009946576407895126946839835259570982582262052248940772671947826848260147699090264013639443745530506820349625245174939965143142980919065925093722169646151570985838741059788595977297549893016175392846813826868386894277415599185592524595395943104997252468084598727364469584865383673622262609912460805124388439045124413654976278079771569143599770012961608944169486855584840635342207222582848864815845602850601684273945226746767889525213852254995466672782398645659611635488623057745649803559363456817432411251507606947945109659609402522887971089314566913686722874894056010150330861792868092087476091782493858900971490967598526136554978189312978482168299894872265880485756401427047755513237964145152374623436454285844479526586782105114135473573952311342716610213596953623144295248493718711014576540359027993440374200731057853906219838744780847848968332144571386875194350643021845319104848100537061468067491927819119793995206141966342875444064374512371819217999839101591956181467514269123974894090718649423196156794520809514655022523160388193014209376213785595663893778708303906979207734672218256259966150142150306803844773454920260541466592520149744285073251866600213243408819071048633173464965145390579626856100550810665879699816357473638405257145910289706414011097120628043903975951567715770042033786993600723055876317635942187312514712053292819182618612586732157919841484882916447060957527069572209175671167229109816909152801735067127485832228718352093539657251210835791513698820914442100675103346711031412671113699086585163983150197016515116851714376576183515565088490998985998238734552833163550764791853589322618548963213293308985706420467525907091548141654985946163718027098199430992448895757128289059232332609729971208443357326548938239119325974636673058360414281388303203824903758985243744170291327656180937734440307074692112019130203303801976211011004492932151608424448596376698389522868478312355265821314495768572624334418930396864262434107732269780280731891544110104468232527162010526522721116603966655730925471105578537634668206531098965269186205647693125705863566201855810072936065987648611791045334885034611365768675324944166803962657978771855608455296541266540853061434443185867697514566140680070023787765913440171274947042056223053899456131407112700040785473326993908145466464588079727082668306343285878569830523580893306575740679545716377525420211495576158140025012622859413021647155097925923099079654737612551765675135751782966645477917450112996148903046399471329621073404375189573596145890193897131117904297828564750320319869151402870808599048010941214722131794764777262241425485454033215718530614228813758504306332175182979866223717215916077166925474873898665494945011465406284336639379003976926567214638530673609657120918076383271664162748888007869256029022847210403172118608204190004229661711963779213375751149595015660496318629472654736425230817703675159067350235072835405670403867435136222247715891504953098444893330963408780769325993978054193414473774418426312986080998886874132604721";
 Random.Initialize();
 class UniqueList {
-    _elements = [];
+    constructor() {
+        this._elements = [];
+    }
     get length() {
         return this._elements.length;
     }
@@ -8434,16 +8302,11 @@ class UniqueList {
     }
 }
 class BranchMesh {
-    branches = [];
-    radius;
     constructor() {
+        this.branches = [];
     }
 }
 class Leaf {
-    d;
-    quaternion;
-    scaling;
-    index;
     constructor(d, quaternion, scaling, index) {
         this.d = d;
         this.quaternion = quaternion;
@@ -8452,19 +8315,14 @@ class Leaf {
     }
 }
 class Branch {
-    position;
-    parent;
-    tree;
-    d = 0;
-    generation = 0;
-    direction;
-    radius;
-    children = [];
-    leaves = [];
     constructor(position, parent, tree) {
         this.position = position;
         this.parent = parent;
         this.tree = tree;
+        this.d = 0;
+        this.generation = 0;
+        this.children = [];
+        this.leaves = [];
         if (this.parent) {
             this.direction = this.position.subtract(this.parent.position).normalize();
             this.d = this.parent.d + 1;
@@ -8567,11 +8425,10 @@ class Branch {
     }
 }
 class Randomizer {
-    seed;
-    _index = 0;
-    _loops = 0;
     constructor(seed) {
         this.seed = seed;
+        this._index = 0;
+        this._loops = 0;
         this.seed = Math.floor(this.seed);
     }
     random() {
@@ -8592,19 +8449,17 @@ class Randomizer {
     }
 }
 class Tree extends BABYLON.Mesh {
-    randomizer;
-    size = 10;
-    trunkLength = 1.2;
-    trunkDY = 0.5;
-    trunkBranchness = () => { return 0.5; };
-    branchSizeRandomize = 2;
-    branchLength = 1;
-    branchDR = 1;
-    branchDY = 1;
-    branchBranchness = () => { return 0.5; };
-    root;
     constructor(seed = 42) {
         super("tree");
+        this.size = 10;
+        this.trunkLength = 1.2;
+        this.trunkDY = 0.5;
+        this.trunkBranchness = () => { return 0.5; };
+        this.branchSizeRandomize = 2;
+        this.branchLength = 1;
+        this.branchDR = 1;
+        this.branchDY = 1;
+        this.branchBranchness = () => { return 0.5; };
         this.randomizer = new Randomizer(seed);
         this.trunkBranchness = (l, gen) => {
             return 2.5 * l / this.size - 0.5;
@@ -8761,7 +8616,6 @@ class TreeMeshBuilder {
     }
 }
 class WorldItem extends BABYLON.Mesh {
-    color;
     constructor(name, color = BrickColor.None) {
         super(name);
         this.color = color;
