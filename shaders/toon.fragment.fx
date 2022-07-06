@@ -28,49 +28,50 @@ void main(void) {
     ToonBrightnessLevels[4] = 0.36;
     ToonBrightnessLevels[5] = 0.2;
 
-    // diffuse
     float ndl = dot(vNormalW, lightInvDirW);
 
-    float a = vColor.a;
+    float alpha = vColor.a;
+
+    // diffuse
     vec4 color = vColor * texture2D(diffuseTexture, vUV);
 
+    float lightningFactor = 1.;
     if (ndl > ToonThresholds[0])
     {
-        color *= ToonBrightnessLevels[0];
+        lightningFactor = ToonBrightnessLevels[0];
     }
     else if (ndl > ToonThresholds[1])
     {
-        color *= ToonBrightnessLevels[1];
+        lightningFactor = ToonBrightnessLevels[1];
     }
     else if (ndl > ToonThresholds[2])
     {
-        color *= ToonBrightnessLevels[2];
+        lightningFactor = ToonBrightnessLevels[2];
     }
     else if (ndl > ToonThresholds[3])
     {
-        color *= ToonBrightnessLevels[3];
+        lightningFactor = ToonBrightnessLevels[3];
     }
     else if (ndl > ToonThresholds[4])
     {
-        color *= ToonBrightnessLevels[4];
+        lightningFactor = ToonBrightnessLevels[4];
     }
     else
     {
-        color *= ToonBrightnessLevels[5];
+        lightningFactor = ToonBrightnessLevels[5];
     }
 
-    float f = ndl * ndl * (cos(30. * ndl) + 1.) * 0.5;
-    if (f > roughness) {
-        color = color * 0.25 + vec4(0.75);
-    }
-    else if (f > roughness * 0.5) {
-        color = color * 0.5 + vec4(0.5);
-    }
-
+    // specular
     vec3 viewDir = normalize(viewPos - vPositionW);
     vec3 reflectDir = reflect(lightInvDirW, vNormalW);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.);
-    color += vec4(spec);
+    float specularFactor = 10. * (1. - roughness) * pow(max(dot(viewDir, reflectDir), 0.0), 32.) + 1.;
+    specularFactor = floor(specularFactor * 1.) / 1.;
+
+    // reflection
+    float reflectionFactor = 10. * (1. - roughness) * (ndl * ndl * (cos(30. * ndl) + 1.) * 0.5) + 1.;
+    reflectionFactor = floor(reflectionFactor * 1.) / 1.;
     
-    gl_FragColor = vec4(color.rgb, a);
+    float f = lightningFactor * specularFactor * reflectionFactor;
+
+    gl_FragColor = vec4(color.rgb * f, alpha);
 }
