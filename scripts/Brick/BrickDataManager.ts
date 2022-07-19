@@ -362,6 +362,26 @@ class BrickDataManager {
         BrickDataManager.BrickColors.set(BrickColor.Fushia, BABYLON.Color4.FromHexString("#DF00FFFF"));
         BrickDataManager.BrickColors.set(BrickColor.Pink, BABYLON.Color4.FromHexString("#FF007FFF"));
 
+        let n = BrickColor.PalePink - BrickColor.PaleRed;
+        for (let i = 0; i < n; i++) {
+            let baseColor = BrickDataManager.BrickColors.get(BrickColor.Red + i);
+            let paleColor = baseColor.clone();
+            paleColor.r = Math.min(1, (paleColor.r + 1.2) * 0.5);
+            paleColor.g = Math.min(1, (paleColor.g + 1.2) * 0.5);
+            paleColor.b = Math.min(1, (paleColor.b + 1.2) * 0.5);
+            BrickDataManager.BrickColors.set(BrickColor.PaleRed + i, paleColor);
+        }
+        
+        n = BrickColor.DarkPink - BrickColor.DarkRed;
+        for (let i = 0; i < n; i++) {
+            let baseColor = BrickDataManager.BrickColors.get(BrickColor.Red + i);
+            let darkColor = baseColor.clone();
+            darkColor.r = Math.max(0, (darkColor.r - 0.2) * 0.5);
+            darkColor.g = Math.max(0, (darkColor.g - 0.2) * 0.5);
+            darkColor.b = Math.max(0, (darkColor.b - 0.2) * 0.5);
+            BrickDataManager.BrickColors.set(BrickColor.DarkRed + i, darkColor);
+        }
+
         BrickDataManager.BrickColorIRLNames.set(BrickColor.White, "White");
         BrickDataManager.BrickColorIRLNames.set(BrickColor.Gray, "Gray");
         BrickDataManager.BrickColorIRLNames.set(BrickColor.Black, "Black");
