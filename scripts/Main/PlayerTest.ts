@@ -146,6 +146,7 @@ class PlayerTest extends Main {
             //Main.Camera.position.z = - 3;
 		}
 
+		/*
 		let bucket = new WorldItem("paint-bucket");
 		bucket.position.y = 3;
 		bucket.instantiate();
@@ -155,6 +156,7 @@ class PlayerTest extends Main {
 		bucketR.position.x = 3;
 		bucketR.position.y = 3;
 		bucketR.instantiate();
+		*/
 
 		return;
 		setTimeout(

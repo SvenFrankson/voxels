@@ -263,7 +263,7 @@ class Miniature extends Main {
 	public async createBrick(brickReferenceStr: string, keepAlive?: boolean): Promise<void> {
 		let brickReference = Brick.ParseReference(brickReferenceStr);
 		let mesh = new BABYLON.Mesh("mesh");
-		let data = await BrickVertexData.GetFullBrickVertexData(brickReference);
+		let data = await BrickVertexData.GetFullBrickVertexData(brickReference, BrickVertexData.GetBrickUVTransform(brickReference.type, 0, 0, 0));
 		data.applyToMesh(mesh);
 		if (brickReference.type === BrickType.Concrete) {
 			mesh.material = Main.concreteMaterial;
