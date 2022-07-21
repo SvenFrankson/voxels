@@ -366,19 +366,24 @@ class BrickDataManager {
         for (let i = 0; i < n; i++) {
             let baseColor = BrickDataManager.BrickColors.get(BrickColor.Red + i);
             let paleColor = baseColor.clone();
-            paleColor.r = Math.min(1, (paleColor.r + 1.2) * 0.5);
-            paleColor.g = Math.min(1, (paleColor.g + 1.2) * 0.5);
-            paleColor.b = Math.min(1, (paleColor.b + 1.2) * 0.5);
+            let paleColorHSL = ColorUtils.RGBToHSL(paleColor);
+            paleColorHSL.l = 75;
+            ColorUtils.HSLToRGBToRef(paleColorHSL, paleColor);
             BrickDataManager.BrickColors.set(BrickColor.PaleRed + i, paleColor);
         }
         
         n = BrickColor.DarkPink - BrickColor.DarkRed;
         for (let i = 0; i < n; i++) {
             let baseColor = BrickDataManager.BrickColors.get(BrickColor.Red + i);
+            console.log(".");
+            console.log(baseColor.asArray());
             let darkColor = baseColor.clone();
-            darkColor.r = Math.max(0, (darkColor.r - 0.2) * 0.5);
-            darkColor.g = Math.max(0, (darkColor.g - 0.2) * 0.5);
-            darkColor.b = Math.max(0, (darkColor.b - 0.2) * 0.5);
+            let darkColorHSL = ColorUtils.RGBToHSL(darkColor);
+            ColorUtils.HSLToRGBToRef(darkColorHSL, darkColor);
+            console.log(darkColor.asArray());
+            console.log(".");
+            darkColorHSL.l = 25;
+            ColorUtils.HSLToRGBToRef(darkColorHSL, darkColor);
             BrickDataManager.BrickColors.set(BrickColor.DarkRed + i, darkColor);
         }
 
